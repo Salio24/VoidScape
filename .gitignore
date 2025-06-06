@@ -1,0 +1,25 @@
+﻿################################################################################
+# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
+################################################################################
+
+/.vs
+
+# build directories 
+bin/*
+
+# build directory for libs and tmp files
+/out
+
+
+/.local
+deinitSub.sh
+initSub.sh
+rmSub.sh
+
+/CMakeSettings.json
+
+*.dll
+*.exe
+*.pdb
+
+*.cori_engine_dll_copied.stamp
