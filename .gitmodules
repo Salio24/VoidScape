@@ -1,0 +1,4 @@
+[submodule "CoriEngine"]
+	path = CoriEngine
+	url = https://github.com/Salio24/CoriEngine.git
+	branch = EngineDev
