@@ -16,7 +16,8 @@ deinitSub.sh
 initSub.sh
 rmSub.sh
 
-/CMakeSettings.json
+CMakeSettings.json
+CMakePresets.json
 
 *.dll
 *.exe
