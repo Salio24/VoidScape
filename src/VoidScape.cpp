@@ -2,7 +2,6 @@
 #include <CoriEntry.hpp>
 #include "GameLayer.hpp"
 
-
 class VoidScape : public Cori::Application {
 public:
 	VoidScape() {

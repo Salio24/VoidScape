@@ -1,11 +1,11 @@
 #pragma once
 #include <Cori.hpp>
 
-class GameLayer : public Cori::Layer {
+class LevelLayer : public Cori::Layer {
 public:
-	GameLayer();
+	LevelLayer();
 
-	~GameLayer();
+	~LevelLayer();
 
 	virtual void OnAttach() override;
 	virtual void OnDetach() override;
