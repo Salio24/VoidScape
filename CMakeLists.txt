@@ -17,8 +17,6 @@ project(VoidScape)
         message(FATAL_ERROR "MSVC Compiler frontend is not supported, use Clang/LLVM with posix frontend")
     endif()
 
-
-
     add_compile_options(-mavx2)
     
     add_subdirectory(${PROJECT_SOURCE_DIR}/CoriEngine)

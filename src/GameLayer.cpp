@@ -33,7 +33,7 @@ void GameLayer::OnImGuiRender(const double deltaTime) {
 		Layer* level = new LevelLayer();
 		Cori::SceneManager::CreateScene("Test Level");
 		level->BindScene("Test Level");
-		level->ActiveScene->ActiveCamera.CreateOrthoCamera(0, 7680, 0, 4320);
+		level->ActiveScene->ActiveCamera.CreateOrthoCamera(0, 640, 0, 360);
 		LevelLoader::LoadLevel(level->ActiveScene, "../../assets/levels/testlevel.tmx");
 		Cori::Application::PushLayer(level);
 	}

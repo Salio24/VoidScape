@@ -15,4 +15,9 @@ public:
 	virtual void OnImGuiRender(const double deltaTime) override;
 
 	virtual void OnEvent(Cori::Event& event) override;
+
+private:
+	int sliderint = 0;
+	float sliderfloat = 0;
+
 };

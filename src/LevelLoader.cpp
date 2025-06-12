@@ -2,7 +2,7 @@
 
 void LevelLoader::LoadLevel(std::shared_ptr<Cori::Scene> scene, const std::string& path) {
 	// temp vvv
-	int blockSize = 72;
+	int blockSize = 16;
 
 	tmx::Map map;
 
@@ -108,6 +108,8 @@ void LevelLoader::LoadLevel(std::shared_ptr<Cori::Scene> scene, const std::strin
 								collider.AddComponent<Cori::TriggerComponent>([](Cori::Entity& trigger, Cori::Entity& entity, Cori::EventCallbackFn eventCallback) -> bool {
 
 									// set player health to 0
+
+
 
 									return true;
 								});
