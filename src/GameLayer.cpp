@@ -22,7 +22,7 @@ void GameLayer::OnUpdate(const double deltaTime) {
 
 }
 
-void GameLayer::OnTickUpdate() {
+void GameLayer::OnTickUpdate(const float timeStep) {
 
 }
 
@@ -33,8 +33,10 @@ void GameLayer::OnImGuiRender(const double deltaTime) {
 		Layer* level = new LevelLayer();
 		Cori::SceneManager::CreateScene("Test Level");
 		level->BindScene("Test Level");
-		level->ActiveScene->ActiveCamera.CreateOrthoCamera(0, 640, 0, 360);
+		//level->ActiveScene->ActiveCamera.CreateOrthoCamera(0, 640, 0, 360);
 		LevelLoader::LoadLevel(level->ActiveScene, "../../assets/levels/testlevel.tmx");
+		//LevelLoader::LoadLevel(level->ActiveScene, "../../../Source/levels/GameLevels/32p/Level_1.tmx");
+
 		Cori::Application::PushLayer(level);
 	}
 

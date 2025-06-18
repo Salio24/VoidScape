@@ -2,7 +2,7 @@
 
 void LevelLoader::LoadLevel(std::shared_ptr<Cori::Scene> scene, const std::string& path) {
 	// temp vvv
-	int blockSize = 16;
+	int blockSize = CORI_PIXELS_PER_METER;
 
 	tmx::Map map;
 
@@ -15,6 +15,8 @@ void LevelLoader::LoadLevel(std::shared_ptr<Cori::Scene> scene, const std::strin
 		auto gridSize = map.getTileSize();
 
 		const auto mapSize = map.getBounds();
+
+
 
 		{
 			const auto tilesets = map.getTilesets();
@@ -38,7 +40,7 @@ void LevelLoader::LoadLevel(std::shared_ptr<Cori::Scene> scene, const std::strin
 					{tileSize.x, tileSize.y}
 				};
 
-				SpriteAtlases.push_back(Cori::AssetManager::GetSpriteAtlas(atlas));
+				SpriteAtlases.push_back(Cori::AssetManager::GetSpriteAtlasOwning(atlas));
 				GDIs.push_back(std::make_pair(tileset.getFirstGID(), tileset.getLastGID()));
 
 			}
@@ -79,12 +81,12 @@ void LevelLoader::LoadLevel(std::shared_ptr<Cori::Scene> scene, const std::strin
 								}
 
 								auto tile = scene->CreateEntity();
-								tile.AddComponent<Cori::RenderingComponent>(glm::vec2{ blockSize, blockSize });
-								tile.AddComponent<Cori::PositionComponent>(glm::vec2{ j * blockSize, ((height - i) * blockSize) - blockSize });
-								tile.AddComponent<Cori::SpriteComponent>(SpriteAtlases.at(tilesetID)->GetTexture(), SpriteAtlases.at(tilesetID)->GetSpriteUVsAtIndex(tileID - GDIs.at(tilesetID).first));
+								tile.AddComponent<Cori::Components::Entity::Render>(glm::vec2{ j * blockSize, ((height - i) * blockSize) - blockSize }, glm::vec2{ blockSize, blockSize });
+								tile.AddComponent<Cori::Components::Entity::Sprite>(SpriteAtlases.at(tilesetID)->GetTexture(), SpriteAtlases.at(tilesetID)->GetSpriteUVsAtIndex(tileID - GDIs.at(tilesetID).first));
 							}
 						}
 					}
+					scene->SortRenderGroup();
 				}
 			}
 			else if (layer->getType() == tmx::Layer::Type::Object) {
@@ -92,29 +94,55 @@ void LevelLoader::LoadLevel(std::shared_ptr<Cori::Scene> scene, const std::strin
 
 				if (objectLayer.getName() == "Colliders") {
 					const auto& objects = objectLayer.getObjects();
+					int height = mapSize.height;
+					int width = mapSize.width;
+
 					for (const auto& object : objects) {
+						if (object.getShape() == tmx::Object::Shape::Polygon) {
+							auto col = scene->CreateEntity();
 
-						auto aabb = object.getAABB();
+							auto pos = object.getPosition();
 
-						auto collider = scene->CreateEntity();
-						collider.AddComponent<Cori::PositionComponent>(glm::vec2{ ((aabb.left) / gridSize.x) * blockSize, ((mapSize.height - (aabb.top + aabb.height)) / gridSize.y) * blockSize });
-						collider.AddComponent<Cori::ColliderComponent>(glm::vec2{ (aabb.width / gridSize.x) * blockSize, (aabb.height / gridSize.y) * blockSize });
+							auto points = object.getPoints();
 
+							Cori::Physics::Vec2 b2pos = Cori::Physics::ToMeters(glm::vec2{ pos.x, (height - pos.y)});
 
-						const auto& props = object.getProperties();
+							std::vector<Cori::Physics::Vec2> b2points;
+							b2points.reserve(points.size());
 
-						for (const auto& prop : props) {
-							if (prop.getName() == "death_trigger") {
-								collider.AddComponent<Cori::TriggerComponent>([](Cori::Entity& trigger, Cori::Entity& entity, Cori::EventCallbackFn eventCallback) -> bool {
+							bool inverseWinding = true;
 
-									// set player health to 0
+							if (inverseWinding) {
+								b2points.push_back(Cori::Physics::ToMeters(glm::vec2{ points.at(0).x, -points.at(0).y }));
 
-
-
-									return true;
-								});
+								for (int i = points.size() - 1; i > 0; --i) {
+									b2points.push_back(Cori::Physics::ToMeters(glm::vec2{ points.at(i).x, -points.at(i).y }));
+								}
 							}
+							else {
+								for (tmx::Vector2f p : points) {
+									b2points.push_back(Cori::Physics::ToMeters(glm::vec2{ p.x, -p.y }));
+								}
+							}
+
+							Cori::Physics::Body::Params bp;
+							bp.type = b2_staticBody;
+							bp.position = Cori::Physics::ToMeters(glm::vec2{ pos.x, ((height - pos.y))});
+
+							auto& rb = col.AddComponent<Cori::Components::Entity::Rigidbody>(scene->PhysicsWorld, bp);
+
+							Cori::Physics::Chain::Params cp;
+							cp.count = b2points.size();
+							cp.points = b2points.data();
+							cp.isLoop = true;
+
+							rb.CreateChain(Cori::Physics::DestroyWithParent, cp);
+
+
 						}
+
+
+						
 					}
 				}
 				else if (objectLayer.getName() == "Points") {

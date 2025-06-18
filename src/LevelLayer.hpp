@@ -11,13 +11,12 @@ public:
 	virtual void OnDetach() override;
 
 	virtual void OnUpdate(const double deltaTime) override;
-	virtual void OnTickUpdate() override;
+	virtual void OnTickUpdate(const float timeStep) override;
 	virtual void OnImGuiRender(const double deltaTime) override;
 
 	virtual void OnEvent(Cori::Event& event) override;
 
 private:
-	int sliderint = 0;
-	float sliderfloat = 0;
+	bool m_PhysicsDebugDraw{ true };
 
 };

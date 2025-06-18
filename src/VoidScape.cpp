@@ -1,3 +1,4 @@
+#define CORI_PIXELS_PER_METER 16
 #include <Cori.hpp>
 #include <CoriEntry.hpp>
 #include "GameLayer.hpp"

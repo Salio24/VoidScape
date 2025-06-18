@@ -3,10 +3,47 @@
         "height": 4300,
         "width": 2
     },
-    "activeFile": "",
+    "activeFile": "testlevel.tmx",
     "expandedProjectPaths": [
+        "."
     ],
     "fileStates": {
+        "Bridge.tsx": {
+            "scaleInDock": 1
+        },
+        "Bushes.tsx": {
+            "scaleInDock": 1
+        },
+        "Construction.tsx": {
+            "scaleInDock": 1
+        },
+        "ConstructionOverlay.tsx": {
+            "scaleInDock": 1
+        },
+        "Ledges.tsx": {
+            "scaleInDock": 1
+        },
+        "Main.tsx": {
+            "scaleInDock": 1
+        },
+        "Pavement.tsx": {
+            "scaleInDock": 1
+        },
+        "Stairways.tsx": {
+            "scaleInDock": 1
+        },
+        "Walls.tsx": {
+            "scaleInDock": 1,
+            "scaleInEditor": 3
+        },
+        "testlevel.tmx": {
+            "scale": 2,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 295.25,
+                "y": 175.5
+            }
+        }
     },
     "last.imagePath": "C:/Users/salio/VSCode/VS2022/MyProject/VoidScape/assets/textures/level/Tilesets",
     "map.height": 23,
@@ -16,9 +53,13 @@
     "map.tileWidth": 16,
     "map.width": 40,
     "openFiles": [
+        "Walls.tsx",
+        "testlevel.tmx"
     ],
     "project": "project.tiled-project",
     "recentFiles": [
+        "Walls.tsx",
+        "testlevel.tmx"
     ],
     "tileset.lastUsedFormat": "tsx",
     "tileset.tileSize": {
