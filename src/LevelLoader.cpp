@@ -99,31 +99,29 @@ void LevelLoader::LoadLevel(std::shared_ptr<Cori::Scene> scene, const std::strin
 
 					for (const auto& object : objects) {
 						if (object.getShape() == tmx::Object::Shape::Polygon) {
-							auto col = scene->CreateEntity();
-
 							auto pos = object.getPosition();
-
 							auto points = object.getPoints();
 
-							Cori::Physics::Vec2 b2pos = Cori::Physics::ToMeters(glm::vec2{ pos.x, (height - pos.y)});
+							Cori::Physics::WindingOrder windingOrder = Cori::Physics::GetPolygonWindingOrder(points);
+							if (CORI_ASSERT_WARN(windingOrder != Cori::Physics::WindingOrder::COLLINEAR, "Polygon is collinear. Cannot create chain collider for object with UID: {}", object.getUID())) { continue; }
 
 							std::vector<Cori::Physics::Vec2> b2points;
 							b2points.reserve(points.size());
 
-							bool inverseWinding = true;
-
-							if (inverseWinding) {
+							if (windingOrder == Cori::Physics::WindingOrder::CLOCKWISE) {
 								b2points.push_back(Cori::Physics::ToMeters(glm::vec2{ points.at(0).x, -points.at(0).y }));
 
 								for (int i = points.size() - 1; i > 0; --i) {
 									b2points.push_back(Cori::Physics::ToMeters(glm::vec2{ points.at(i).x, -points.at(i).y }));
 								}
 							}
-							else {
+							else if (windingOrder == Cori::Physics::WindingOrder::COUNTER_CLOCKWISE) {
 								for (tmx::Vector2f p : points) {
 									b2points.push_back(Cori::Physics::ToMeters(glm::vec2{ p.x, -p.y }));
 								}
 							}
+
+							auto col = scene->CreateEntity();
 
 							Cori::Physics::Body::Params bp;
 							bp.type = b2_staticBody;
@@ -137,12 +135,7 @@ void LevelLoader::LoadLevel(std::shared_ptr<Cori::Scene> scene, const std::strin
 							cp.isLoop = true;
 
 							rb.CreateChain(Cori::Physics::DestroyWithParent, cp);
-
-
 						}
-
-
-						
 					}
 				}
 				else if (objectLayer.getName() == "Points") {

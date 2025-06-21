@@ -38,10 +38,10 @@
         },
         "testlevel.tmx": {
             "scale": 2,
-            "selectedLayer": 0,
+            "selectedLayer": 1,
             "viewCenter": {
-                "x": 295.25,
-                "y": 175.5
+                "x": 273.75,
+                "y": 186
             }
         }
     },

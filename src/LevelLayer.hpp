@@ -1,5 +1,7 @@
 #pragma once
 #include <Cori.hpp>
+#include "Mover.hpp"
+
 
 class LevelLayer : public Cori::Layer {
 public:
@@ -19,4 +21,5 @@ public:
 private:
 	bool m_PhysicsDebugDraw{ true };
 
+	Mover mover;
 };

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.11.2" orientation="orthogonal" renderorder="left-up" width="40" height="23" tilewidth="16" tileheight="16" infinite="0" nextlayerid="3" nextobjectid="11">
+<map version="1.10" tiledversion="1.11.2" orientation="orthogonal" renderorder="left-up" width="40" height="23" tilewidth="16" tileheight="16" infinite="0" nextlayerid="3" nextobjectid="21">
  <tileset firstgid="1" source="Bridge.tsx"/>
  <tileset firstgid="64" source="Bushes.tsx"/>
  <tileset firstgid="183" source="Construction.tsx"/>
@@ -37,8 +37,11 @@
 </data>
  </layer>
  <objectgroup id="2" name="Colliders">
-  <object id="10" x="112" y="48">
-   <polygon points="0,0 0,48 96,48 96,0 80,0 48,32 16,0"/>
+  <object id="19" x="16" y="352">
+   <polygon points="0,0 0,-336 608,-336 608,0"/>
+  </object>
+  <object id="20" x="336" y="352">
+   <polygon points="0,0 128,-96 288,-96 288,0"/>
   </object>
  </objectgroup>
 </map>
