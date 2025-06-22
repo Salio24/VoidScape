@@ -12,31 +12,22 @@ LevelLayer::~LevelLayer() {
 void LevelLayer::OnAttach() {
 	ActiveScene->ActiveCamera.CreateOrthoCamera(0, 640, 0, 360);
 
-	auto ent = ActiveScene->CreateEntity("Floor");
+	Mover::Params mp;
+	mp.position = { 5.0f, 5.0f };
 
-	Cori::Physics::Body::Params bp;
-	bp.type = b2_staticBody;
-	bp.position = { 0.0f, 0.0f };
-
-	auto& rb = ent.AddComponent<Cori::Components::Entity::Rigidbody>(ActiveScene->PhysicsWorld, bp);
-
-	Cori::Physics::Shape::Params sp;
-
-	rb.CreateShape(Cori::Physics::DestroyWithParent, sp, Cori::Physics::Polygon::CreateBox({ 40.0f, 1.0f }));
-
-	mover.Init(this);
+	m_Mover.reset(new Mover(Cori::Physics::Capsule::Create({ 0.0f, -0.5f }, { 0.0f, 0.5f }, 0.3f), ActiveScene->PhysicsWorld, mp));
 }
 
 void LevelLayer::OnDetach() {
 
 }
 
-void LevelLayer::OnUpdate(const double deltaTime) {
+void LevelLayer::OnUpdate(const double deltaTime, const double tickAlpha) {
 
 }
 
 void LevelLayer::OnTickUpdate(const float timeStep) {
-	mover.Step(timeStep, this);
+	m_Mover->OnTickUpdate(timeStep);
 }
 
 void LevelLayer::OnImGuiRender(const double deltaTime) {
@@ -47,6 +38,8 @@ void LevelLayer::OnImGuiRender(const double deltaTime) {
 	ImGui::Begin("Layer Layer UI");
 
 	ImGui::Checkbox("Box2d debug draw", &m_PhysicsDebugDraw);
+	ImGui::Checkbox("Mover debug draw", &m_MoverDebugDraw);
+
 
 	if (ImGui::Button("Add b2Box")) {
 		auto ent = ActiveScene->CreateEntity();
@@ -64,8 +57,10 @@ void LevelLayer::OnImGuiRender(const double deltaTime) {
 
 	ImGui::End();
 
-	mover.DebugDraw(this);
-	mover.UpdateGui();
+	if (m_MoverDebugDraw) {
+		m_Mover->DebugDraw();
+		m_Mover->UpdateGui();
+	}
 
 }
 

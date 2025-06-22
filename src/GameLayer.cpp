@@ -18,7 +18,7 @@ void GameLayer::OnDetach() {
 
 }
 
-void GameLayer::OnUpdate(const double deltaTime) {
+void GameLayer::OnUpdate(const double deltaTime, const double tickAlpha) {
 
 }
 
@@ -29,7 +29,7 @@ void GameLayer::OnTickUpdate(const float timeStep) {
 void GameLayer::OnImGuiRender(const double deltaTime) {
 	ImGui::Begin("Game Layer UI");
 
-	if (ImGui::Button("Test")) {
+	if (ImGui::Button("Start")) {
 		Layer* level = new LevelLayer();
 		Cori::SceneManager::CreateScene("Test Level");
 		level->BindScene("Test Level");

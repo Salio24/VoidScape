@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.11.2" orientation="orthogonal" renderorder="left-up" width="40" height="23" tilewidth="16" tileheight="16" infinite="0" nextlayerid="3" nextobjectid="21">
+<map version="1.10" tiledversion="1.11.2" orientation="orthogonal" renderorder="left-up" width="40" height="23" tilewidth="16" tileheight="16" infinite="0" nextlayerid="3" nextobjectid="24">
  <tileset firstgid="1" source="Bridge.tsx"/>
  <tileset firstgid="64" source="Bushes.tsx"/>
  <tileset firstgid="183" source="Construction.tsx"/>
@@ -40,8 +40,14 @@
   <object id="19" x="16" y="352">
    <polygon points="0,0 0,-336 608,-336 608,0"/>
   </object>
-  <object id="20" x="336" y="352">
-   <polygon points="0,0 128,-96 288,-96 288,0"/>
+  <object id="21" x="352" y="352">
+   <polygon points="0,0 96,-96 272,-96 272,0"/>
+  </object>
+  <object id="22" x="160" y="288">
+   <polygon points="0,0 32,0 32,-224 0,-224"/>
+  </object>
+  <object id="23" x="368" y="144">
+   <polygon points="0,0 -96,128 0,112 160,48 80,-32 0,-80 0,0"/>
   </object>
  </objectgroup>
 </map>

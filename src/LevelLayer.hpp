@@ -12,7 +12,7 @@ public:
 	virtual void OnAttach() override;
 	virtual void OnDetach() override;
 
-	virtual void OnUpdate(const double deltaTime) override;
+	virtual void OnUpdate(const double deltaTime, const double tickAlpha) override;
 	virtual void OnTickUpdate(const float timeStep) override;
 	virtual void OnImGuiRender(const double deltaTime) override;
 
@@ -20,6 +20,7 @@ public:
 
 private:
 	bool m_PhysicsDebugDraw{ true };
+	bool m_MoverDebugDraw{ true };
 
-	Mover mover;
+	std::unique_ptr<Mover> m_Mover;
 };
