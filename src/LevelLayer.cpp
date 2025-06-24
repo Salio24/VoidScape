@@ -66,7 +66,7 @@ void LevelLayer::OnImGuiRender(const double deltaTime) {
 
 	ImGui::Checkbox("Box2d debug draw", &m_PhysicsDebugDraw);
 	ImGui::Checkbox("Mover debug draw", &m_MoverDebugDraw);
-	ImGui::Checkbox("Manual Step", &manualStep);
+	ImGui::Checkbox("Manual Step(J - enable/disable, K - step)", &manualStep);
 
 
 	if (ImGui::Button("Add b2Box")) {

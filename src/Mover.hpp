@@ -34,7 +34,8 @@ public:
 		float acceleration{ 20.0f };
 		float airSteer{ 0.2f };
 		float friction{ 8.0f };
-		float gravity{ 30.0f };
+		float gravityDefault{ 30.0f };
+		float fastFallGravityModifier{ 1.5f };
 		float pogoHertz{ 5.0f };
 		float pogoDampingRatio{ 0.8f };
 		float pogoLengthScale{ 2.0f };
@@ -47,7 +48,7 @@ public:
 			m_WallJumpStartSpeed(def.wallJumpStartSpeed), m_WallJumpVariableSpeed(def.wallJumpVariableSpeed), m_WallJumpStartSideSpeed(def.wallJumpStartSideSpeed), m_WallJumpVariableSideSpeed(def.wallJumpVariableSideSpeed), m_WallJumpVariableTicks(def.wallJumpVariableTicks), m_WallJumpBufferTicks(def.wallJumpBufferTicks),
 			m_DoubleJumpStartSpeed(def.doubleJumpStartSpeed), m_DoubleJumpVariableSpeed(def.doubleJumpVariableSpeed), m_DoubleJumpVariableTicks(def.doubleJumpVariableTicks), m_DoubleJumpRayModifierForRegular(def.doubleJumpRayModifierForRegular), m_DoubleJumpRayModifierForWall(def.doubleJumpRayModifierForWall),
 			m_MaxSpeed(def.maxSpeed), m_MinSpeed(def.minSpeed), m_StopSpeed(def.stopSpeed), m_Acceleration(def.acceleration), m_AirSteer(def.airSteer),
-			m_Friction(def.friction), m_GravityDefault(def.gravity), m_PogoHertz(def.pogoHertz), m_PogoDampingRatio(def.pogoDampingRatio), m_PogoLengthScale(def.pogoLengthScale), m_SegmentOffset(def.segmentOffset), m_WallSlideSpeed(def.wallSlideSpeed) {
+			m_Friction(def.friction), m_GravityDefault(def.gravityDefault), m_FastFallGravityModifier(def.fastFallGravityModifier), m_PogoHertz(def.pogoHertz), m_PogoDampingRatio(def.pogoDampingRatio), m_PogoLengthScale(def.pogoLengthScale), m_SegmentOffset(def.segmentOffset), m_WallSlideSpeed(def.wallSlideSpeed) {
 		Cori::Physics::Body::Params bp;
 		bp.type = b2_kinematicBody;
 		bp.position = m_Transform.p;
@@ -248,30 +249,43 @@ public:
 		ImGui::SliderFloat("Min Speed", &m_MinSpeed, 0.0f, 1.0f, "%.2f");
 		ImGui::SliderFloat("Max Speed", &m_MaxSpeed, 0.0f, 20.0f, "%.0f");
 		ImGui::SliderFloat("Stop Speed", &m_StopSpeed, 0.0f, 40.0f, "%.1f");
-		ImGui::SliderFloat("Accelerate", &m_Acceleration, 0.0f, 100.0f, "%.0f");
+		
+		ImGui::Separator();
+
+		ImGui::SliderFloat("Gravity Default", &m_GravityDefault, 0.0f, 100.0f, "%.1f");
+		ImGui::SliderFloat("Fast Fall Gravity Modifier", &m_FastFallGravityModifier, 0.0f, 3.0f, "%.2f");
+
+		ImGui::Separator();
+
+		ImGui::SliderFloat("Acceleration", &m_Acceleration, 0.0f, 100.0f, "%.0f");
 		ImGui::SliderFloat("Friction", &m_Friction, 0.0f, 40.0f, "%.1f");
-		ImGui::SliderFloat("Gravity", &m_GravityDefault, 0.0f, 100.0f, "%.1f");
 		ImGui::SliderFloat("Air Steer", &m_AirSteer, 0.0f, 1.0f, "%.2f");
+
+		ImGui::Separator();
+
 		ImGui::SliderFloat("Pogo Hertz", &m_PogoHertz, 0.0f, 30.0f, "%.0f");
 		ImGui::SliderFloat("Pogo Damping", &m_PogoDampingRatio, 0.0f, 4.0f, "%.1f");
 		ImGui::SliderFloat("Pogo Length Scale", &m_PogoLengthScale, 0.1f, 10.0f, "%.2f");
 		ImGui::SliderFloat("Segment Offset", &m_SegmentOffset, 0.1f, 4.0f, "%.2f");
+		
+		ImGui::Separator();
+
 		ImGui::SliderFloat("Wall Slide Speed", &m_WallSlideSpeed, 0.1f, 10.0f, "%.2f");
 
-		ImGui::SliderFloat("Test", &test, 0.1f, 2.0f, "%.2f");
 
 		ImGui::End();
 	}
 
 	void DebugDraw() {
+
 		if (m_CastResult.hit == false) {
-			b2Vec2 delta = m_Translation;
-			Cori::Layer::debug_renderer.DrawLine(m_Origin, m_Origin + delta, b2_colorPurple);
+			b2Vec2 delta = m_Translation + m_Velocity * (1.0f / 60.0f);
+			Cori::Layer::debug_renderer.DrawLine(m_Origin + m_Velocity * (1.0f / 60.0f), m_Origin + delta, b2_colorPurple);
 			Cori::Layer::debug_renderer.DrawLine(m_Segment.point1 + delta, m_Segment.point2 + delta, b2_colorPurple);
 		}
 		else {
-			b2Vec2 delta = m_CastResult.fraction * m_Translation;
-			Cori::Layer::debug_renderer.DrawLine(m_Origin, m_Origin + delta, b2_colorPurple);
+			b2Vec2 delta = m_CastResult.fraction * m_Translation + m_Velocity * (1.0f / 60.0f);
+			Cori::Layer::debug_renderer.DrawLine(m_Origin + m_Velocity * (1.0f / 60.0f), m_Origin + delta, b2_colorPurple);
 			Cori::Layer::debug_renderer.DrawLine(m_Segment.point1 + delta, m_Segment.point2 + delta, b2_colorPlum);
 		}
 
@@ -381,6 +395,9 @@ public:
 		//CORI_INFO("pr: {}", rayresult.hit);
 		
 		m_Gravity = m_GravityDefault;
+		if (m_Velocity.y < -0.1f - m_Gravity * m_FastFallGravityModifier * timeStep) {
+			m_Gravity *= m_FastFallGravityModifier;
+		}
 
 		m_CanWallJump = false;
 
@@ -600,6 +617,7 @@ public:
 	float m_AirSteer;
 	float m_Friction;
 	float m_GravityDefault;
+	float m_FastFallGravityModifier;
 	float m_PogoHertz;
 	float m_PogoDampingRatio;
 	float m_PogoLengthScale;
