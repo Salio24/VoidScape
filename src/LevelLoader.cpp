@@ -126,6 +126,7 @@ void LevelLoader::LoadLevel(std::shared_ptr<Cori::Scene> scene, const std::strin
 							Cori::Physics::Body::Params bp;
 							bp.type = b2_staticBody;
 							bp.position = Cori::Physics::ToMeters(glm::vec2{ pos.x, ((height - pos.y))});
+						
 
 							auto& rb = col.AddComponent<Cori::Components::Entity::Rigidbody>(scene->PhysicsWorld, bp);
 
@@ -133,6 +134,7 @@ void LevelLoader::LoadLevel(std::shared_ptr<Cori::Scene> scene, const std::strin
 							cp.count = b2points.size();
 							cp.points = b2points.data();
 							cp.isLoop = true;
+							cp.filter.categoryBits = Cori::Physics::CollisionBits::StaticBit;
 
 							rb.CreateChain(Cori::Physics::DestroyWithParent, cp);
 						}

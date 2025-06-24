@@ -1,5 +1,6 @@
 #include "LevelLayer.hpp"
 
+static bool manualStep = false;
 
 LevelLayer::LevelLayer() : Cori::Layer("Level Layer") {
 
@@ -27,7 +28,33 @@ void LevelLayer::OnUpdate(const double deltaTime, const double tickAlpha) {
 }
 
 void LevelLayer::OnTickUpdate(const float timeStep) {
-	m_Mover->OnTickUpdate(timeStep);
+	if (!manualStep) {
+		m_Mover->OnTickUpdate(timeStep);
+	}
+	else {
+		static bool oneshot = true;
+		if (Cori::Input::IsKeyPressed(Cori::CORI_KEY_K)) {
+			if (oneshot) {
+				m_Mover->OnTickUpdate(timeStep);
+				oneshot = false;
+			}
+		}
+		else {
+			oneshot = true;
+		}
+	}
+
+	static bool oneshot2 = true;
+
+	if (Cori::Input::IsKeyPressed(Cori::CORI_KEY_J)) {
+		if (oneshot2) {
+			manualStep = !manualStep;
+			oneshot2 = false;
+		}
+	}
+	else {
+		oneshot2 = true;
+	}
 }
 
 void LevelLayer::OnImGuiRender(const double deltaTime) {
@@ -39,6 +66,7 @@ void LevelLayer::OnImGuiRender(const double deltaTime) {
 
 	ImGui::Checkbox("Box2d debug draw", &m_PhysicsDebugDraw);
 	ImGui::Checkbox("Mover debug draw", &m_MoverDebugDraw);
+	ImGui::Checkbox("Manual Step", &manualStep);
 
 
 	if (ImGui::Button("Add b2Box")) {
