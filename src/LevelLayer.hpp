@@ -22,5 +22,7 @@ private:
 	bool m_PhysicsDebugDraw{ true };
 	bool m_MoverDebugDraw{ true };
 
+	Cori::Entity m_Player;
+
 	std::unique_ptr<Mover> m_Mover;
 };
