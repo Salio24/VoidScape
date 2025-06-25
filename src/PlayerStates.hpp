@@ -3,23 +3,22 @@
 #include "PlayerAnimations.hpp"
 
 namespace PlayerStates {
-	class IdleState : public Cori::FSM::State { // Uses default Cori::Entity as owner
+	class IdleState : public Cori::FSM::State {
 	public:
 		void OnEnter(Cori::Entity player, Cori::FSM::Machine* fsm) override {
-			CORI_CORE_INFO("Entity ID {0} entering Idle. {1}", static_cast<uint32_t>(player), Cori::Application::GetTest());
+			//CORI_CORE_INFO("Entity ID {0} entering Idle. {1}", static_cast<uint32_t>(player), Cori::Application::GetTest());
 			auto& ar = player.GetComponents<Cori::Animator>();
-			ar.Start<Animations::PlayerIdle>();
+			ar.StartSingle<Animations::PlayerIdle>();
 		}
 
 		void OnUpdate(Cori::Entity player, Cori::FSM::Machine* fsm, float deltaTime) override {
 			//CORI_CORE_INFO("Entity ID {0} updating Idle. {1}", static_cast<uint32_t>(player), Cori::Application::GetTest());
 			auto& ar = player.GetComponents<Cori::Animator>();
-			ar.Play<Animations::PlayerIdle>();
-
+			ar.UpdateSingle < Animations::PlayerIdle>();
 		}
 
 		void OnExit(Cori::Entity player, Cori::FSM::Machine* fsm) override {
-			CORI_CORE_INFO("Entity ID {0} exiting Idle. {1}", static_cast<uint32_t>(player), Cori::Application::GetTest());
+			//CORI_CORE_INFO("Entity ID {0} exiting Idle. {1}", static_cast<uint32_t>(player), Cori::Application::GetTest());
 		}
 
 		const char* GetDebugName() const {
@@ -31,19 +30,19 @@ namespace PlayerStates {
 	class RunState : public Cori::FSM::State {
 	public:
 		void OnEnter(Cori::Entity player, Cori::FSM::Machine* fsm) override {
-			CORI_CORE_INFO("Entity ID {0} entering RunState. {1}", static_cast<uint32_t>(player), Cori::Application::GetTest());
+			//CORI_CORE_INFO("Entity ID {0} entering RunState. {1}", static_cast<uint32_t>(player), Cori::Application::GetTest());
 			auto& ar = player.GetComponents<Cori::Animator>();
-			ar.Start<Animations::PlayerRun>();
+			ar.StartSingle<Animations::PlayerRun>();
 		}
 
 		void OnUpdate(Cori::Entity player, Cori::FSM::Machine* fsm, float deltaTime) override {
 			//CORI_CORE_INFO("Entity ID {0} updating RunState. {1}", static_cast<uint32_t>(player), Cori::Application::GetTest());
 			auto& ar = player.GetComponents<Cori::Animator>();
-			ar.Play<Animations::PlayerRun>();
+			ar.UpdateSingle<Animations::PlayerRun>();
 		}
 
 		void OnExit(Cori::Entity player, Cori::FSM::Machine* fsm) override {
-			CORI_CORE_INFO("Entity ID {0} exiting RunState. {1}", static_cast<uint32_t>(player), Cori::Application::GetTest());
+			//CORI_CORE_INFO("Entity ID {0} exiting RunState. {1}", static_cast<uint32_t>(player), Cori::Application::GetTest());
 		}
 
 		const char* GetDebugName() const {
@@ -56,12 +55,12 @@ namespace PlayerStates {
 		void OnEnter(Cori::Entity player, Cori::FSM::Machine* fsm) override {
 
 			auto& ar = player.GetComponents<Cori::Animator>();
-			ar.Start<Animations::PlayerFall>();
+			ar.StartSingle<Animations::PlayerFall>();
 		}
 
 		void OnUpdate(Cori::Entity player, Cori::FSM::Machine* fsm, float deltaTime) override {
 			auto& ar = player.GetComponents<Cori::Animator>();
-			ar.Play<Animations::PlayerFall>();
+			ar.UpdateSingle<Animations::PlayerFall>();
 		}
 
 		void OnExit(Cori::Entity player, Cori::FSM::Machine* fsm) override {
@@ -69,7 +68,7 @@ namespace PlayerStates {
 		}
 
 		const char* GetDebugName() const {
-			return "FallState";
+			return "FallState"; 
 		}
 	};
 
@@ -77,12 +76,12 @@ namespace PlayerStates {
 	public:
 		void OnEnter(Cori::Entity player, Cori::FSM::Machine* fsm) override {
 			auto& ar = player.GetComponents<Cori::Animator>();
-			ar.Start<Animations::PlayerDoubleJump>();
+			ar.StartSequence<Animations::PlayerJumpStart, Animations::PlayerJumpMid>();
 		}
 
 		void OnUpdate(Cori::Entity player, Cori::FSM::Machine* fsm, float deltaTime) override {
 			auto& ar = player.GetComponents<Cori::Animator>();
-			ar.Play<Animations::PlayerDoubleJump>();
+			ar.UpdateSequence();
 		}
 
 		void OnExit(Cori::Entity player, Cori::FSM::Machine* fsm) override {
@@ -97,12 +96,12 @@ namespace PlayerStates {
 	public:
 		void OnEnter(Cori::Entity player, Cori::FSM::Machine* fsm) override {
 			auto& ar = player.GetComponents<Cori::Animator>();
-			ar.Start<Animations::PlayerDoubleJump>();
+			ar.StartSingle<Animations::PlayerDoubleJump>();
 		}
 
 		void OnUpdate(Cori::Entity player, Cori::FSM::Machine* fsm, float deltaTime) override {
 			auto& ar = player.GetComponents<Cori::Animator>();
-			ar.Play<Animations::PlayerDoubleJump>();
+			ar.UpdateSingle<Animations::PlayerDoubleJump>();
 		}
 
 		void OnExit(Cori::Entity player, Cori::FSM::Machine* fsm) override {
@@ -117,12 +116,12 @@ namespace PlayerStates {
 	public:
 		void OnEnter(Cori::Entity player, Cori::FSM::Machine* fsm) override {
 			auto& ar = player.GetComponents<Cori::Animator>();
-			ar.Start<Animations::PlayerWallJump>();
+			ar.StartSequence<Animations::PlayerJumpStart, Animations::PlayerJumpMid>();
 		}
 
 		void OnUpdate(Cori::Entity player, Cori::FSM::Machine* fsm, float deltaTime) override {
 			auto& ar = player.GetComponents<Cori::Animator>();
-			ar.Play<Animations::PlayerWallJump>();
+			ar.UpdateSequence();
 		}
 
 		void OnExit(Cori::Entity player, Cori::FSM::Machine* fsm) override {
@@ -137,12 +136,12 @@ namespace PlayerStates {
 	public:
 		void OnEnter(Cori::Entity player, Cori::FSM::Machine* fsm) override {
 			auto& ar = player.GetComponents<Cori::Animator>();
-			ar.Start<Animations::PlayerWallSlide>();
+			ar.StartSingle<Animations::PlayerWallSlide>();
 		}
 
 		void OnUpdate(Cori::Entity player, Cori::FSM::Machine* fsm, float deltaTime) override {
 			auto& ar = player.GetComponents<Cori::Animator>();
-			ar.Play<Animations::PlayerWallSlide>();
+			ar.UpdateSingle<Animations::PlayerWallSlide>();
 		}
 
 		void OnExit(Cori::Entity player, Cori::FSM::Machine* fsm) override {

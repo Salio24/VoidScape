@@ -195,8 +195,6 @@ public:
 			b2Capsule mover;
 			mover.center1 = b2TransformPoint(m_Transform, m_Capsule.center1);
 
-			Cori::Physics::Vec2 t = { m_Capsule.center2.x, m_Capsule.center2.y * test };
-
 			mover.center2 = b2TransformPoint(m_Transform, m_Capsule.center2);
 			mover.radius = m_Capsule.radius;
 
@@ -279,7 +277,8 @@ public:
 		ImGui::Separator();
 
 		ImGui::SliderFloat("Minimal Speed For Run State", &m_MinSpeedForRunState, 0.1f, 10.0f, "%.2f");
-
+		//ImGui::SliderFloat("test1", &test1, 0.1f, 2.0f, "%.2f");
+		ImGui::Checkbox("Draw Player Pixel Aligned to Camera Canvas", &m_PixelAlignedRender);
 
 		ImGui::End();
 	}
@@ -299,9 +298,9 @@ public:
 			//Cori::Layer::debug_renderer.DrawPoint(m_Origin + m_CastResult.fraction * m_Translation + m_Velocity * (1.0f / 60.0f), 8.0f, b2_colorBlack);
 		}
 
-		//Cori::Layer::debug_renderer.DrawPoint(m_ForRenderingPosition, 8.0f, b2_colorBlack);
-		//Cori::Layer::debug_renderer.DrawPoint(m_OldForRenderingPosition, 8.0f, b2_colorBlack);
-		//Cori::Layer::debug_renderer.DrawPoint((m_ForRenderingPosition * test + m_OldForRenderingPosition * (1.0f - test)), 8.0f, b2_colorBlack);
+		//Cori::Layer::debug_renderer.DrawPoint(m_RenderingPosition, 8.0f, b2_colorBlack);
+		//Cori::Layer::debug_renderer.DrawPoint(m_OldRenderingPosition, 8.0f, b2_colorBlack);
+		//Cori::Layer::debug_renderer.DrawPoint((m_RenderingPosition * test + m_OldRenderingPosition * (1.0f - test)), 8.0f, b2_colorBlack);
 
 
 
@@ -380,25 +379,30 @@ public:
 		auto& rend = m_Player.GetComponents<Cori::Components::Entity::Render>();
 
 		//rend.m_Position = Cori::Physics::ToPixels(m_ForRenderingPosition) - glm::vec2{ rend.m_Size.x / 2, 0.0f };
-		rend.m_Position = Cori::Physics::ToPixels((m_ForRenderingPosition * tickAlpha + m_OldForRenderingPosition * (1.0f - tickAlpha))) - glm::vec2{rend.m_Size.x / 2, 0.0f};
+		if (m_PixelAlignedRender) {
+			glm::vec2 pos = Cori::Physics::ToPixels((m_RenderingPosition * tickAlpha + m_OldRenderingPosition * (1.0f - tickAlpha))) - glm::vec2{ rend.m_Size.x / 2, 0.0f };
+			rend.m_Position.x = int(pos.x);
+			rend.m_Position.y = int(pos.y);
+		}
+		else {
+			rend.m_Position = Cori::Physics::ToPixels((m_RenderingPosition * tickAlpha + m_OldRenderingPosition * (1.0f - tickAlpha))) - glm::vec2{ rend.m_Size.x / 2, 0.0f };
+		}
 
 		rend.m_Flipped = m_Velocity.x < 0.0f ? true : false;
 
 		if (m_CanWallJump) {
-			if (Cori::Input::IsKeyPressed(Cori::CORI_KEY_A)) {
+			if (m_WallJumpDirection == 1) {
 				rend.m_Flipped = true;
 			}
-			else if (Cori::Input::IsKeyPressed(Cori::CORI_KEY_D)) {
+			else if (m_WallJumpDirection == -1) {
 				rend.m_Flipped = false;
 			}
-
+			
 		}
 
 	}
 
 	void OnTickUpdate(const float timeStep) {
-		m_OldForRenderingPosition = m_ForRenderingPosition;
-
 		auto& fsm = m_Player.GetComponents < Cori::Components::Entity::StateMachine>();
 
 
@@ -454,12 +458,18 @@ public:
 
 			if (std::abs(std::round(plane.normal.x * 10000.0f)) == 10000) {
 				m_CanWallJump = true;
+				bufferFallState = false;
+				fsm.SetStateIfNotInState<PlayerStates::WallSlideState>();
 				m_WallJumpDirection = Cori::Math::Sign(plane.normal.x);
 				//CORI_DEBUG("Normals: {}, bool {}", Cori::Physics::Vec2ToString(plane.normal), m_CanWallJump);
 				break;
 			}
 		}
 
+		if (bufferFallState) {
+			fsm.SetStateIfNotInState<PlayerStates::FallState>();
+
+		}
 
 		float throttle = 0.0f;
 
@@ -470,7 +480,7 @@ public:
 		if (Cori::Input::IsKeyPressed(Cori::CORI_KEY_A)) {
 			if (m_CanWallJump && m_WallJumpDirection == 1 && m_Velocity.y < -0.1f - m_Gravity * timeStep) {
 				bufferFallState = false;
-				fsm.SetStateIfNotInState<PlayerStates::WallSlideState>();
+				//fsm.SetStateIfNotInState<PlayerStates::WallSlideState>();
 				m_Gravity = 0.0f;
 				m_Velocity.y = -m_WallSlideSpeed;
 			}
@@ -483,7 +493,7 @@ public:
 		if (Cori::Input::IsKeyPressed(Cori::CORI_KEY_D)) {
 			if (m_CanWallJump && m_WallJumpDirection == -1 && m_Velocity.y < -0.1f - m_Gravity * timeStep) {
 				bufferFallState = false;
-				fsm.SetStateIfNotInState<PlayerStates::WallSlideState>();
+				//fsm.SetStateIfNotInState<PlayerStates::WallSlideState>();
 				m_Gravity = 0.0f;
 				m_Velocity.y = -m_WallSlideSpeed;
 			}
@@ -491,11 +501,6 @@ public:
 			if (m_OnGround) {
 				fsm.SetStateIfNotInState<PlayerStates::RunState>();
 			}
-		}
-
-		if (bufferFallState) {
-			fsm.SetStateIfNotInState<PlayerStates::FallState>();
-
 		}
 
 		if (!m_OnGround && m_OldOnGround) {
@@ -572,7 +577,7 @@ public:
 			m_WallJumping = false;
 			m_DoubleJumping = false;
 
-			m_WallJumpDirection = 0;
+			//m_WallJumpDirection = 0;
 		
 		}
 
@@ -598,13 +603,9 @@ public:
 			m_WallJumpBufferTickTimer++;
 		}
 
-		if (m_WallJumpBufferTickTimer < 128) {
-			m_WallJumpBufferTickTimer++;
-		}
 
 		if ((m_OnGround || m_JumpCoyoteTimeTickTimer <= m_JumpCoyoteTimeTicks) && m_JumpBufferTickTimer <= m_JumpBufferTicks && !m_WallJumping) {
 			m_Velocity.y = m_JumpStartSpeed;
-			m_OnGround = false;
 
 			if (m_JumpCoyoteTimeTickTimer <= m_JumpCoyoteTimeTicks) {
 				CORI_INFO("COYOTE");
@@ -612,6 +613,8 @@ public:
 			else if (m_OnGround) {
 				CORI_INFO("GROUND");
 			}
+
+			m_OnGround = false;
 
 			CORI_DEBUG("REGULAR");
 			// add fast fall
@@ -621,8 +624,9 @@ public:
 			m_JumpVariableTickTimer = 0;
 			m_JumpBufferTickTimer = 128;
 		} 
-		else if (m_OnGround || m_JumpCoyoteTimeTickTimer > m_JumpCoyoteTimeTicks) {
+		else if ((m_OnGround || m_JumpCoyoteTimeTickTimer > m_JumpCoyoteTimeTicks) && m_JumpBufferTickTimer > m_JumpBufferTicks) {
 			m_JumpBufferTickTimer = 128;
+			m_JumpCoyoteTimeTickTimer = 128;
 		}
 
 		if (m_JumpBufferTickTimer < 128) {
@@ -634,7 +638,6 @@ public:
 		}
 
 		//CORI_INFO("ticks: {}", m_JumpCoyoteTimeTickTimer);
-
 
 		constexpr float tolerance = 0.01f;
 
@@ -656,12 +659,22 @@ public:
 		m_P1 = b2TransformPoint(m_Transform, m_Capsule.center1);
 		m_P2 = b2TransformPoint(m_Transform, m_Capsule.center2);
 
-		//m_OldForRenderingPosition = m_ForRenderingPosition;
-		if (m_CastResult.hit == false) {
-			m_ForRenderingPosition = m_Origin + m_Translation + m_Velocity * (1.0f / 60.0f);
+		m_OldRenderingPosition = m_RenderingPosition;
+		if (m_Velocity.y < -0.1f - m_Gravity * timeStep) {
+			if (m_CastResult.hit == false) {
+				m_RenderingPosition = m_Origin + m_Translation + m_Velocity * (timeStep * 1.5f);
+			}
+			else {
+				m_RenderingPosition = m_Origin + m_CastResult.fraction * m_Translation + m_Velocity * (timeStep * 1.5f);
+			}
 		}
 		else {
-			m_ForRenderingPosition = m_Origin + m_CastResult.fraction * m_Translation + m_Velocity * (1.0f / 60.0f);
+			if (m_CastResult.hit == false) {
+				m_RenderingPosition = m_Origin + m_Translation + Cori::Physics::Vec2{m_Velocity.x * (timeStep * 1.5f), 0.0f};
+			}
+			else {
+				m_RenderingPosition = m_Origin + m_CastResult.fraction * m_Translation + Cori::Physics::Vec2{ m_Velocity.x * (timeStep * 1.5f), 0.0f };
+			}
 		}
 
 	}
@@ -705,8 +718,8 @@ public:
 
 	float originToBottom;
 
-	Cori::Physics::Vec2 m_ForRenderingPosition;
-	Cori::Physics::Vec2 m_OldForRenderingPosition;
+	Cori::Physics::Vec2 m_RenderingPosition;
+	Cori::Physics::Vec2 m_OldRenderingPosition;
 
 private:
 	static constexpr int m_PlaneCapacity = 8;
@@ -763,7 +776,9 @@ private:
 	bool m_NearGround{ false };
 	bool m_NearWall{ false };
 
-	float test{ 1.0f };
+	bool m_PixelAlignedRender{ false };
+
+	float test1{ 1.0f };
 
 	Cori::Entity m_Player{};
 };
