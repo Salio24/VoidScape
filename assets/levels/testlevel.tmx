@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.11.2" orientation="orthogonal" renderorder="left-up" width="40" height="23" tilewidth="16" tileheight="16" infinite="0" nextlayerid="3" nextobjectid="50">
+<map version="1.10" tiledversion="1.11.2" orientation="orthogonal" renderorder="left-up" width="40" height="23" tilewidth="16" tileheight="16" infinite="0" nextlayerid="3" nextobjectid="51">
  <tileset firstgid="1" source="Bridge.tsx"/>
  <tileset firstgid="64" source="Bushes.tsx"/>
  <tileset firstgid="183" source="Construction.tsx"/>
@@ -55,47 +55,11 @@
   <object id="31" x="544" y="224">
    <polygon points="0,0 0,-144 16,-144 16,0 0,0"/>
   </object>
-  <object id="35" x="240" y="96">
-   <polygon points="0,0 0,16 16,16 16,0"/>
-  </object>
-  <object id="36" x="240" y="112">
-   <polygon points="0,0 0,16 16,16 16,0"/>
-  </object>
-  <object id="37" x="240" y="128">
-   <polygon points="0,0 0,16 16,16 16,0"/>
-  </object>
-  <object id="38" x="240" y="144">
-   <polygon points="0,0 0,16 16,16 16,0"/>
-  </object>
-  <object id="39" x="240" y="160">
-   <polygon points="0,0 0,16 16,16 16,0"/>
-  </object>
-  <object id="40" x="240" y="176">
-   <polygon points="0,0 0,16 16,16 16,0"/>
-  </object>
-  <object id="41" x="240" y="192">
-   <polygon points="0,0 0,16 16,16 16,0"/>
-  </object>
-  <object id="42" x="240" y="208">
-   <polygon points="0,0 0,16 16,16 16,0"/>
-  </object>
-  <object id="43" x="240" y="224">
-   <polygon points="0,0 0,16 16,16 16,0"/>
-  </object>
-  <object id="44" x="240" y="240">
-   <polygon points="0,0 0,16 16,16 16,0"/>
-  </object>
-  <object id="45" x="240" y="256">
-   <polygon points="0,0 0,16 16,16 16,0"/>
-  </object>
-  <object id="46" x="240" y="272">
-   <polygon points="0,0 0,16 16,16 16,0"/>
-  </object>
-  <object id="47" x="240" y="288">
-   <polygon points="0,0 0,16 16,16 16,0"/>
-  </object>
   <object id="49" x="512" y="352">
    <polygon points="0,0 112,-112 96,-48 64,-16"/>
+  </object>
+  <object id="50" x="240" y="96">
+   <polygon points="0,0 16,0 16,208 0,208"/>
   </object>
  </objectgroup>
 </map>

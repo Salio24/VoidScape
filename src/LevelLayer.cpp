@@ -1,5 +1,5 @@
 #include "LevelLayer.hpp"
-#include "PlayerStates.hpp"
+#include "Player/States.hpp"
 
 static bool manualStep = false;
 
@@ -30,19 +30,19 @@ void LevelLayer::OnAttach() {
 
 	auto& fsm = m_Player.AddComponent <Cori::Components::Entity::StateMachine>(m_Player);
 
-	fsm.Register<PlayerStates::IdleState>();
-	fsm.SetState<PlayerStates::IdleState>();
-	fsm.Register<PlayerStates::RunState>();
-	fsm.Register<PlayerStates::FallState>();
-	fsm.Register<PlayerStates::JumpState>();
-	fsm.Register<PlayerStates::DoubleJumpState>();
-	fsm.Register<PlayerStates::WallJumpState>();
-	fsm.Register<PlayerStates::WallSlideState>();
+	fsm.Register<States::Player::Idle>();
+	fsm.SetState<States::Player::Idle>();
+	fsm.Register<States::Player::Run>();
+	fsm.Register<States::Player::Fall>();
+	fsm.Register<States::Player::Jump>();
+	fsm.Register<States::Player::DoubleJump>();
+	fsm.Register<States::Player::WallJump>();
+	fsm.Register<States::Player::WallSlide>();
 
 	Mover::Params mp;
 	mp.position = { 5.0f, 5.0f };
 	mp.gravityDefault = 34.5f;
-	m_Mover.reset(new Mover(Cori::Physics::Capsule::Create({ 0.0f, -0.5f }, { 0.0f, 0.7f }, 0.37f), ActiveScene->PhysicsWorld, m_Player, mp));
+	m_Mover.reset(new Mover(Cori::Physics::Capsule::Create({ 0.0f, -0.5f }, { 0.0f, 0.55f }, 0.37f), ActiveScene->PhysicsWorld, m_Player, mp));
 }
 
 void LevelLayer::OnDetach() {

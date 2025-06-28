@@ -2,6 +2,11 @@
 #include <Cori.hpp>
 #include <CoriEntry.hpp>
 #include "GameLayer.hpp"
+#include <print>
+
+void Lol() {
+	std::println("Ne proshlo i veka LOL");
+}
 
 class VoidScape : public Cori::Application {
 public:
