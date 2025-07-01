@@ -38,13 +38,13 @@ public:
 		float pogoHertz{ 5.0f };
 		float pogoDampingRatio{ 0.8f };
 		float pogoLengthScale{ 2.0f };
-		float segmentOffset{ 0.9f };
+		float segmentOffset{ 0.65f };
 		float wallSlideSpeed{ 1.5f };
 
 		float minSpeedForRunState{ 1.0f };
 	};
 
-	Mover(const Cori::Physics::Capsule& capsule, Cori::Physics::WorldRef world, Cori::Entity player, const Params& def);
+	Mover(const Cori::Physics::Capsule& capsule, Cori::Physics::WorldRef world, Cori::Entity& player, const Params& def);
 	~Mover() = default;
 
 	void OnUpdate(const double deltaTime, const double tickAlpha);
@@ -109,8 +109,10 @@ private:
 
 	static constexpr int m_PlaneCapacity = 8;
 
+	//Cori::Physics::BodyRef m_SensorVisitorBody;
+
+
 	Cori::Physics::WorldRef m_World;
-	Cori::Physics::BodyRef m_SensorVisitorBody;
 	Cori::Physics::Capsule m_Capsule;
 	Cori::Physics::Segment m_Segment;
 
@@ -164,5 +166,5 @@ private:
 
 	float test1{ 1.0f };
 
-	Cori::Entity m_Player{};
+	Cori::Entity m_Player;
 };

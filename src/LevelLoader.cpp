@@ -81,7 +81,7 @@ void LevelLoader::LoadLevel(std::shared_ptr<Cori::Scene> scene, const std::strin
 								}
 
 								auto tile = scene->CreateEntity();
-								tile.AddComponent<Cori::Components::Entity::Render>(glm::vec2{ j * blockSize, ((height - i) * blockSize) - blockSize }, glm::vec2{ blockSize, blockSize });
+								tile.AddComponent<Cori::Components::Entity::Render>(glm::vec2{ j * blockSize, ((height - i) * blockSize) - blockSize }, glm::vec2{ blockSize, blockSize }, 1.0f);
 								tile.AddComponent<Cori::Components::Entity::Sprite>(SpriteAtlases.at(tilesetID)->GetTexture(), SpriteAtlases.at(tilesetID)->GetSpriteUVsAtIndex(tileID - GDIs.at(tilesetID).first));
 							}
 						}
@@ -128,7 +128,7 @@ void LevelLoader::LoadLevel(std::shared_ptr<Cori::Scene> scene, const std::strin
 							bp.position = Cori::Physics::ToMeters(glm::vec2{ pos.x, ((height - pos.y))});
 						
 
-							auto& rb = col.AddComponent<Cori::Components::Entity::Rigidbody>(scene->PhysicsWorld, bp);
+							auto& rb = col.AddComponent<Cori::Components::Entity::Rigidbody>(scene->PhysicsWorld, bp, col);
 
 							Cori::Physics::Chain::Params cp;
 							cp.count = b2points.size();

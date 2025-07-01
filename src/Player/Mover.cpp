@@ -1,6 +1,6 @@
 #include "Mover.hpp"
 
-Mover::Mover(const Cori::Physics::Capsule& capsule, Cori::Physics::WorldRef world, Cori::Entity player, const Params& def) : // GOD FUCKING LORD THATS A HUGE INIT-LIST
+Mover::Mover(const Cori::Physics::Capsule& capsule, Cori::Physics::WorldRef world, Cori::Entity& player, const Params& def) : // GOD FUCKING LORD THATS A HUGE INIT-LIST
 	m_Capsule(capsule), m_World(world), m_Player(player), m_Transform{ def.position, b2Rot_identity },
 	m_JumpStartSpeed(def.jumpStartSpeed), m_JumpVariableSpeed(def.jumpVariableSpeed), 
 		m_JumpVariableTicks(def.jumpVariableTicks), m_JumpBufferTicks(def.jumpBufferTicks), m_JumpCoyoteTimeTicks(def.jumpCoyoteTimeTicks),
@@ -20,15 +20,15 @@ Mover::Mover(const Cori::Physics::Capsule& capsule, Cori::Physics::WorldRef worl
 	bp.fixedRotation = true;
 	bp.rotation = b2Rot_identity;
 
-	m_SensorVisitorBody = m_World.CreateBody(Cori::Physics::DestroyWithParent, bp);
+	//m_SensorVisitorBody = m_World.CreateBody(Cori::Physics::DestroyWithParent, bp);
+
+	auto& rb = m_Player.AddComponent<Cori::Components::Entity::Rigidbody>(world, bp, m_Player);
 
 	Cori::Physics::Shape::Params sp;
 	sp.filter.maskBits = Cori::Physics::CollisionBits::SensorBit;
-	sp.isSensor = true;
 	sp.enableSensorEvents = true;
-	sp.userData = &m_Player;
 
-	m_SensorVisitorBody.CreateShape(Cori::Physics::DestroyWithParent, sp, m_Capsule);
+	rb.CreateShape(Cori::Physics::DestroyWithParent, sp, m_Capsule);
 }
 
 void Mover::OnUpdate(const double deltaTime, const double tickAlpha) {
@@ -93,12 +93,17 @@ void Mover::OnTickUpdate(const float timeStep) {
 	// ^^^
 
 	bool bufferFallState = false;
+	bool bufferAscendingState = false;
 
 	// fast fall
 	m_Gravity = m_GravityDefault;
-	if (m_Velocity.y < -0.1f - m_Gravity * m_FastFallGravityModifier * timeStep) {
+	if (m_Velocity.y < -0.35f - m_Gravity * m_FastFallGravityModifier * timeStep) {
 		m_Gravity *= m_FastFallGravityModifier;
 		bufferFallState = true;
+	}
+
+	if (std::abs(m_Velocity.y) > 1.0f && (m_Jumping || m_WallJumping || m_DoubleJumping)) {
+		bufferAscendingState = true;
 	}
 
 	m_CanWallJump = false;
@@ -112,6 +117,7 @@ void Mover::OnTickUpdate(const float timeStep) {
 		if (std::abs(std::round(plane.normal.x * 10000.0f)) == 10000) {
 			m_CanWallJump = true;
 			bufferFallState = false;
+			bufferAscendingState = false;
 			if (!m_OnGround) {
 				fsm.SetStateIfNotInState<States::Player::WallSlide>();
 			}
@@ -124,13 +130,18 @@ void Mover::OnTickUpdate(const float timeStep) {
 		fsm.SetStateIfNotInState<States::Player::Fall>();
 	}
 
+	if (bufferAscendingState && !m_CanWallJump) {
+		if (fsm.IsInState<States::Player::WallSlide>()) {
+			fsm.SetState<States::Player::Ascending>();
+		}
+	}
+
 	float throttle = 0.0f;
 
 	// vvv left/right movement and wall slide
 	{
 		if (Cori::Input::IsKeyPressed(Cori::CORI_KEY_A)) {
 			if (m_CanWallJump && m_WallJumpDirection == 1 && m_Velocity.y < -0.1f - m_Gravity * timeStep) {
-				bufferFallState = false;
 				m_Gravity = 0.0f;
 				m_Velocity.y = -m_WallSlideSpeed;
 			}
@@ -142,7 +153,6 @@ void Mover::OnTickUpdate(const float timeStep) {
 
 		if (Cori::Input::IsKeyPressed(Cori::CORI_KEY_D)) {
 			if (m_CanWallJump && m_WallJumpDirection == -1 && m_Velocity.y < -0.1f - m_Gravity * timeStep) {
-				bufferFallState = false;
 				m_Gravity = 0.0f;
 				m_Velocity.y = -m_WallSlideSpeed;
 			}
@@ -281,13 +291,14 @@ void Mover::OnTickUpdate(const float timeStep) {
 	SolveMove(timeStep, throttle);
 
 	// update kinematic body position meant for sensor use
+	auto& rb = m_Player.GetComponents<Cori::Components::Entity::Rigidbody>();
 	constexpr float tolerance = 0.01f;
 	b2Vec2 delta = m_OldTransform.p - m_Transform.p;
 	if (std::abs(delta.x) > tolerance * tolerance || std::abs(delta.y) > tolerance * tolerance) {
-		m_SensorVisitorBody.SetTargetTransform({ {m_Transform.p.x + m_Velocity.x * timeStep, m_Transform.p.y + m_Velocity.y * timeStep}, b2Rot_identity }, timeStep);
+		rb.SetTargetTransform({ {m_Transform.p.x + m_Velocity.x * timeStep, m_Transform.p.y + m_Velocity.y * timeStep}, b2Rot_identity }, timeStep);
 	}
 	else {
-		m_SensorVisitorBody.SetLinearVelocity({ 0.0f, 0.0f });
+		rb.SetLinearVelocity({ 0.0f, 0.0f });
 	}
 
 	// for debug draw

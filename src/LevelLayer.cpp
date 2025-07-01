@@ -12,17 +12,21 @@ LevelLayer::~LevelLayer() {
 }
 
 void LevelLayer::OnAttach() {
-	ActiveScene->ActiveCamera.CreateOrthoCamera(0, 640, 0, 360);
+	ActiveScene->ActiveCamera.CreateOrthoCamera(0, 640, 0, 360, -10, 0);
 
+	// player creation
 	m_Player = ActiveScene->CreateEntity("Player");
 
-	auto& an = m_Player.AddComponent<Cori::Animator>("../../assets/player/PlayerSheet.json", m_Player, (1.0f / 60.0f), "Test");
+	auto& an = m_Player.AddComponent<Cori::Components::Entity::Animator>("../../assets/player/PlayerSheet.json", m_Player, (1.0f / 60.0f), "Test");
 
 	auto& rend = m_Player.AddComponent<Cori::Components::Entity::Render>();
 	rend.m_Position = { 100.0f, 200.0f };
 	rend.m_Size = an.m_FrameSize;
+	rend.m_Layer = 2.0f;
 
 	// maybe add placeholder as a default to ctor?
+	// will deal with this during renderer2d rewrite
+	// TODO: !
 	auto& sp = m_Player.AddComponent<Cori::Components::Entity::Sprite>();
 	sp.m_Texture = Cori::AssetManager::GetTexture2D(Cori::Texture2Ds::Placeholder);
 	sp.m_UVs.UVmin = { 0.0f, 0.0f };
@@ -38,11 +42,34 @@ void LevelLayer::OnAttach() {
 	fsm.Register<States::Player::DoubleJump>();
 	fsm.Register<States::Player::WallJump>();
 	fsm.Register<States::Player::WallSlide>();
+	fsm.Register<States::Player::Ascending>();
 
 	Mover::Params mp;
 	mp.position = { 5.0f, 5.0f };
 	mp.gravityDefault = 34.5f;
 	m_Mover.reset(new Mover(Cori::Physics::Capsule::Create({ 0.0f, -0.5f }, { 0.0f, 0.55f }, 0.37f), ActiveScene->PhysicsWorld, m_Player, mp));
+
+	// test trigger creation
+	auto tr = ActiveScene->CreateEntity("TestTrigger");
+	
+	Cori::Physics::Body::Params bp;
+	bp.type = b2_staticBody;
+	bp.position = { 0.0f, 5.0f };
+	bp.name = "TestTrigger";
+
+	auto& rb = tr.AddComponent<Cori::Components::Entity::Rigidbody>(ActiveScene->PhysicsWorld, bp, tr);
+
+	Cori::Physics::Shape::Params spa;
+	spa.filter.categoryBits = Cori::Physics::CollisionBits::SensorBit;
+	spa.isSensor = true;
+	spa.enableSensorEvents = true;
+
+	rb.CreateShape(Cori::Physics::DestroyWithParent, spa, Cori::Physics::Polygon::CreateBox({ 5.0f, 5.0f }));
+
+	auto& trig = tr.AddComponent<Cori::Components::Entity::Trigger>(tr);
+	trig.SetBehavior<TestTrigger>();
+
+
 }
 
 void LevelLayer::OnDetach() {
@@ -101,7 +128,7 @@ void LevelLayer::OnImGuiRender(const double deltaTime) {
 		bp.type = b2_dynamicBody;
 		bp.position = { 4.0f, 4.0f };
 	
-		auto& rb = ent.AddComponent<Cori::Components::Entity::Rigidbody>(ActiveScene->PhysicsWorld, bp);
+		auto& rb = ent.AddComponent<Cori::Components::Entity::Rigidbody>(ActiveScene->PhysicsWorld, bp, ent);
 	
 		Cori::Physics::Shape::Params sp;
 	

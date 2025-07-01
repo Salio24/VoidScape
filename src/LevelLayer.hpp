@@ -1,7 +1,7 @@
 #pragma once
 #include <Cori.hpp>
 #include "Player/Mover.hpp"
-
+#include "Triggers/TriggerScripts.hpp"
 
 class LevelLayer : public Cori::Layer {
 public:

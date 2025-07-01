@@ -31,11 +31,12 @@ void GameLayer::OnImGuiRender(const double deltaTime) {
 
 	if (ImGui::Button("Start")) {
 		Layer* level = new LevelLayer();
-		Cori::SceneManager::CreateScene("Test Level");
-		level->BindScene("Test Level");
-		//level->ActiveScene->ActiveCamera.CreateOrthoCamera(0, 640, 0, 360);
-		LevelLoader::LoadLevel(level->ActiveScene, "../../assets/levels/testlevel.tmx");
-		//LevelLoader::LoadLevel(level->ActiveScene, "../../../Source/levels/GameLevels/32p/Level_1.tmx");
+		if (Cori::SceneManager::CreateScene("Test Level")) {
+			level->BindScene("Test Level");
+			//level->ActiveScene->ActiveCamera.CreateOrthoCamera(0, 640, 0, 360);
+			LevelLoader::LoadLevel(level->ActiveScene, "../../assets/levels/testlevel.tmx");
+			//LevelLoader::LoadLevel(level->ActiveScene, "../../../Source/levels/GameLevels/32p/Level_1.tmx");
+		}
 
 		Cori::Application::PushLayer(level);
 	}

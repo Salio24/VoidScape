@@ -1,4 +1,5 @@
 #define CORI_PIXELS_PER_METER 16
+#define CORI_MAX_TRIGGER_VISITORS 2
 #include <Cori.hpp>
 #include <CoriEntry.hpp>
 #include "GameLayer.hpp"
