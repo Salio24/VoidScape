@@ -1,13 +1,10 @@
 #define CORI_PIXELS_PER_METER 16
 #define CORI_MAX_TRIGGER_VISITORS 2
+#define CORI_ASYNC_LOGGING
 #include <Cori.hpp>
 #include <CoriEntry.hpp>
 #include "GameLayer.hpp"
 #include <print>
-
-void Lol() {
-	std::println("Ne proshlo i veka LOL");
-}
 
 class VoidScape : public Cori::Application {
 public:

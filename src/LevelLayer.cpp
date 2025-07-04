@@ -19,14 +19,13 @@ void LevelLayer::OnAttach() {
 
 	auto& an = m_Player.AddComponent<Cori::Components::Entity::Animator>("../../assets/player/PlayerSheet.json", m_Player, (1.0f / 60.0f), "Test");
 
+	auto& spawn = m_Player.AddComponent<Cori::Components::Entity::Spawnpoint>(glm::vec2{ 80.0f, 80.0f });
+
 	auto& rend = m_Player.AddComponent<Cori::Components::Entity::Render>();
-	rend.m_Position = { 100.0f, 200.0f };
+	rend.m_Position = spawn.m_Spawnpoint;
 	rend.m_Size = an.m_FrameSize;
 	rend.m_Layer = 2.0f;
 
-	// maybe add placeholder as a default to ctor?
-	// will deal with this during renderer2d rewrite
-	// TODO: !
 	auto& sp = m_Player.AddComponent<Cori::Components::Entity::Sprite>();
 	sp.m_Texture = Cori::AssetManager::GetTexture2D(Cori::Texture2Ds::Placeholder);
 	sp.m_UVs.UVmin = { 0.0f, 0.0f };
@@ -45,7 +44,7 @@ void LevelLayer::OnAttach() {
 	fsm.Register<States::Player::Ascending>();
 
 	Mover::Params mp;
-	mp.position = { 5.0f, 5.0f };
+	//mp.position = { 5.0f, 5.0f };
 	mp.gravityDefault = 34.5f;
 	m_Mover.reset(new Mover(Cori::Physics::Capsule::Create({ 0.0f, -0.5f }, { 0.0f, 0.55f }, 0.37f), ActiveScene->PhysicsWorld, m_Player, mp));
 
@@ -65,11 +64,10 @@ void LevelLayer::OnAttach() {
 	spa.enableSensorEvents = true;
 
 	rb.CreateShape(Cori::Physics::DestroyWithParent, spa, Cori::Physics::Polygon::CreateBox({ 5.0f, 5.0f }));
+	//rb.CreateShape(Cori::Physics::DestroyWithParent, spa, Cori::Physics::Circle::Create({ 5.0f, 5.0f }, 2.0f));
 
 	auto& trig = tr.AddComponent<Cori::Components::Entity::Trigger>(tr);
 	trig.SetBehavior<TestTrigger>();
-
-
 }
 
 void LevelLayer::OnDetach() {

@@ -5,9 +5,7 @@
 class Mover {
 public:
 	struct Params {
-		Params() = default;
 
-		Cori::Physics::Vec2 position{ 0.0f, 0.0f };
 		float jumpStartSpeed{ 10.0f };
 		float jumpVariableSpeed{ 1.0f };
 		int   jumpVariableTicks{ 10 };
@@ -37,7 +35,7 @@ public:
 		float fastFallGravityModifier{ 1.5f };
 		float pogoHertz{ 5.0f };
 		float pogoDampingRatio{ 0.8f };
-		float pogoLengthScale{ 2.0f };
+		float pogoLengthScale{ 1.95f };
 		float segmentOffset{ 0.65f };
 		float wallSlideSpeed{ 1.5f };
 
@@ -109,6 +107,9 @@ private:
 
 	static constexpr int m_PlaneCapacity = 8;
 
+	void SaveSettings(const std::filesystem::path& filepath);
+	void LoadSettings(const std::filesystem::path& filepath);
+
 	//Cori::Physics::BodyRef m_SensorVisitorBody;
 
 
@@ -168,3 +169,14 @@ private:
 
 	Cori::Entity m_Player;
 };
+
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Mover::Params,
+	jumpStartSpeed, jumpVariableSpeed, jumpVariableTicks, jumpBufferTicks, jumpCoyoteTimeTicks,
+	wallJumpStartSpeed, wallJumpVariableSpeed, wallJumpStartSideSpeed, wallJumpVariableSideSpeed,
+	wallJumpVariableTicks, wallJumpBufferTicks,
+	doubleJumpStartSpeed, doubleJumpVariableSpeed, doubleJumpVariableTicks,
+	doubleJumpRayModifierForRegular, doubleJumpRayModifierForWall,
+	maxSpeed, minSpeed, stopSpeed, acceleration, airSteer, friction, gravityDefault,
+	fastFallGravityModifier, pogoHertz, pogoDampingRatio, pogoLengthScale, segmentOffset,
+	wallSlideSpeed, minSpeedForRunState
+)

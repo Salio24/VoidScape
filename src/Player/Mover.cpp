@@ -1,7 +1,7 @@
 #include "Mover.hpp"
 
 Mover::Mover(const Cori::Physics::Capsule& capsule, Cori::Physics::WorldRef world, Cori::Entity& player, const Params& def) : // GOD FUCKING LORD THATS A HUGE INIT-LIST
-	m_Capsule(capsule), m_World(world), m_Player(player), m_Transform{ def.position, b2Rot_identity },
+	m_Capsule(capsule), m_World(world), m_Player(player),
 	m_JumpStartSpeed(def.jumpStartSpeed), m_JumpVariableSpeed(def.jumpVariableSpeed), 
 		m_JumpVariableTicks(def.jumpVariableTicks), m_JumpBufferTicks(def.jumpBufferTicks), m_JumpCoyoteTimeTicks(def.jumpCoyoteTimeTicks),
 	m_WallJumpStartSpeed(def.wallJumpStartSpeed), m_WallJumpVariableSpeed(def.wallJumpVariableSpeed), m_WallJumpStartSideSpeed(def.wallJumpStartSideSpeed),
@@ -13,14 +13,16 @@ Mover::Mover(const Cori::Physics::Capsule& capsule, Cori::Physics::WorldRef worl
 	m_PogoHertz(def.pogoHertz), m_PogoDampingRatio(def.pogoDampingRatio), m_PogoLengthScale(def.pogoLengthScale), m_SegmentOffset(def.segmentOffset), 
 	m_WallSlideSpeed(def.wallSlideSpeed), m_MinSpeedForRunState(def.minSpeedForRunState) {
 
+	glm::vec2 spawn = player.GetComponents<Cori::Components::Entity::Spawnpoint>().m_Spawnpoint;
+
+	m_Transform = { Cori::Physics::ToMeters(spawn), b2Rot_identity };
+
 	//a hack to allow sensor use with an entity that is operated via mover
 	Cori::Physics::Body::Params bp;
 	bp.type = b2_kinematicBody;
 	bp.position = m_Transform.p;
 	bp.fixedRotation = true;
 	bp.rotation = b2Rot_identity;
-
-	//m_SensorVisitorBody = m_World.CreateBody(Cori::Physics::DestroyWithParent, bp);
 
 	auto& rb = m_Player.AddComponent<Cori::Components::Entity::Rigidbody>(world, bp, m_Player);
 
@@ -44,8 +46,13 @@ void Mover::OnUpdate(const double deltaTime, const double tickAlpha) {
 		rend.m_Position = Cori::Physics::ToPixels((m_RenderingPosition * tickAlpha + m_OldRenderingPosition * (1.0f - tickAlpha))) - glm::vec2{ rend.m_Size.x / 2, 0.0f };
 	}
 
-	// render flipping based on velocity and wall jump direction
-	rend.m_Flipped = m_Velocity.x < 0.0f ? true : false;
+	if (m_Velocity.x < 0.0f) {
+		rend.m_Flipped = true;
+	}
+	else if (m_Velocity.x > 0.0f) {
+		rend.m_Flipped = false;
+	}
+
 	if (m_CanWallJump) {
 		if (m_WallJumpDirection == 1) {
 			rend.m_Flipped = true;
@@ -400,6 +407,16 @@ void Mover::UpdateGui() {
 
 	ImGui::SliderFloat("Test Value1", &test1, 0.1f, 20.0f, "%.2f");
 
+	ImGui::Separator();
+
+	if (ImGui::Button("Save Settings")) {
+		SaveSettings("../../config/mover.json");
+	}
+
+	if (ImGui::Button("Load Settings")) {
+		LoadSettings("../../config/mover.json");
+	}
+
 	ImGui::End();
 }
 
@@ -600,4 +617,91 @@ void Mover::SolveMove(const float timeStep, float throttle) {
 	}
 
 	m_Velocity = b2ClipVector(m_Velocity, m_Planes, m_PlaneCount);
+}
+
+void Mover::SaveSettings(const std::filesystem::path& filepath) {
+	Params currentParams;
+
+	currentParams.jumpStartSpeed = m_JumpStartSpeed;
+	currentParams.jumpVariableSpeed = m_JumpVariableSpeed;
+	currentParams.jumpVariableTicks = m_JumpVariableTicks;
+	currentParams.jumpBufferTicks = m_JumpBufferTicks;
+	currentParams.jumpCoyoteTimeTicks = m_JumpCoyoteTimeTicks;
+	currentParams.wallJumpStartSpeed = m_WallJumpStartSpeed;
+	currentParams.wallJumpVariableSpeed = m_WallJumpVariableSpeed;
+	currentParams.wallJumpStartSideSpeed = m_WallJumpStartSideSpeed;
+	currentParams.wallJumpVariableSideSpeed = m_WallJumpVariableSideSpeed;
+	currentParams.wallJumpVariableTicks = m_WallJumpVariableTicks;
+	currentParams.wallJumpBufferTicks = m_WallJumpBufferTicks;
+	currentParams.doubleJumpStartSpeed = m_DoubleJumpStartSpeed;
+	currentParams.doubleJumpVariableSpeed = m_DoubleJumpVariableSpeed;
+	currentParams.doubleJumpVariableTicks = m_DoubleJumpVariableTicks;
+	currentParams.doubleJumpRayModifierForRegular = m_DoubleJumpRayModifierForRegular;
+	currentParams.doubleJumpRayModifierForWall = m_DoubleJumpRayModifierForWall;
+	currentParams.maxSpeed = m_MaxSpeed;
+	currentParams.minSpeed = m_MinSpeed;
+	currentParams.stopSpeed = m_StopSpeed;
+	currentParams.acceleration = m_Acceleration;
+	currentParams.airSteer = m_AirSteer;
+	currentParams.friction = m_Friction;
+	currentParams.gravityDefault = m_GravityDefault;
+	currentParams.fastFallGravityModifier = m_FastFallGravityModifier;
+	currentParams.pogoHertz = m_PogoHertz;
+	currentParams.pogoDampingRatio = m_PogoDampingRatio;
+	currentParams.pogoLengthScale = m_PogoLengthScale;
+	currentParams.segmentOffset = m_SegmentOffset;
+	currentParams.wallSlideSpeed = m_WallSlideSpeed;
+	currentParams.minSpeedForRunState = m_MinSpeedForRunState;
+
+	if (auto result = Cori::JsonSerializer::Save(currentParams, filepath); !result) {
+		CORI_INFO_TAGGED({ "Mover" }, "Failed to save mover settings to: {} : {}", filepath.string(), result.error());
+	}
+	else {
+		CORI_INFO_TAGGED({ "Mover" }, "Mover settings saved successfully to: {} ", filepath.string());
+	}
+}
+
+void Mover::LoadSettings(const std::filesystem::path& filepath) {
+	auto loadedParamsResult = Cori::JsonSerializer::Load<Params>(filepath);
+
+	if (!loadedParamsResult) {
+		CORI_INFO_TAGGED({ "Mover" }, "Failed to load mover settings from: {} : {}", filepath.string(), loadedParamsResult.error());
+		return;
+	}
+
+	const Params& loadedParams = *loadedParamsResult;
+
+	m_JumpStartSpeed = loadedParams.jumpStartSpeed;
+	m_JumpVariableSpeed = loadedParams.jumpVariableSpeed;
+	m_JumpVariableTicks = loadedParams.jumpVariableTicks;
+	m_JumpBufferTicks = loadedParams.jumpBufferTicks;
+	m_JumpCoyoteTimeTicks = loadedParams.jumpCoyoteTimeTicks;
+	m_WallJumpStartSpeed = loadedParams.wallJumpStartSpeed;
+	m_WallJumpVariableSpeed = loadedParams.wallJumpVariableSpeed;
+	m_WallJumpStartSideSpeed = loadedParams.wallJumpStartSideSpeed;
+	m_WallJumpVariableSideSpeed = loadedParams.wallJumpVariableSideSpeed;
+	m_WallJumpVariableTicks = loadedParams.wallJumpVariableTicks;
+	m_WallJumpBufferTicks = loadedParams.wallJumpBufferTicks;
+	m_DoubleJumpStartSpeed = loadedParams.doubleJumpStartSpeed;
+	m_DoubleJumpVariableSpeed = loadedParams.doubleJumpVariableSpeed;
+	m_DoubleJumpVariableTicks = loadedParams.doubleJumpVariableTicks;
+	m_DoubleJumpRayModifierForRegular = loadedParams.doubleJumpRayModifierForRegular;
+	m_DoubleJumpRayModifierForWall = loadedParams.doubleJumpRayModifierForWall;
+	m_MaxSpeed = loadedParams.maxSpeed;
+	m_MinSpeed = loadedParams.minSpeed;
+	m_StopSpeed = loadedParams.stopSpeed;
+	m_Acceleration = loadedParams.acceleration;
+	m_AirSteer = loadedParams.airSteer;
+	m_Friction = loadedParams.friction;
+	m_GravityDefault = loadedParams.gravityDefault;
+	m_FastFallGravityModifier = loadedParams.fastFallGravityModifier;
+	m_PogoHertz = loadedParams.pogoHertz;
+	m_PogoDampingRatio = loadedParams.pogoDampingRatio;
+	m_PogoLengthScale = loadedParams.pogoLengthScale;
+	m_SegmentOffset = loadedParams.segmentOffset;
+	m_WallSlideSpeed = loadedParams.wallSlideSpeed;
+	m_MinSpeedForRunState = loadedParams.minSpeedForRunState;
+
+
+	CORI_INFO_TAGGED({ "Mover" }, "Mover settings loaded successfully from: {} ", filepath.string());
 }
