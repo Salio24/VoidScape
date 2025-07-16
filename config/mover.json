@@ -1,5 +1,5 @@
 {
-    "acceleration": 20.0,
+    "acceleration": 26.0,
     "airSteer": 0.20000000298023224,
     "doubleJumpRayModifierForRegular": 2.0,
     "doubleJumpRayModifierForWall": 2.0,

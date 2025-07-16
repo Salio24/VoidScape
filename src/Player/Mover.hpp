@@ -112,7 +112,6 @@ private:
 
 	//Cori::Physics::BodyRef m_SensorVisitorBody;
 
-
 	Cori::Physics::WorldRef m_World;
 	Cori::Physics::Capsule m_Capsule;
 	Cori::Physics::Segment m_Segment;

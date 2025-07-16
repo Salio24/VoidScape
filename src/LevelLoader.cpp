@@ -41,8 +41,7 @@ void LevelLoader::LoadLevel(std::shared_ptr<Cori::Scene> scene, const std::strin
 				};
 
 				SpriteAtlases.push_back(Cori::AssetManager::GetSpriteAtlasOwning(atlas));
-				GDIs.push_back(std::make_pair(tileset.getFirstGID(), tileset.getLastGID()));
-
+				GDIs.emplace_back(tileset.getFirstGID(), tileset.getLastGID());
 			}
 		}
 
@@ -73,7 +72,7 @@ void LevelLoader::LoadLevel(std::shared_ptr<Cori::Scene> scene, const std::strin
 									tilesetID = 0;
 								}
 								else if (tileID >= it->first) {
-									tilesetID = std::distance(GDIs.begin(), it);
+									tilesetID = static_cast<int>(std::distance(GDIs.begin(), it));
 								}
 								else {
 									CORI_ASSERT_WARN(false, "Tile ID is between some GDI range.");

@@ -43,6 +43,7 @@ void LevelLayer::OnAttach() {
 	fsm.Register<States::Player::WallSlide>();
 	fsm.Register<States::Player::Ascending>();
 
+
 	Mover::Params mp;
 	//mp.position = { 5.0f, 5.0f };
 	mp.gravityDefault = 34.5f;
