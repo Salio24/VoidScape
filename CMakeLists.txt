@@ -10,12 +10,6 @@ else()
     set(CLANG_VARIANT "OTHER" CACHE STRING "Not MSYS2 environment")
 endif()
 
-if(CLANG_VARIANT STREQUAL "OTHER" AND CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
-    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:RelWithDebInfo>:Debug>")
-    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Release>:>")
-endif ()
-
 set(CMAKE_INSTALL_PREFIX "${CMAKE_BINARY_DIR}" CACHE INTERNAL "")
 
 if(CLANG_VARIANT STREQUAL "MSYS2")
@@ -30,12 +24,16 @@ if(CLANG_VARIANT STREQUAL "MSYS2")
 endif ()
 
 project(VoidScape)
-
+    if(CLANG_VARIANT STREQUAL "OTHER" AND CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND CMAKE_SYSTEM_NAME STREQUAL "Windows")
+        set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+        set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:RelWithDebInfo>:Debug>")
+        set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Release>:>")
+    endif ()
 
     set(CMAKE_CXX_STANDARD 23)
 
     add_compile_options(-mavx2)
-    
+
     add_subdirectory(${PROJECT_SOURCE_DIR}/CoriEngine)
 
 	set(EXECUTABLE_NAME ${PROJECT_NAME})
@@ -50,7 +48,8 @@ project(VoidScape)
 	
 	add_executable(${EXECUTABLE_NAME} ${MY_SOURCES})
 	
-	target_compile_options(${EXECUTABLE_NAME} PRIVATE -Wall -Wextra)
+	#target_compile_options(${EXECUTABLE_NAME} PRIVATE -Wall -Wextra)
+    target_compile_options(${EXECUTABLE_NAME} PRIVATE -w)
 	
 	target_compile_definitions(${EXECUTABLE_NAME} PRIVATE
         $<$<CONFIG:Debug>:DEBUG_BUILD>

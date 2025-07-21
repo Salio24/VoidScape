@@ -1,10 +1,11 @@
 #define CORI_PIXELS_PER_METER 16
 #define CORI_MAX_TRIGGER_VISITORS 2
 #define CORI_ASYNC_LOGGING
+#define CORI_CHECK_TAG_COLLISION
 #include <Cori.hpp>
 #include <CoriEntry.hpp>
 #include "GameLayer.hpp"
-#include <print>
+
 
 class VoidScape : public Cori::Application {
 public:
