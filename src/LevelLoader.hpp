@@ -4,8 +4,9 @@
 #include <tmxlite/Layer.hpp>
 #include <tmxlite/TileLayer.hpp>
 #include <tmxlite/ObjectGroup.hpp>
+#include "Tags.hpp"
 
 class LevelLoader {
 public:
-	static void LoadLevel(std::shared_ptr<Cori::Scene> scene, const std::string& path);
+	static void LoadLevel(Cori::SceneHandle& scene, const std::string& path);
 };

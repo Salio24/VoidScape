@@ -8,13 +8,13 @@ namespace States {
 		public:
 			void OnEnter(Cori::Entity& player, Cori::StateMachine* fsm) override {
 				//CORI_CORE_INFO("Entity ID {0} entering Idle. {1}", static_cast<uint32_t>(player), Cori::Application::GetTest());
-				auto& ar = player.GetComponents<Cori::Components::Entity::Animator>();
+				auto& ar = player.GetComponents<Cori::Components::Entity::QuadAnimator>();
 				ar.StartSingle<Animations::Player::Idle>();
 			}
 
 			void OnUpdate(Cori::Entity& player, Cori::StateMachine* fsm, float deltaTime) override {
 				//CORI_CORE_INFO("Entity ID {0} updating Idle. {1}", static_cast<uint32_t>(player), Cori::Application::GetTest());
-				auto& ar = player.GetComponents<Cori::Components::Entity::Animator>();
+				auto& ar = player.GetComponents<Cori::Components::Entity::QuadAnimator>();
 				ar.UpdateSingle < Animations::Player::Idle>();
 			}
 
@@ -31,13 +31,13 @@ namespace States {
 		public:
 			void OnEnter(Cori::Entity& player, Cori::StateMachine* fsm) override {
 				//CORI_CORE_INFO("Entity ID {0} entering RunState. {1}", static_cast<uint32_t>(player), Cori::Application::GetTest());
-				auto& ar = player.GetComponents<Cori::Components::Entity::Animator>();
+				auto& ar = player.GetComponents<Cori::Components::Entity::QuadAnimator>();
 				ar.StartSingle<Animations::Player::Run>();
 			}
 
 			void OnUpdate(Cori::Entity& player, Cori::StateMachine* fsm, float deltaTime) override {
 				//CORI_CORE_INFO("Entity ID {0} updating RunState. {1}", static_cast<uint32_t>(player), Cori::Application::GetTest());
-				auto& ar = player.GetComponents<Cori::Components::Entity::Animator>();
+				auto& ar = player.GetComponents<Cori::Components::Entity::QuadAnimator>();
 				ar.UpdateSingle<Animations::Player::Run>();
 			}
 
@@ -54,12 +54,12 @@ namespace States {
 		public:
 			void OnEnter(Cori::Entity& player, Cori::StateMachine* fsm) override {
 
-				auto& ar = player.GetComponents<Cori::Components::Entity::Animator>();
+				auto& ar = player.GetComponents<Cori::Components::Entity::QuadAnimator>();
 				ar.StartSingle<Animations::Player::Fall>();
 			}
 
 			void OnUpdate(Cori::Entity& player, Cori::StateMachine* fsm, float deltaTime) override {
-				auto& ar = player.GetComponents<Cori::Components::Entity::Animator>();
+				auto& ar = player.GetComponents<Cori::Components::Entity::QuadAnimator>();
 				ar.UpdateSingle<Animations::Player::Fall>();
 			}
 
@@ -74,12 +74,12 @@ namespace States {
 		class Jump : public Cori::State {
 		public:
 			void OnEnter(Cori::Entity& player, Cori::StateMachine* fsm) override {
-				auto& ar = player.GetComponents<Cori::Components::Entity::Animator>();
+				auto& ar = player.GetComponents<Cori::Components::Entity::QuadAnimator>();
 				ar.StartSequence<Animations::Player::JumpStart, Animations::Player::JumpMid>();
 			}
 
 			void OnUpdate(Cori::Entity& player, Cori::StateMachine* fsm, float deltaTime) override {
-				auto& ar = player.GetComponents<Cori::Components::Entity::Animator>();
+				auto& ar = player.GetComponents<Cori::Components::Entity::QuadAnimator>();
 				ar.UpdateSequence();
 			}
 
@@ -94,12 +94,12 @@ namespace States {
 		class DoubleJump : public Cori::State {
 		public:
 			void OnEnter(Cori::Entity& player, Cori::StateMachine* fsm) override {
-				auto& ar = player.GetComponents<Cori::Components::Entity::Animator>();
+				auto& ar = player.GetComponents<Cori::Components::Entity::QuadAnimator>();
 				ar.StartSingle<Animations::Player::DoubleJump>();
 			}
 
 			void OnUpdate(Cori::Entity& player, Cori::StateMachine* fsm, float deltaTime) override {
-				auto& ar = player.GetComponents<Cori::Components::Entity::Animator>();
+				auto& ar = player.GetComponents<Cori::Components::Entity::QuadAnimator>();
 				ar.UpdateSingle<Animations::Player::DoubleJump>();
 			}
 
@@ -114,12 +114,12 @@ namespace States {
 		class WallJump : public Cori::State {
 		public:
 			void OnEnter(Cori::Entity& player, Cori::StateMachine* fsm) override {
-				auto& ar = player.GetComponents<Cori::Components::Entity::Animator>();
+				auto& ar = player.GetComponents<Cori::Components::Entity::QuadAnimator>();
 				ar.StartSequence<Animations::Player::JumpStart, Animations::Player::JumpMid>();
 			}
 
 			void OnUpdate(Cori::Entity& player, Cori::StateMachine* fsm, float deltaTime) override {
-				auto& ar = player.GetComponents<Cori::Components::Entity::Animator>();
+				auto& ar = player.GetComponents<Cori::Components::Entity::QuadAnimator>();
 				ar.UpdateSequence();
 			}
 
@@ -134,12 +134,12 @@ namespace States {
 		class WallSlide : public Cori::State {
 		public:
 			void OnEnter(Cori::Entity& player, Cori::StateMachine* fsm) override {
-				auto& ar = player.GetComponents<Cori::Components::Entity::Animator>();
+				auto& ar = player.GetComponents<Cori::Components::Entity::QuadAnimator>();
 				ar.StartSingle<Animations::Player::WallSlide>();
 			}
 
 			void OnUpdate(Cori::Entity& player, Cori::StateMachine* fsm, float deltaTime) override {
-				auto& ar = player.GetComponents<Cori::Components::Entity::Animator>();
+				auto& ar = player.GetComponents<Cori::Components::Entity::QuadAnimator>();
 				ar.UpdateSingle<Animations::Player::WallSlide>();
 			}
 
@@ -155,12 +155,12 @@ namespace States {
 		class Ascending : public Cori::State {
 		public:
 			void OnEnter(Cori::Entity& player, Cori::StateMachine* fsm) override {
-				auto& ar = player.GetComponents<Cori::Components::Entity::Animator>();
+				auto& ar = player.GetComponents<Cori::Components::Entity::QuadAnimator>();
 				ar.StartSingle<Animations::Player::JumpMid>();
 			}
 
 			void OnUpdate(Cori::Entity& player, Cori::StateMachine* fsm, float deltaTime) override {
-				auto& ar = player.GetComponents<Cori::Components::Entity::Animator>();
+				auto& ar = player.GetComponents<Cori::Components::Entity::QuadAnimator>();
 				ar.UpdateSingle<Animations::Player::JumpMid>();
 			}
 

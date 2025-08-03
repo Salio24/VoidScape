@@ -1,6 +1,6 @@
 #include "LevelLoader.hpp"
 
-void LevelLoader::LoadLevel(std::shared_ptr<Cori::Scene> scene, const std::string& path) {
+void LevelLoader::LoadLevel(Cori::SceneHandle& scene, const std::string& path) {
 	// temp vvv
 	int blockSize = CORI_PIXELS_PER_METER;
 
@@ -79,13 +79,18 @@ void LevelLoader::LoadLevel(std::shared_ptr<Cori::Scene> scene, const std::strin
 									tilesetID = 0;
 								}
 
-								auto tile = scene->CreateEntity();
-								tile.AddComponent<Cori::Components::Entity::Render>(glm::vec2{ j * blockSize, ((height - i) * blockSize) - blockSize }, glm::vec2{ blockSize, blockSize }, 1.0f);
-								tile.AddComponent<Cori::Components::Entity::Sprite>(SpriteAtlases.at(tilesetID)->GetTexture(), SpriteAtlases.at(tilesetID)->GetSpriteUVsAtIndex(tileID - GDIs.at(tilesetID).first));
+								static uint32_t count = 1;
+
+								auto tile = scene.CreateEntity("Tile " + std::to_string(count), Tags::StaticTile);
+								tile.AddComponent<Cori::Components::Entity::QuadRenderer>(glm::vec2{ blockSize / 2.0f, blockSize / 2.0f }, SpriteAtlases.at(tilesetID)->GetTexture(), SpriteAtlases.at(tilesetID)->GetSpriteUVsAtIndex(tileID - GDIs.at(tilesetID).first));
+								auto& transform = tile.GetComponents<Cori::Components::Entity::Transform>();
+								transform.SetLocalPosition(glm::vec2{ j * blockSize + blockSize / 2.0f, ((height - i) * blockSize) - blockSize / 2.0f });
+								transform.SetLocalDepth(1.0f);
+
+								count++;
 							}
 						}
 					}
-					scene->SortRenderGroup();
 				}
 			}
 			else if (layer->getType() == tmx::Layer::Type::Object) {
@@ -120,14 +125,16 @@ void LevelLoader::LoadLevel(std::shared_ptr<Cori::Scene> scene, const std::strin
 								}
 							}
 
-							auto col = scene->CreateEntity();
+							static uint32_t count = 1;
+
+							auto col = scene.CreateEntity("Chain Collider " + std::to_string(count), Tags::ChainCollider);
 
 							Cori::Physics::Body::Params bp;
 							bp.type = b2_staticBody;
 							bp.position = Cori::Physics::ToMeters(glm::vec2{ pos.x, ((height - pos.y))});
 						
 
-							auto& rb = col.AddComponent<Cori::Components::Entity::Rigidbody>(scene->PhysicsWorld, bp, col);
+							auto& rb = col.AddComponent<Cori::Components::Entity::Rigidbody>(scene.GetPhysicsWorld(), bp, col);
 
 							Cori::Physics::Chain::Params cp;
 							cp.count = b2points.size();
@@ -136,6 +143,7 @@ void LevelLoader::LoadLevel(std::shared_ptr<Cori::Scene> scene, const std::strin
 							cp.filter.categoryBits = Cori::Physics::CollisionBits::StaticBit;
 
 							rb.CreateChain(Cori::Physics::DestroyWithParent, cp);
+							count++;
 						}
 					}
 				}

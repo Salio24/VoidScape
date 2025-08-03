@@ -34,31 +34,31 @@ Mover::Mover(const Cori::Physics::Capsule& capsule, Cori::Physics::WorldRef worl
 }
 
 void Mover::OnUpdate(const double deltaTime, const double tickAlpha) {
-	auto& rend = m_Player.GetComponents<Cori::Components::Entity::Render>();
+	auto& transform = m_Player.GetComponents<Cori::Components::Entity::Transform>();
+	auto& renderer = m_Player.GetComponents<Cori::Components::Entity::QuadRenderer>();
 
 	// actual rendering position interpolation between ticks
 	if (m_PixelAlignedRender) {
-		glm::vec2 pos = Cori::Physics::ToPixels((m_RenderingPosition * tickAlpha + m_OldRenderingPosition * (1.0f - tickAlpha))) - glm::vec2{ rend.m_Size.x / 2, 0.0f };
-		rend.m_Position.x = int(pos.x);
-		rend.m_Position.y = int(pos.y);
+		glm::vec2 pos = Cori::Physics::ToPixels((m_RenderingPosition * tickAlpha + m_OldRenderingPosition * (1.0f - tickAlpha))) + glm::vec2{ 0.0f, renderer.m_HalfSize.y };
+		transform.SetLocalPosition({static_cast<int>(pos.x), static_cast<int>(pos.y)});
 	}
 	else {
-		rend.m_Position = Cori::Physics::ToPixels((m_RenderingPosition * tickAlpha + m_OldRenderingPosition * (1.0f - tickAlpha))) - glm::vec2{ rend.m_Size.x / 2, 0.0f };
+		transform.SetLocalPosition(Cori::Physics::ToPixels((m_RenderingPosition * tickAlpha + m_OldRenderingPosition * (1.0f - tickAlpha))) + glm::vec2{ 0.0f, renderer.m_HalfSize.y });
 	}
 
 	if (m_Velocity.x < 0.0f) {
-		rend.m_Flipped = true;
+		renderer.m_FlipX = true;
 	}
 	else if (m_Velocity.x > 0.0f) {
-		rend.m_Flipped = false;
+		renderer.m_FlipX = false;
 	}
 
 	if (m_CanWallJump) {
 		if (m_WallJumpDirection == 1) {
-			rend.m_Flipped = true;
+			renderer.m_FlipX = true;
 		}
 		else if (m_WallJumpDirection == -1) {
-			rend.m_Flipped = false;
+			renderer.m_FlipX = false;
 		}
 	}
 }

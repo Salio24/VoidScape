@@ -1,5 +1,6 @@
 #include "LevelLayer.hpp"
 #include "Player/States.hpp"
+#include "Tags.hpp"
 
 static bool manualStep = false;
 
@@ -12,24 +13,16 @@ LevelLayer::~LevelLayer() {
 }
 
 void LevelLayer::OnAttach() {
-	ActiveScene->ActiveCamera.CreateOrthoCamera(0, 640, 0, 360, -10, 0);
+	ActiveScene.GetActiveCamera().CreateOrthoCamera(0, 640, 0, 360, -10, 0);
 
 	// player creation
-	m_Player = ActiveScene->CreateEntity("Player");
+	m_Player = ActiveScene.CreateEntity("Player Root", Tags::Character);
 
-	auto& an = m_Player.AddComponent<Cori::Components::Entity::Animator>("../../assets/player/PlayerSheet.json", m_Player, (1.0f / 60.0f), "Test");
-
+	auto& renderer = m_Player.AddComponent<Cori::Components::Entity::QuadRenderer>();
+	auto& animator = m_Player.AddComponent<Cori::Components::Entity::QuadAnimator>("../../assets/player/PlayerSheet.json", m_Player, (1.0f / 60.0f), "Test");
 	auto& spawn = m_Player.AddComponent<Cori::Components::Entity::Spawnpoint>(glm::vec2{ 80.0f, 80.0f });
-
-	auto& rend = m_Player.AddComponent<Cori::Components::Entity::Render>();
-	rend.m_Position = spawn.m_Spawnpoint;
-	rend.m_Size = an.m_FrameSize;
-	rend.m_Layer = 2.0f;
-
-	auto& sp = m_Player.AddComponent<Cori::Components::Entity::Sprite>();
-	sp.m_Texture = Cori::AssetManager::GetTexture2D(Cori::Texture2Ds::Placeholder);
-	sp.m_UVs.UVmin = { 0.0f, 0.0f };
-	sp.m_UVs.UVmax = { 1.0f, 1.0f };
+	auto& transform = m_Player.GetComponents<Cori::Components::Entity::Transform>();
+	transform.SetLocalDepth(2);
 
 	auto& fsm = m_Player.AddComponent <Cori::Components::Entity::StateMachine>(m_Player);
 
@@ -43,28 +36,26 @@ void LevelLayer::OnAttach() {
 	fsm.Register<States::Player::WallSlide>();
 	fsm.Register<States::Player::Ascending>();
 
-
 	Mover::Params mp;
-	//mp.position = { 5.0f, 5.0f };
 	mp.gravityDefault = 34.5f;
-	m_Mover.reset(new Mover(Cori::Physics::Capsule::Create({ 0.0f, -0.5f }, { 0.0f, 0.55f }, 0.37f), ActiveScene->PhysicsWorld, m_Player, mp));
+	m_Mover.reset(new Mover(Cori::Physics::Capsule::Create({ 0.0f, -0.5f }, { 0.0f, 0.55f }, 0.37f), ActiveScene.GetPhysicsWorld(), m_Player, mp));
 
 	// test trigger creation
-	auto tr = ActiveScene->CreateEntity("TestTrigger");
+	auto tr = ActiveScene.CreateEntity("TestTrigger", Tags::Triggers);
 	
 	Cori::Physics::Body::Params bp;
 	bp.type = b2_staticBody;
-	bp.position = { 0.0f, 5.0f };
+	bp.position = { 2.0f, 5.0f };
 	bp.name = "TestTrigger";
 
-	auto& rb = tr.AddComponent<Cori::Components::Entity::Rigidbody>(ActiveScene->PhysicsWorld, bp, tr);
+	auto& rb = tr.AddComponent<Cori::Components::Entity::Rigidbody>(ActiveScene.GetPhysicsWorld(), bp, tr);
 
 	Cori::Physics::Shape::Params spa;
 	spa.filter.categoryBits = Cori::Physics::CollisionBits::SensorBit;
 	spa.isSensor = true;
 	spa.enableSensorEvents = true;
 
-	rb.CreateShape(Cori::Physics::DestroyWithParent, spa, Cori::Physics::Polygon::CreateBox({ 5.0f, 5.0f }));
+	rb.CreateShape(Cori::Physics::DestroyWithParent, spa, Cori::Physics::Polygon::CreateBox({ 2.0f, 2.0f }));
 	//rb.CreateShape(Cori::Physics::DestroyWithParent, spa, Cori::Physics::Circle::Create({ 5.0f, 5.0f }, 2.0f));
 
 	auto& trig = tr.AddComponent<Cori::Components::Entity::Trigger>(tr);
@@ -121,13 +112,13 @@ void LevelLayer::OnImGuiRender(const double deltaTime) {
 	ImGui::Checkbox("Manual Step(J - enable/disable, K - step)", &manualStep);
 
 	if (ImGui::Button("Add dynamic box")) {
-		auto ent = ActiveScene->CreateEntity();
+		auto ent = ActiveScene.CreateEntity("Dynamic Box", Tags::ForTest);
 	
 		Cori::Physics::Body::Params bp;
 		bp.type = b2_dynamicBody;
 		bp.position = { 4.0f, 4.0f };
 	
-		auto& rb = ent.AddComponent<Cori::Components::Entity::Rigidbody>(ActiveScene->PhysicsWorld, bp, ent);
+		auto& rb = ent.AddComponent<Cori::Components::Entity::Rigidbody>(ActiveScene.GetPhysicsWorld(), bp, ent);
 	
 		Cori::Physics::Shape::Params sp;
 	
@@ -137,7 +128,7 @@ void LevelLayer::OnImGuiRender(const double deltaTime) {
 	ImGui::End();
 
 	if (m_MoverDebugDraw) {
-		m_Mover->DebugDraw((float)deltaTime);
+		m_Mover->DebugDraw(static_cast<float>(deltaTime));
 		m_Mover->UpdateGui();
 	}
 
