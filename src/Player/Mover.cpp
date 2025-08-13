@@ -1,17 +1,17 @@
 #include "Mover.hpp"
 
 Mover::Mover(const Cori::Physics::Capsule& capsule, Cori::Physics::WorldRef world, Cori::Entity& player, const Params& def) : // GOD FUCKING LORD THATS A HUGE INIT-LIST
-	m_Capsule(capsule), m_World(world), m_Player(player),
-	m_JumpStartSpeed(def.jumpStartSpeed), m_JumpVariableSpeed(def.jumpVariableSpeed), 
-		m_JumpVariableTicks(def.jumpVariableTicks), m_JumpBufferTicks(def.jumpBufferTicks), m_JumpCoyoteTimeTicks(def.jumpCoyoteTimeTicks),
-	m_WallJumpStartSpeed(def.wallJumpStartSpeed), m_WallJumpVariableSpeed(def.wallJumpVariableSpeed), m_WallJumpStartSideSpeed(def.wallJumpStartSideSpeed),
-		m_WallJumpVariableSideSpeed(def.wallJumpVariableSideSpeed), m_WallJumpVariableTicks(def.wallJumpVariableTicks), m_WallJumpBufferTicks(def.wallJumpBufferTicks),
-	m_DoubleJumpStartSpeed(def.doubleJumpStartSpeed), m_DoubleJumpVariableSpeed(def.doubleJumpVariableSpeed), m_DoubleJumpVariableTicks(def.doubleJumpVariableTicks),
-		m_DoubleJumpRayModifierForRegular(def.doubleJumpRayModifierForRegular), m_DoubleJumpRayModifierForWall(def.doubleJumpRayModifierForWall),
-	m_MaxSpeed(def.maxSpeed), m_MinSpeed(def.minSpeed), m_StopSpeed(def.stopSpeed), m_Acceleration(def.acceleration), m_AirSteer(def.airSteer),
-	m_Friction(def.friction), m_GravityDefault(def.gravityDefault), m_FastFallGravityModifier(def.fastFallGravityModifier), 
-	m_PogoHertz(def.pogoHertz), m_PogoDampingRatio(def.pogoDampingRatio), m_PogoLengthScale(def.pogoLengthScale), m_SegmentOffset(def.segmentOffset), 
-	m_WallSlideSpeed(def.wallSlideSpeed), m_MinSpeedForRunState(def.minSpeedForRunState) {
+	m_JumpStartSpeed(def.jumpStartSpeed), m_JumpVariableSpeed(def.jumpVariableSpeed), m_JumpVariableTicks(def.jumpVariableTicks),
+	m_JumpBufferTicks(def.jumpBufferTicks), m_JumpCoyoteTimeTicks(def.jumpCoyoteTimeTicks),
+		m_WallJumpStartSpeed(def.wallJumpStartSpeed), m_WallJumpVariableSpeed(def.wallJumpVariableSpeed), m_WallJumpStartSideSpeed(def.wallJumpStartSideSpeed),
+	m_WallJumpVariableSideSpeed(def.wallJumpVariableSideSpeed), m_WallJumpVariableTicks(def.wallJumpVariableTicks), m_WallJumpBufferTicks(def.wallJumpBufferTicks),
+		m_DoubleJumpStartSpeed(def.doubleJumpStartSpeed), m_DoubleJumpVariableSpeed(def.doubleJumpVariableSpeed), m_DoubleJumpVariableTicks(def.doubleJumpVariableTicks),
+	m_DoubleJumpRayModifierForRegular(def.doubleJumpRayModifierForRegular), m_DoubleJumpRayModifierForWall(def.doubleJumpRayModifierForWall), m_MaxSpeed(def.maxSpeed),
+		m_MinSpeed(def.minSpeed), m_StopSpeed(def.stopSpeed),
+	m_Acceleration(def.acceleration), m_AirSteer(def.airSteer), m_Friction(def.friction), m_GravityDefault(def.gravityDefault), m_FastFallGravityModifier(def.fastFallGravityModifier),
+	m_PogoHertz(def.pogoHertz), m_PogoDampingRatio(def.pogoDampingRatio), m_PogoLengthScale(def.pogoLengthScale),
+	m_SegmentOffset(def.segmentOffset), m_WallSlideSpeed(def.wallSlideSpeed), m_MinSpeedForRunState(def.minSpeedForRunState), m_World(world),
+	m_Capsule(capsule), m_Player(player) {
 
 	glm::vec2 spawn = player.GetComponents<Cori::Components::Entity::Spawnpoint>().m_Spawnpoint;
 
@@ -63,7 +63,7 @@ void Mover::OnUpdate(const double deltaTime, const double tickAlpha) {
 	}
 }
 
-void Mover::OnTickUpdate(const float timeStep) {
+void Mover::OnTickUpdate(const float timeStep, MainCamera& mainCamera) {
 	auto& fsm = m_Player.GetComponents < Cori::Components::Entity::StateMachine>();
 	
 	// vvv double jump raycast checks, to avoid double jumping when player is almoust touching the ground or the wall 
@@ -102,14 +102,26 @@ void Mover::OnTickUpdate(const float timeStep) {
 	bool bufferFallState = false;
 	bool bufferAscendingState = false;
 
+	if (m_OnGround && !m_OldOnGround) {
+		float traumaToAdd = 0.15f * (std::sqrt(m_LastFallingDistance) / 4.0f);
+		CORI_DEBUG("{} {}", traumaToAdd, m_LastFallingDistance);
+		mainCamera.AddTrauma(traumaToAdd);
+	}
+
 	// fast fall
 	m_Gravity = m_GravityDefault;
 	if (m_Velocity.y < -0.35f - m_Gravity * m_FastFallGravityModifier * timeStep) {
 		m_Gravity *= m_FastFallGravityModifier;
 		bufferFallState = true;
+		m_LastFallingDistance += -(m_Velocity.y * timeStep);
+	} else {
+		m_LastFallingDistance = 0.0f;
 	}
 
-	if (std::abs(m_Velocity.y) > 1.0f && (m_Jumping || m_WallJumping || m_DoubleJumping)) {
+
+	//if (std::abs(m_Velocity.y) > 1.0f && (m_Jumping || m_WallJumping || m_DoubleJumping)) {
+	if (std::abs(m_Velocity.y) > 1.0f) {
+
 		bufferAscendingState = true;
 	}
 
@@ -127,6 +139,7 @@ void Mover::OnTickUpdate(const float timeStep) {
 			bufferAscendingState = false;
 			if (!m_OnGround) {
 				fsm.SetStateIfNotInState<States::Player::WallSlide>();
+				m_LastFallingDistance = 0.0f;
 			}
 			m_WallJumpDirection = Cori::Math::Sign(plane.normal.x);
 			break;
@@ -177,6 +190,7 @@ void Mover::OnTickUpdate(const float timeStep) {
 		if (!m_OnGround && m_OldOnGround) {
 			m_JumpCoyoteTimeTickTimer = 0;
 		}
+
 		m_OldOnGround = m_OnGround;
 
 		if (m_JumpCoyoteTimeTickTimer < 128) {
@@ -405,7 +419,7 @@ void Mover::UpdateGui() {
 	ImGui::SliderFloat("Minimal Speed For Run State", &m_MinSpeedForRunState, 0.1f, 10.0f, "%.2f");
 	ImGui::Checkbox("Draw Player Pixel Aligned to Camera Canvas", &m_PixelAlignedRender);
 
-	ImGui::SliderFloat("Test Value1", &test1, 0.1f, 20.0f, "%.2f");
+	//ImGui::SliderFloat("Test Value1", &test1, 0.1f, 20.0f, "%.2f");
 
 	ImGui::Separator();
 

@@ -2,27 +2,30 @@
 #include <Cori.hpp>
 #include "Player/Mover.hpp"
 #include "Triggers/TriggerScripts.hpp"
+#include "Components.hpp"
 
 class LevelLayer : public Cori::Layer {
 public:
 	LevelLayer();
 
-	~LevelLayer();
+	~LevelLayer() override;
 
-	virtual void OnAttach() override;
-	virtual void OnDetach() override;
+	void OnAttach() override;
+	void OnDetach() override;
 
-	virtual void OnUpdate(const double deltaTime, const double tickAlpha) override;
-	virtual void OnTickUpdate(const float timeStep) override;
-	virtual void OnImGuiRender(const double deltaTime) override;
+	void OnUpdate(const Cori::GameTimer& gameTimer) override;
+	void OnTickUpdate(const float timeStep) override;
+	void OnImGuiRender(const double deltaTime) override;
 
-	virtual void OnEvent(Cori::Event& event) override;
+	void OnEvent(Cori::Event& event) override;
 
 private:
-	bool m_PhysicsDebugDraw{ true };
-	bool m_MoverDebugDraw{ true };
+	bool m_PhysicsDebugDraw{ false };
+	bool m_MoverDebugDraw{ false };
 
 	Cori::Entity m_Player;
+
+	MainCamera m_MainCamera;
 
 	std::unique_ptr<Mover> m_Mover;
 };

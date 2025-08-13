@@ -1,6 +1,7 @@
 #pragma once
 #include <Cori.hpp>
 #include "States.hpp"
+#include "Components.hpp"
 
 class Mover {
 public:
@@ -47,7 +48,7 @@ public:
 
 	void OnUpdate(const double deltaTime, const double tickAlpha);
 
-	void OnTickUpdate(const float timeStep);
+	void OnTickUpdate(const float timeStep, MainCamera& mainCamera);
 
 	void UpdateGui();
 	void DebugDraw(float test);
@@ -100,6 +101,8 @@ public:
 	Cori::Physics::Vec2 m_RenderingPosition;
 	Cori::Physics::Vec2 m_OldRenderingPosition;
 
+	Cori::Physics::Vec2 m_Velocity{ 0.0f, 0.0f };
+
 private:
 	static bool PlaneResultFcn(b2ShapeId shapeId, const b2PlaneResult* planeResult, void* context);
 
@@ -122,7 +125,6 @@ private:
 	Cori::Physics::Transform m_Transform;
 	Cori::Physics::Transform m_OldTransform;
 	Cori::Physics::Vec2 m_Translation;
-	Cori::Physics::Vec2 m_Velocity{ 0.0f, 0.0f };
 	Cori::Physics::Vec2 m_Origin{ 0.0f, 0.0f };
 	Cori::Physics::Vec2 m_P1;
 	Cori::Physics::Vec2 m_P2;
@@ -163,6 +165,8 @@ private:
 	bool m_NearWall{ false };
 
 	bool m_PixelAlignedRender{ false };
+
+	float m_LastFallingDistance{ 0.0f };
 
 	float test1{ 1.0f };
 

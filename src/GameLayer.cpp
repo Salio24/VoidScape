@@ -18,7 +18,7 @@ void GameLayer::OnDetach() {
 
 }
 
-void GameLayer::OnUpdate(const double deltaTime, const double tickAlpha) {
+void GameLayer::OnUpdate(const Cori::GameTimer& gameTimer) {
 
 }
 

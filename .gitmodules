@@ -2,3 +2,6 @@
 	path = CoriEngine
 	url = https://github.com/Salio24/CoriEngine.git
 	branch = EngineDev
+[submodule "thirdparty/PerlinNoise"]
+	path = thirdparty/PerlinNoise
+	url = https://github.com/Reputeless/PerlinNoise

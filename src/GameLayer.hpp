@@ -7,12 +7,12 @@ public:
 
 	~GameLayer();
 
-	virtual void OnAttach() override;
-	virtual void OnDetach() override;
+	void OnAttach() override;
+	void OnDetach() override;
 
-	virtual void OnUpdate(const double deltaTime, const double tickAlpha) override;
-	virtual void OnTickUpdate(const float timeStep) override;
-	virtual void OnImGuiRender(const double deltaTime) override;
+	void OnUpdate(const Cori::GameTimer& gameTimer) override;
+	void OnTickUpdate(const float timeStep) override;
+	void OnImGuiRender(const double deltaTime) override;
 
-	virtual void OnEvent(Cori::Event& event) override;
+	void OnEvent(Cori::Event& event) override;
 };

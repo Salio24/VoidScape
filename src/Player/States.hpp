@@ -1,6 +1,7 @@
 #pragma once
 #include <Cori.hpp>
 #include "Animations.hpp"
+#include "Components.hpp"
 
 namespace States {
 	namespace Player {
@@ -15,7 +16,7 @@ namespace States {
 			void OnUpdate(Cori::Entity& player, Cori::StateMachine* fsm, float deltaTime) override {
 				//CORI_CORE_INFO("Entity ID {0} updating Idle. {1}", static_cast<uint32_t>(player), Cori::Application::GetTest());
 				auto& ar = player.GetComponents<Cori::Components::Entity::QuadAnimator>();
-				ar.UpdateSingle < Animations::Player::Idle>();
+				ar.UpdateSingle<Animations::Player::Idle>();
 			}
 
 			void OnExit(Cori::Entity& player, Cori::StateMachine* fsm) override {

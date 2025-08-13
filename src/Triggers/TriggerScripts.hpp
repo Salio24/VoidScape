@@ -5,7 +5,8 @@ class TestTrigger : public Cori::Physics::TriggerBehaviour {
 public:
 	TestTrigger() = default;
 	void OnEnter(Cori::Entity& entity) override {
-		CORI_TRACE_TAGGED({ "Trigger" }, "Enter");
+
+		CORI_TRACE_TAGGED({ "Trigger" }, "Enter by: {}", entity.GetName());
 	}
 
 	void OnTickUpdate(Cori::Entity& entity, const float timeStep) override {
