@@ -1,6 +1,5 @@
 #include "LevelLayer.hpp"
 
-#include <memory>
 #include "Player/States.hpp"
 #include "Tags.hpp"
 
@@ -15,16 +14,19 @@ LevelLayer::~LevelLayer() {
 }
 
 void LevelLayer::OnAttach() {
-	ActiveScene.GetActiveCamera().CreateOrthoCamera(0, 640, 0, 360, -50, 0);
-	m_MainCamera.SetWorldBound({{-320.0f, -180.0f}, {30000.0f, 30000.0f}});
-	m_MainCamera.SetRenderCameraSize({640.0f, 360.0f});
+	int screenWidth = Cori::Application::GetWindow().GetWidth();
+	int screenHeight = Cori::Application::GetWindow().GetHeight();
+
+	ActiveScene.GetActiveCamera().CreateOrthoCamera(0, static_cast<float>(screenWidth) / static_cast<float>(screenHeight / 360.0f), 0, 360, -50, 0);
+
+	m_MainCamera.SetWorldBound({{16, 16}, {1264, 784}});
 
 	// player creation
 	m_Player = ActiveScene.CreateEntity("Player Root", Tags::Character);
 
 	auto& renderer = m_Player.AddComponent<Cori::Components::Entity::QuadRenderer>();
 	auto& animator = m_Player.AddComponent<Cori::Components::Entity::QuadAnimator>("../../assets/player/PlayerSheet.json", m_Player, (1.0f / 60.0f), "Test");
-	auto& spawn = m_Player.AddComponent<Cori::Components::Entity::Spawnpoint>(glm::vec2{ 80.0f, 80.0f });
+	auto& spawn = m_Player.AddComponent<Cori::Components::Entity::Spawnpoint>(glm::vec2{ 160.0f, 160.0f });
 	auto& transform = m_Player.GetComponents<Cori::Components::Entity::Transform>();
 	transform.SetLocalDepth(2);
 
@@ -71,8 +73,8 @@ void LevelLayer::OnDetach() {
 }
 
 void LevelLayer::OnUpdate(const Cori::GameTimer& gameTimer) {
-	Cori::Renderer2D::SubmitScreenSpaceColoredQuad({320, 180}, {0.2f, 100}, {1, 1, 1});
-	Cori::Renderer2D::SubmitScreenSpaceColoredQuad({320, 180}, {100, 0.2f}, {1, 1, 1});
+	Cori::Renderer2D::SubmitScreenSpaceColoredQuad(ActiveScene.GetActiveCamera().GetSize() / 2.0f, {0.2f, 100}, {1, 1, 1});
+	Cori::Renderer2D::SubmitScreenSpaceColoredQuad(ActiveScene.GetActiveCamera().GetSize() / 2.0f, {100, 0.2f}, {1, 1, 1});
 
 	m_Mover->OnUpdate(gameTimer.GetDeltaTime(), gameTimer.GetTickAlpha());
 	m_MainCamera.OnUpdate(gameTimer, ActiveScene.GetActiveCamera());
@@ -116,7 +118,7 @@ void LevelLayer::OnImGuiRender(const double deltaTime) {
 	static int camim = 0.0f;
 	static int camgl = 0.0f;
 	if (m_PhysicsDebugDraw) {
-		Cori::ImGuiPresets::Box2dDebugDraw({ 640, 360 }, CORI_PIXELS_PER_METER, this, true, ActiveScene.GetActiveCamera().GetPosition(), 2000.0f);
+		Cori::ImGuiPresets::Box2dDebugDraw(ActiveScene.GetActiveCamera().GetSize(), CORI_PIXELS_PER_METER, this, true, ActiveScene.GetActiveCamera().GetPosition(), 2000.0f);
 	}
 
 	//ActiveScene.GetActiveCamera().SetPosition({camgl, camgl});
@@ -187,6 +189,12 @@ void LevelLayer::OnImGuiRender(const double deltaTime) {
 }
 
 void LevelLayer::OnEvent(Cori::Event& event) {
+	Cori::EventDispatcher dispatcher(event);
+
+	dispatcher.Dispatch<Cori::WindowResizeEvent>([this](const Cori::WindowResizeEvent& e) -> bool {
+		ActiveScene.GetActiveCamera().CreateOrthoCamera(0, static_cast<float>(e.GetWidth()) / static_cast<float>(e.GetHeight() / 360.0f), 0, 360, -50, 0);
+			return true;
+		});
 
 }
 

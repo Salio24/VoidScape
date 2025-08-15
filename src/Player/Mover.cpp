@@ -102,22 +102,26 @@ void Mover::OnTickUpdate(const float timeStep, MainCamera& mainCamera) {
 	bool bufferFallState = false;
 	bool bufferAscendingState = false;
 
-	if (m_OnGround && !m_OldOnGround) {
-		float traumaToAdd = 0.15f * (std::sqrt(m_LastFallingDistance) / 4.0f);
-		CORI_DEBUG("{} {}", traumaToAdd, m_LastFallingDistance);
-		mainCamera.AddTrauma(traumaToAdd);
-	}
+	//CORI_DEBUG("Distance: {}", m_LastFallingDistance);
 
 	// fast fall
 	m_Gravity = m_GravityDefault;
-	if (m_Velocity.y < -0.35f - m_Gravity * m_FastFallGravityModifier * timeStep) {
+	bool falling = m_Velocity.y < -0.35f - m_Gravity * m_FastFallGravityModifier * timeStep;
+	if (falling) {
 		m_Gravity *= m_FastFallGravityModifier;
 		bufferFallState = true;
 		m_LastFallingDistance += -(m_Velocity.y * timeStep);
-	} else {
-		m_LastFallingDistance = 0.0f;
 	}
 
+	if (m_OnGround && !m_OldOnGround) {
+		float traumaToAdd = 0.15f * (std::sqrt(m_LastFallingDistance) / 4.0f);
+		//CORI_DEBUG("trauma: {}", traumaToAdd);
+		mainCamera.AddTrauma(traumaToAdd);
+	}
+
+	if (!falling) {
+		m_LastFallingDistance = 0.0f;
+	}
 
 	//if (std::abs(m_Velocity.y) > 1.0f && (m_Jumping || m_WallJumping || m_DoubleJumping)) {
 	if (std::abs(m_Velocity.y) > 1.0f) {
@@ -208,7 +212,7 @@ void Mover::OnTickUpdate(const float timeStep, MainCamera& mainCamera) {
 				m_JumpButtonReleased = false;
 				m_CanDoubleJump = false;
 
-				CORI_DEBUG("DOUBLE");
+				//CORI_DEBUG("DOUBLE");
 
 				fsm.SetState<States::Player::DoubleJump>();
 
@@ -221,8 +225,8 @@ void Mover::OnTickUpdate(const float timeStep, MainCamera& mainCamera) {
 			}
 
 			if (m_JumpButtonReleased && (m_JumpBufferTickTimer > m_JumpBufferTicks || m_WallJumpBufferTickTimer > m_WallJumpBufferTicks) && !m_Jumping && !m_DoubleJumping && !m_WallJumping) { 
-				CORI_INFO("WALL CAST {}", m_NearWall);
-				CORI_INFO("GROUND CAST {}", m_NearGround);
+				//CORI_INFO("WALL CAST {}", m_NearWall);
+				//CORI_INFO("GROUND CAST {}", m_NearGround);
 
 				m_JumpButtonReleased = false;
 				m_WallJumpBufferTickTimer = 0;
@@ -256,7 +260,7 @@ void Mover::OnTickUpdate(const float timeStep, MainCamera& mainCamera) {
 			m_Velocity.x = m_WallJumpStartSideSpeed * m_WallJumpDirection;
 			m_CanWallJump = false;
 
-			CORI_DEBUG("WALL");
+			//CORI_DEBUG("WALL");
 
 			fsm.SetState<States::Player::WallJump>();
 
@@ -276,15 +280,15 @@ void Mover::OnTickUpdate(const float timeStep, MainCamera& mainCamera) {
 			m_Velocity.y = m_JumpStartSpeed;
 
 			if (m_JumpCoyoteTimeTickTimer <= m_JumpCoyoteTimeTicks) {
-				CORI_INFO("COYOTE");
+				//CORI_INFO("COYOTE");
 			}
 			else if (m_OnGround) {
-				CORI_INFO("GROUND");
+				//CORI_INFO("GROUND");
 			}
 
 			m_OnGround = false;
 
-			CORI_DEBUG("REGULAR");
+			//CORI_DEBUG("REGULAR");
 
 			fsm.SetState<States::Player::Jump>();
 

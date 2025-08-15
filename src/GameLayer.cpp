@@ -30,16 +30,24 @@ void GameLayer::OnImGuiRender(const double deltaTime) {
 	ImGui::Begin("Game Layer UI");
 
 	if (ImGui::Button("Start")) {
-		Layer* level = new LevelLayer();
-		if (Cori::SceneManager::CreateScene("Test Level")) {
-			level->BindScene("Test Level");
-			//level->ActiveScene->ActiveCamera.CreateOrthoCamera(0, 640, 0, 360);
-			LevelLoader::LoadLevel(level->ActiveScene, "../../assets/levels/testlevel.tmx");
-			//LevelLoader::LoadLevel(level->ActiveScene, "../../../Source/levels/GameLevels/32p/Level_1.tmx");
-		}
+		static bool oneshot = true; // temporary fix until new error handling is adapted
+		if (oneshot) {
+			Layer* level = new LevelLayer();
+			if (Cori::SceneManager::CreateScene("Test Level")) {
+				level->BindScene("Test Level");
+				//level->ActiveScene->ActiveCamera.CreateOrthoCamera(0, 640, 0, 360);
+				LevelLoader::LoadLevel(level->ActiveScene, "../../assets/levels/testlevel.tmx");
+				//LevelLoader::LoadLevel(level->ActiveScene, "../../../Source/levels/GameLevels/32p/Level_1.tmx");
+			}
 
-		Cori::Application::PushLayer(level);
+			Cori::Application::PushLayer(level);
+			oneshot = false;
+		}
 	}
+
+	ImGui::SeparatorText("Graphical Settings");
+
+	Cori::ImGuiPresets::ScreenModeAndResolutionDropdowns();
 
 	ImGui::End();
 

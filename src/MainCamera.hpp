@@ -42,19 +42,19 @@ public:
 		actualCamera.RecalculateVP();
 	}
 
-	void OnTickUpdate(const float timeStep, const glm::vec2 playerPos, const glm::vec2 playerHalfSize, const glm::vec2 playerVelocity, Cori::CameraController& actualCamera) {
+	void OnTickUpdate(const float timeStep, const glm::vec2 playerPos, const glm::vec2 playerHalfSize, const glm::vec2 playerVelocity, const Cori::CameraController& actualCamera) {
 		m_OldCameraPosition = m_CameraPosition;
 
-		//m_CameraPosition = playerPos - glm::vec2{320.0f, 180.0f};
+		glm::vec2 camSize = actualCamera.GetSize();
 
-		glm::vec2 targetRaw = playerPos - glm::vec2{m_RenderCameraSize.x / 2.0f - playerVelocity.x * m_VelocityDependencyModifierX, m_RenderCameraSize.y / 2.0f - playerVelocity.y * m_VelocityDependencyModifierY};
+		glm::vec2 targetRaw = playerPos - glm::vec2{camSize.x / 2.0f - playerVelocity.x * m_VelocityDependencyModifierX, camSize.y / 2.0f - playerVelocity.y * m_VelocityDependencyModifierY};
 
 		glm::vec2 target;
 
-		target.x = std::clamp(targetRaw.x, m_WorldBound.m_Min.x + m_RenderCameraSize.x / 2.0f, m_WorldBound.m_Max.x - m_RenderCameraSize.x / 2.0f);
+		target.x = std::clamp(targetRaw.x, m_WorldBound.m_Min.x, m_WorldBound.m_Max.x - camSize.x);
 		//target.x = targetRaw.x;
 
-		target.y = std::clamp(targetRaw.y, m_WorldBound.m_Min.y + m_RenderCameraSize.y / 2.0f, m_WorldBound.m_Max.y - m_RenderCameraSize.y / 2.0f);
+		target.y = std::clamp(targetRaw.y, m_WorldBound.m_Min.y, m_WorldBound.m_Max.y - camSize.y);
 		//target.y = targetRaw.y;
 
 		m_CameraPosition.x += (target.x - m_CameraPosition.x) * m_AsymptoticAverageX;
@@ -63,6 +63,8 @@ public:
 		m_Trauma -= 0.01f;
 
 		m_Trauma = std::clamp(m_Trauma, 0.0f, 1.0f);
+
+		//CORI_DEBUG("pos: {} {}", playerPos.x, playerPos.y);
 
 		//CORI_DEBUG("Trauma: {}", m_Trauma);
 
@@ -81,10 +83,6 @@ public:
 		return m_WorldBound;
 	}
 
-	void SetRenderCameraSize(const glm::vec2& renderCameraSize) {
-		m_RenderCameraSize = renderCameraSize;
-	}
-
 	bool m_PlayerJustLanded{ false };
 
 	float m_MaxTransformShakeX{ 350.0f };
@@ -96,7 +94,7 @@ public:
 	float m_VelocityDependencyModifierX{ 0.40f };
 	float m_VelocityDependencyModifierY{ 0.0f };
 
-	float m_MaxRotationalShake{ 30.0f };
+	float m_MaxRotationalShake{ 75.0f };
 	float m_RotationalShakeFrequencyModifier{ 1.0f };
 
 	float m_TransformShakeFrequencyModifier{ 1.0f };
@@ -112,8 +110,6 @@ private:
 	glm::vec2 m_OldCameraPosition{ 0.0f, 0.0f };
 
 	Cori::Utility::AABB m_WorldBound{};
-
-	glm::vec2 m_RenderCameraSize{ 0.0f, 0.0f };
 
 	bool m_GetPosOneshot{ true };
 
