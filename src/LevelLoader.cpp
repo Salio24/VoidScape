@@ -24,8 +24,8 @@ void LevelLoader::LoadLevel(Cori::SceneHandle& scene, const std::string& path) {
 			for (const auto& tileset : tilesets) {
 				auto tileSize = tileset.getTileSize();
 
-				auto texture = Cori::Texture2D::Create(tileset.getImagePath());
-				auto atlas = Cori::SpriteAtlas::Create(tileset.getName(), texture, glm::ivec2{tileSize.x, tileSize.y});
+				auto image = Cori::Image::Create(tileset.getImagePath());
+				auto atlas = Cori::SpriteAtlas::Create(tileset.getName(), image, glm::ivec2{tileSize.x, tileSize.y});
 				if (atlas) {
 					SpriteAtlases.push_back(atlas.value());
 				} else {
