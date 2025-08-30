@@ -15,7 +15,8 @@
             "scaleInDock": 1
         },
         "Construction.tsx": {
-            "scaleInDock": 1
+            "scaleInDock": 2,
+            "scaleInEditor": 1
         },
         "ConstructionOverlay.tsx": {
             "scaleInDock": 1
@@ -24,24 +25,24 @@
             "scaleInDock": 1
         },
         "Main.tsx": {
-            "scaleInDock": 1
+            "scaleInDock": 3
         },
         "Pavement.tsx": {
             "scaleInDock": 1
         },
         "Stairways.tsx": {
-            "scaleInDock": 1
+            "scaleInDock": 3
         },
         "Walls.tsx": {
             "scaleInDock": 1,
             "scaleInEditor": 3
         },
         "testlevel.tmx": {
-            "scale": 1.5,
-            "selectedLayer": 0,
+            "scale": 3,
+            "selectedLayer": 1,
             "viewCenter": {
-                "x": 621,
-                "y": 448
+                "x": 520.1666666666667,
+                "y": 345.33333333333326
             }
         }
     },

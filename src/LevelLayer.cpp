@@ -2,6 +2,7 @@
 
 #include "Player/States.hpp"
 #include "Tags.hpp"
+#include "Player/ParticleAnimation.hpp"
 
 static bool manualStep = false;
 
@@ -24,11 +25,74 @@ void LevelLayer::OnAttach() {
 	// player creation
 	m_Player = ActiveScene.CreateEntity("Player Root", Tags::Character);
 
-	auto& renderer = m_Player.AddComponent<Cori::Components::Entity::QuadRenderer>();
-	auto& animator = m_Player.AddComponent<Cori::Components::Entity::QuadAnimator>("../../assets/player/PlayerSheet.json", m_Player, (1.0f / 60.0f), "Test");
-	auto& spawn = m_Player.AddComponent<Cori::Components::Entity::Spawnpoint>(glm::vec2{ 160.0f, 160.0f });
-	auto& transform = m_Player.GetComponents<Cori::Components::Entity::Transform>();
-	transform.SetLocalDepth(2);
+	m_Player.AddComponent<Cori::Components::Entity::QuadRenderer>();
+	m_Player.AddComponent<Cori::Components::Entity::QuadAnimator>("../../assets/textures/player/PlayerSheet.json", m_Player, 1.0f / 60.0f, AnimatorNames::PlayerMainAnimator);
+	m_Player.AddComponent<Cori::Components::Entity::Spawnpoint>(glm::vec2{ 160.0f, 160.0f });
+	{
+		auto& transform = m_Player.GetComponents<Cori::Components::Entity::Transform>();
+		transform.SetLocalDepth(4);
+	}
+
+	Cori::Entity playerParticles1 = ActiveScene.CreateEntity("Movement Particles Part 1", Tags::Character);
+	playerParticles1.AddComponent<Cori::Components::Entity::QuadRenderer>();
+	playerParticles1.AddComponent<Cori::Components::Entity::QuadAnimator>("../../assets/textures/player/FXSheet.json", playerParticles1, 1.0f / 60.0f, AnimatorNames::PlayerParticleAnimator);
+	CORI_CHECK_EXPECTED(playerParticles1.SetParent(m_Player));
+	playerParticles1.SetActive(false);
+	{
+		auto& transform = playerParticles1.GetComponents<Cori::Components::Entity::Transform>();
+		transform.SetLocalDepth(-1);
+	}
+
+	Cori::Entity playerParticles2 = ActiveScene.CreateEntity("Movement Particles Part 2", Tags::Character);
+	playerParticles2.AddComponent<Cori::Components::Entity::QuadRenderer>();
+	playerParticles2.AddComponent<Cori::Components::Entity::QuadAnimator>("../../assets/textures/player/FXSheet.json", playerParticles2, 1.0f / 60.0f, AnimatorNames::PlayerParticleAnimator);
+	CORI_CHECK_EXPECTED(playerParticles2.SetParent(m_Player));
+	playerParticles2.SetActive(false);
+	{
+		auto& transform = playerParticles2.GetComponents<Cori::Components::Entity::Transform>();
+		transform.SetLocalDepth(-1);
+	}
+
+	Cori::Entity playerParticlesIndependent = ActiveScene.CreateEntity("Movement Particles Independent Root", Tags::Character);
+	CORI_CHECK_EXPECTED(playerParticlesIndependent.SetParent(m_Player));
+	{
+		auto& transform = playerParticlesIndependent.GetComponents<Cori::Components::Entity::Transform>();
+		transform.SetLocalDepth(-1);
+	}
+
+	{
+		Cori::Entity particles = ActiveScene.CreateEntity("Landing Particles", Tags::Character);
+		particles.AddComponent<Cori::Components::Entity::QuadRenderer>();
+		particles.AddComponent<Cori::Components::Entity::QuadAnimator>("../../assets/textures/player/FXSheet.json", particles, 1.0f / 60.0f, AnimatorNames::PlayerParticleAnimator);
+		CORI_CHECK_EXPECTED(particles.SetParent(playerParticlesIndependent));
+		particles.SetActive(false);
+	}
+
+	{
+		Cori::Entity particles = ActiveScene.CreateEntity("Jumping Particles", Tags::Character);
+		particles.AddComponent<Cori::Components::Entity::QuadRenderer>();
+		particles.AddComponent<Cori::Components::Entity::QuadAnimator>("../../assets/textures/player/FXSheet.json", particles, 1.0f / 60.0f, AnimatorNames::PlayerParticleAnimator);
+		CORI_CHECK_EXPECTED(particles.SetParent(playerParticlesIndependent));
+		particles.SetActive(false);
+	}
+
+	{
+		Cori::Entity particles = ActiveScene.CreateEntity("WallJump Particles", Tags::Character);
+		particles.AddComponent<Cori::Components::Entity::QuadRenderer>();
+		particles.AddComponent<Cori::Components::Entity::QuadAnimator>("../../assets/textures/player/FXSheet.json", particles, 1.0f / 60.0f, AnimatorNames::PlayerParticleAnimator);
+		CORI_CHECK_EXPECTED(particles.SetParent(playerParticlesIndependent));
+		particles.SetActive(false);
+	}
+
+	{
+		Cori::Entity particles = ActiveScene.CreateEntity("DoubleJump Particles", Tags::Character);
+		particles.AddComponent<Cori::Components::Entity::QuadRenderer>();
+		particles.AddComponent<Cori::Components::Entity::QuadAnimator>("../../assets/textures/player/FXSheet.json", particles, 1.0f / 60.0f, AnimatorNames::PlayerParticleAnimator);
+		CORI_CHECK_EXPECTED(particles.SetParent(playerParticlesIndependent));
+		particles.SetActive(false);
+	}
+
+
 
 	auto& fsm = m_Player.AddComponent <Cori::Components::Entity::StateMachine>(m_Player);
 
@@ -41,6 +105,7 @@ void LevelLayer::OnAttach() {
 	fsm.Register<States::Player::WallJump>();
 	fsm.Register<States::Player::WallSlide>();
 	fsm.Register<States::Player::Ascending>();
+	fsm.SetState<States::Player::Idle>();
 
 	Mover::Params mp;
 	mp.gravityDefault = 34.5f;
@@ -73,8 +138,8 @@ void LevelLayer::OnDetach() {
 }
 
 void LevelLayer::OnUpdate(const Cori::GameTimer& gameTimer) {
-	Cori::Renderer2D::SubmitScreenSpaceColoredQuad(ActiveScene.GetActiveCamera().GetSize() / 2.0f, {0.2f, 100}, {1, 1, 1});
-	Cori::Renderer2D::SubmitScreenSpaceColoredQuad(ActiveScene.GetActiveCamera().GetSize() / 2.0f, {100, 0.2f}, {1, 1, 1});
+	//Cori::Renderer2D::SubmitScreenSpaceColoredQuad(ActiveScene.GetActiveCamera().GetSize() / 2.0f, {0.2f, 100}, {1, 1, 1});
+	//Cori::Renderer2D::SubmitScreenSpaceColoredQuad(ActiveScene.GetActiveCamera().GetSize() / 2.0f, {100, 0.2f}, {1, 1, 1});
 
 	m_Mover->OnUpdate(gameTimer.GetDeltaTime(), gameTimer.GetTickAlpha());
 	m_MainCamera.OnUpdate(gameTimer, ActiveScene.GetActiveCamera());
@@ -109,8 +174,10 @@ void LevelLayer::OnTickUpdate(const float timeStep) {
 		oneshot2 = true;
 	}
 
+	TickParticleUpdate(m_Player);
+
 	glm::vec2 playerPos = m_Player.GetComponents<Cori::Components::Entity::Transform>().GetLocalPosition();
-	glm::vec2 playerHalfSize = m_Player.GetComponents<Cori::Components::Entity::QuadRenderer>().m_HalfSize;
+	glm::vec2 playerHalfSize = m_Player.GetComponents<Cori::Components::Entity::QuadRenderer>().GetHalfSize();
 	m_MainCamera.OnTickUpdate(timeStep, playerPos, playerHalfSize, Cori::Physics::ToPixels(m_Mover->m_Velocity) ,ActiveScene.GetActiveCamera());
 }
 

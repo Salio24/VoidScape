@@ -5,7 +5,7 @@ class GameLayer : public Cori::Layer {
 public:
 	GameLayer();
 
-	~GameLayer();
+	~GameLayer() override;
 
 	void OnAttach() override;
 	void OnDetach() override;

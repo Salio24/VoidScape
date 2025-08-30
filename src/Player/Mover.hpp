@@ -40,7 +40,7 @@ public:
 		float segmentOffset{ 0.65f };
 		float wallSlideSpeed{ 1.5f };
 
-		float minSpeedForRunState{ 1.0f };
+		float minSpeedForRunState{ 4.0f };
 	};
 
 	Mover(const Cori::Physics::Capsule& capsule, Cori::Physics::WorldRef world, Cori::Entity& player, const Params& def);
@@ -146,6 +146,8 @@ private:
 	bool m_Jumping{ false };
 	bool m_WallJumping{ false };
 	bool m_DoubleJumping{ false };
+
+	bool m_ResetDistanceNextTick{ false };
 
 	bool m_CanWallJump{ false };
 	bool m_CanDoubleJump{ false };

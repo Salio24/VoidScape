@@ -2,23 +2,43 @@
 #include <Cori.hpp>
 
 namespace AnimatorNames {
-	inline constexpr char TestAnimator[] = "Test";
+	inline constexpr char PlayerMainAnimator[] = "Player Main Animator";
+
+	inline constexpr char PlayerParticleAnimator[] = "Player Particle Animator";
+
 }
 
 namespace Animations {
 	namespace Player {
-		using Idle = Cori::AnimationHandle<0 , true, AnimatorNames::TestAnimator>;
-		using DoubleJump = Cori::AnimationHandle<9, false, AnimatorNames::TestAnimator>;
-		using Run = Cori::AnimationHandle<2, true, AnimatorNames::TestAnimator>;
-		using WallSlide = Cori::AnimationHandle<22, true, AnimatorNames::TestAnimator>;
+		inline constexpr Cori::AnimationDescriptor Idle(0, true, AnimatorNames::PlayerMainAnimator);
 
+		inline constexpr Cori::AnimationDescriptor IdleTransition(17, false, AnimatorNames::PlayerMainAnimator);
 
-		using Fall = Cori::AnimationHandle<7, true, AnimatorNames::TestAnimator>;
+		inline constexpr Cori::AnimationDescriptor DoubleJump(9, true, AnimatorNames::PlayerMainAnimator);
 
-		using WallSlide = Cori::AnimationHandle<22, true, AnimatorNames::TestAnimator>;
-		using WallJump = Cori::AnimationHandle<14, false, AnimatorNames::TestAnimator>;
+		inline constexpr Cori::AnimationDescriptor Run(2, true, AnimatorNames::PlayerMainAnimator);
 
-		using JumpStart = Cori::AnimationHandle<5, false, AnimatorNames::TestAnimator>;
-		using JumpMid = Cori::AnimationHandle<6, true, AnimatorNames::TestAnimator>;
+		inline constexpr Cori::AnimationDescriptor WallSlide(22, true, AnimatorNames::PlayerMainAnimator);
+
+		inline constexpr Cori::AnimationDescriptor WallJump(23, false, AnimatorNames::PlayerMainAnimator);
+
+		inline constexpr Cori::AnimationDescriptor Fall(7, true, AnimatorNames::PlayerMainAnimator);
+
+		inline constexpr Cori::AnimationDescriptor JumpStart(5, false, AnimatorNames::PlayerMainAnimator);
+
+		inline constexpr Cori::AnimationDescriptor JumpMid(6, true, AnimatorNames::PlayerMainAnimator);
+
+		namespace Particles {
+			inline constexpr Cori::AnimationDescriptor RunFront(3, true, AnimatorNames::PlayerParticleAnimator);
+			inline constexpr Cori::AnimationDescriptor RunBack(4, true, AnimatorNames::PlayerParticleAnimator);
+
+			inline constexpr Cori::AnimationDescriptor Jump(7, false, AnimatorNames::PlayerParticleAnimator);
+			inline constexpr Cori::AnimationDescriptor Landing(8, false, AnimatorNames::PlayerParticleAnimator);
+			inline constexpr Cori::AnimationDescriptor WallJump(14, false, AnimatorNames::PlayerParticleAnimator);
+			inline constexpr Cori::AnimationDescriptor WallSlide(15, true, AnimatorNames::PlayerParticleAnimator);
+
+			inline constexpr Cori::AnimationDescriptor DoubleJump(10, false, AnimatorNames::PlayerParticleAnimator);
+
+		}
 	}
 }

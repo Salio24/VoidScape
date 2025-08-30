@@ -11,12 +11,9 @@ void LevelLoader::LoadLevel(Cori::SceneHandle& scene, const std::string& path) {
 	std::vector<std::shared_ptr<Cori::SpriteAtlas>> SpriteAtlases;
 
 	if (map.load(path)) {
-
 		auto gridSize = map.getTileSize();
 
 		const auto mapSize = map.getBounds();
-
-
 
 		{
 			const auto tilesets = map.getTilesets();
@@ -26,21 +23,15 @@ void LevelLoader::LoadLevel(Cori::SceneHandle& scene, const std::string& path) {
 
 			for (const auto& tileset : tilesets) {
 				auto tileSize = tileset.getTileSize();
-				std::string atlasName = tileset.getName();
-				std::string textureName = atlasName + " Texture";
 
-				const Cori::Texture2DDescriptor texture{
-					textureName,
-					tileset.getImagePath()
-				};
+				auto texture = Cori::Texture2D::Create(tileset.getImagePath());
+				auto atlas = Cori::SpriteAtlas::Create(tileset.getName(), texture, glm::ivec2{tileSize.x, tileSize.y});
+				if (atlas) {
+					SpriteAtlases.push_back(atlas.value());
+				} else {
+					CORI_ERROR_TAGGED({ "Level Loader" }, "Failed to load a tileset from a tmx file. Tmx path: '{}', Tileset path: '{}'. Error: {}", path, tileset.getImagePath(), atlas.error().what());
+				}
 
-				const Cori::SpriteAtlasDescriptor atlas{
-					atlasName,
-					texture,
-					{tileSize.x, tileSize.y}
-				};
-
-				SpriteAtlases.push_back(Cori::AssetManager::GetSpriteAtlasOwning(atlas));
 				GDIs.emplace_back(tileset.getFirstGID(), tileset.getLastGID());
 			}
 		}
@@ -68,14 +59,14 @@ void LevelLoader::LoadLevel(Cori::SceneHandle& scene, const std::string& path) {
 								auto it = std::lower_bound(GDIs.begin(), GDIs.end(), tileID, comparator);
 
 								if (it == GDIs.end()) {
-									CORI_ASSERT_WARN(false, "Tile ID is greater than all GDI ranges.");
+									CORI_WARN("LevelLoader: Tile ID is greater than all GDI ranges.");
 									tilesetID = 0;
 								}
 								else if (tileID >= it->first) {
 									tilesetID = static_cast<int>(std::distance(GDIs.begin(), it));
 								}
 								else {
-									CORI_ASSERT_WARN(false, "Tile ID is between some GDI range.");
+									CORI_WARN("LevelLoader: Tile ID is between some GDI range.");
 									tilesetID = 0;
 								}
 
@@ -107,7 +98,7 @@ void LevelLoader::LoadLevel(Cori::SceneHandle& scene, const std::string& path) {
 							auto points = object.getPoints();
 
 							Cori::Physics::WindingOrder windingOrder = Cori::Physics::GetPolygonWindingOrder(points);
-							if (CORI_ASSERT_WARN(windingOrder != Cori::Physics::WindingOrder::COLLINEAR, "Polygon is collinear. Cannot create chain collider for object with UID: {}", object.getUID())) { continue; }
+							if (CORI_CHECK(windingOrder != Cori::Physics::WindingOrder::COLLINEAR, "Polygon is collinear. Cannot create chain collider for object with UID: {}", object.getUID())) { continue; }
 
 							std::vector<Cori::Physics::Vec2> b2points;
 							b2points.reserve(points.size());

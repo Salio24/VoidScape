@@ -38,27 +38,32 @@ void Mover::OnUpdate(const double deltaTime, const double tickAlpha) {
 	auto& renderer = m_Player.GetComponents<Cori::Components::Entity::QuadRenderer>();
 
 	// actual rendering position interpolation between ticks
+	glm::vec2 halfSize = renderer.GetHalfSize();
 	if (m_PixelAlignedRender) {
-		glm::vec2 pos = Cori::Physics::ToPixels((m_RenderingPosition * tickAlpha + m_OldRenderingPosition * (1.0f - tickAlpha))) + glm::vec2{ 0.0f, renderer.m_HalfSize.y };
+		glm::vec2 pos = Cori::Physics::ToPixels((m_RenderingPosition * tickAlpha + m_OldRenderingPosition * (1.0f - tickAlpha))) + glm::vec2{ 0.0f, halfSize.y };
 		transform.SetLocalPosition({static_cast<int>(pos.x), static_cast<int>(pos.y)});
 	}
 	else {
-		transform.SetLocalPosition(Cori::Physics::ToPixels((m_RenderingPosition * tickAlpha + m_OldRenderingPosition * (1.0f - tickAlpha))) + glm::vec2{ 0.0f, renderer.m_HalfSize.y });
+		transform.SetLocalPosition(Cori::Physics::ToPixels((m_RenderingPosition * tickAlpha + m_OldRenderingPosition * (1.0f - tickAlpha))) + glm::vec2{ 0.0f, halfSize.y });
 	}
 
 	if (m_Velocity.x < 0.0f) {
-		renderer.m_FlipX = true;
+		transform.SetLocalScale({ -1.0f, 1.0f });
+		//renderer.m_FlipX = true;
 	}
 	else if (m_Velocity.x > 0.0f) {
-		renderer.m_FlipX = false;
+		transform.SetLocalScale({ 1.0f, 1.0f });
+		//renderer.m_FlipX = false;
 	}
 
 	if (m_CanWallJump) {
 		if (m_WallJumpDirection == 1) {
-			renderer.m_FlipX = true;
+			transform.SetLocalScale({ -1.0f, 1.0f });
+			//renderer.m_FlipX = true;
 		}
 		else if (m_WallJumpDirection == -1) {
-			renderer.m_FlipX = false;
+			transform.SetLocalScale({ 1.0f, 1.0f });
+			//renderer.m_FlipX = false;
 		}
 	}
 }
@@ -68,8 +73,8 @@ void Mover::OnTickUpdate(const float timeStep, MainCamera& mainCamera) {
 	
 	// vvv double jump raycast checks, to avoid double jumping when player is almoust touching the ground or the wall 
 	{
-		m_GroundRayStart = { m_Transform.p.x + m_Velocity.x * timeStep + m_Capsule.radius * Cori::Math::Sign(m_Velocity.x), m_Transform.p.y - (m_PogoLengthScale * m_Capsule.radius + m_Capsule.radius - m_Capsule.center1.y) };
-		m_GroundRayEnd = { m_GroundRayStart.x, m_GroundRayStart.y + (m_Velocity.y * timeStep * m_JumpBufferTicks / m_DoubleJumpRayModifierForRegular) };
+		m_GroundRayStart = { m_Transform.p.x + m_Velocity.x * timeStep + m_Capsule.radius * static_cast<float>(Cori::Math::Sign(m_Velocity.x)), m_Transform.p.y - (m_PogoLengthScale * m_Capsule.radius + m_Capsule.radius - m_Capsule.center1.y) };
+		m_GroundRayEnd = { m_GroundRayStart.x, m_GroundRayStart.y + (m_Velocity.y * timeStep * static_cast<float>(m_JumpBufferTicks) / m_DoubleJumpRayModifierForRegular) };
 		{
 			Cori::Physics::Vec2 rayTranslation = b2Sub(m_GroundRayEnd, m_GroundRayStart);
 			Cori::Physics::RayResult rayResult{};
@@ -82,8 +87,8 @@ void Mover::OnTickUpdate(const float timeStep, MainCamera& mainCamera) {
 			m_NearGround = rayResult.hit;
 		}
 
-		m_WallRayStart = { m_Transform.p.x + m_Capsule.radius * Cori::Math::Sign(m_Velocity.x) + m_Velocity.x * timeStep, m_Transform.p.y + (m_Velocity.y * timeStep * m_WallJumpBufferTicks) };
-		m_WallRayEnd = { m_WallRayStart.x + (m_Velocity.x * timeStep * m_WallJumpBufferTicks / m_DoubleJumpRayModifierForWall), m_WallRayStart.y };
+		m_WallRayStart = { m_Transform.p.x + m_Capsule.radius * static_cast<float>(Cori::Math::Sign(m_Velocity.x)) + m_Velocity.x * timeStep, m_Transform.p.y + (m_Velocity.y * timeStep * static_cast<float>(m_WallJumpBufferTicks)) };
+		m_WallRayEnd = { m_WallRayStart.x + (m_Velocity.x * timeStep * static_cast<float>(m_WallJumpBufferTicks) / m_DoubleJumpRayModifierForWall), m_WallRayStart.y };
 
 		{
 			Cori::Physics::Vec2 rayTranslation = b2Sub(m_WallRayEnd, m_WallRayStart);
@@ -119,12 +124,18 @@ void Mover::OnTickUpdate(const float timeStep, MainCamera& mainCamera) {
 		mainCamera.AddTrauma(traumaToAdd);
 	}
 
-	if (!falling) {
+	if (m_ResetDistanceNextTick) {
 		m_LastFallingDistance = 0.0f;
+		m_ResetDistanceNextTick = false;
+	}
+
+	if (!falling) {
+		m_ResetDistanceNextTick = true;
 	}
 
 	//if (std::abs(m_Velocity.y) > 1.0f && (m_Jumping || m_WallJumping || m_DoubleJumping)) {
 	if (std::abs(m_Velocity.y) > 1.0f) {
+		//CORI_DEBUG("1");
 
 		bufferAscendingState = true;
 	}
@@ -143,7 +154,7 @@ void Mover::OnTickUpdate(const float timeStep, MainCamera& mainCamera) {
 			bufferAscendingState = false;
 			if (!m_OnGround) {
 				fsm.SetStateIfNotInState<States::Player::WallSlide>();
-				m_LastFallingDistance = 0.0f;
+				m_ResetDistanceNextTick = true;
 			}
 			m_WallJumpDirection = Cori::Math::Sign(plane.normal.x);
 			break;
@@ -441,13 +452,13 @@ void Mover::UpdateGui() {
 void Mover::DebugDraw(float test) {
 	if (m_CastResult.hit == false) {
 		b2Vec2 delta = m_Translation + m_Velocity * (1.0f / 60.0f);
-		Cori::Layer::debug_renderer.DrawLine(m_Origin + m_Velocity * (1.0f / 60.0f), m_Origin + delta, b2_colorPurple);
-		Cori::Layer::debug_renderer.DrawLine(m_Segment.point1 + delta, m_Segment.point2 + delta, b2_colorPurple);
+		Cori::Layer::m_DebugImGuiRenderer.DrawLine(m_Origin + m_Velocity * (1.0f / 60.0f), m_Origin + delta, b2_colorPurple);
+		Cori::Layer::m_DebugImGuiRenderer.DrawLine(m_Segment.point1 + delta, m_Segment.point2 + delta, b2_colorPurple);
 	}
 	else {
 		b2Vec2 delta = m_CastResult.fraction * m_Translation + m_Velocity * (1.0f / 60.0f);
-		Cori::Layer::debug_renderer.DrawLine(m_Origin + m_Velocity * (1.0f / 60.0f), m_Origin + delta, b2_colorPurple);
-		Cori::Layer::debug_renderer.DrawLine(m_Segment.point1 + delta, m_Segment.point2 + delta, b2_colorPlum);
+		Cori::Layer::m_DebugImGuiRenderer.DrawLine(m_Origin + m_Velocity * (1.0f / 60.0f), m_Origin + delta, b2_colorPurple);
+		Cori::Layer::m_DebugImGuiRenderer.DrawLine(m_Segment.point1 + delta, m_Segment.point2 + delta, b2_colorPlum);
 	}
 
 	int count = m_PlaneCount;
@@ -456,47 +467,47 @@ void Mover::DebugDraw(float test) {
 		b2Plane plane = m_Planes[i].plane;
 		b2Vec2 p1 = m_Transform.p + (plane.offset - m_Capsule.radius) * plane.normal;
 		b2Vec2 p2 = p1 + 0.1f * plane.normal;
-		Cori::Layer::debug_renderer.DrawPoint(p1, 5.0f, b2_colorYellow);
-		Cori::Layer::debug_renderer.DrawLine(p1, p2, b2_colorYellow);
+		Cori::Layer::m_DebugImGuiRenderer.DrawPoint(p1, 5.0f, b2_colorYellow);
+		Cori::Layer::m_DebugImGuiRenderer.DrawLine(p1, p2, b2_colorYellow);
 	}
 
 	b2HexColor color = m_OnGround ? b2_colorOrange : b2_colorAquamarine;
-	Cori::Layer::debug_renderer.DrawCapsuleFilled(m_P1, m_P2, m_Capsule.radius, color);
-	Cori::Layer::debug_renderer.DrawLine(m_Transform.p, m_Transform.p + m_Velocity, b2_colorPurple);
+	Cori::Layer::m_DebugImGuiRenderer.DrawCapsuleFilled(m_P1, m_P2, m_Capsule.radius, color);
+	Cori::Layer::m_DebugImGuiRenderer.DrawLine(m_Transform.p, m_Transform.p + m_Velocity, b2_colorPurple);
 
-	Cori::Layer::debug_renderer.DrawPoint(m_P1, 8.0f, b2_colorPink);
+	Cori::Layer::m_DebugImGuiRenderer.DrawPoint(m_P1, 8.0f, b2_colorPink);
 
-	Cori::Layer::debug_renderer.DrawLine(m_GroundRayStart, m_GroundRayEnd, b2_colorWhite);
+	Cori::Layer::m_DebugImGuiRenderer.DrawLine(m_GroundRayStart, m_GroundRayEnd, b2_colorWhite);
 
-	Cori::Layer::debug_renderer.DrawLine(m_WallRayStart, m_WallRayEnd, b2_colorWhite);
+	Cori::Layer::m_DebugImGuiRenderer.DrawLine(m_WallRayStart, m_WallRayEnd, b2_colorWhite);
 
-	Cori::Layer::debug_renderer.DrawText({ 1.1f, 21.9f }, fmt::color::white, "Velocity: " + Cori::Physics::Vec2ToString(m_Velocity));
-	Cori::Layer::debug_renderer.DrawText({ 1.1f, 21.6f }, fmt::color::white, "Velocity * ts: " + Cori::Physics::Vec2ToString({ m_Velocity.x * (1.0f / 60.0f), m_Velocity.y * (1.0f / 60.0f) }));
-	Cori::Layer::debug_renderer.DrawText({ 1.1f, 21.3f }, fmt::color::white, "Position: " + Cori::Physics::Vec2ToString(m_Transform.p));
+	Cori::Layer::m_DebugImGuiRenderer.DrawText({ 1.1f, 21.9f }, fmt::color::white, "Velocity: " + Cori::Physics::Vec2ToString(m_Velocity));
+	Cori::Layer::m_DebugImGuiRenderer.DrawText({ 1.1f, 21.6f }, fmt::color::white, "Velocity * ts: " + Cori::Physics::Vec2ToString({ m_Velocity.x * (1.0f / 60.0f), m_Velocity.y * (1.0f / 60.0f) }));
+	Cori::Layer::m_DebugImGuiRenderer.DrawText({ 1.1f, 21.3f }, fmt::color::white, "Position: " + Cori::Physics::Vec2ToString(m_Transform.p));
 
-	Cori::Layer::debug_renderer.DrawText({ 1.1f, 20.7f }, fmt::color::white, "m_JumpVariableTickTimer: " + std::to_string(m_JumpVariableTickTimer));
-	Cori::Layer::debug_renderer.DrawText({ 1.1f, 20.4f }, fmt::color::white, "m_JumpBufferTickTimer: " + std::to_string(m_JumpBufferTickTimer));
-	Cori::Layer::debug_renderer.DrawText({ 1.1f, 20.1f }, fmt::color::white, "m_JumpCoyoteTimeTickTimer: " + std::to_string(m_JumpCoyoteTimeTickTimer));
+	Cori::Layer::m_DebugImGuiRenderer.DrawText({ 1.1f, 20.7f }, fmt::color::white, "m_JumpVariableTickTimer: " + std::to_string(m_JumpVariableTickTimer));
+	Cori::Layer::m_DebugImGuiRenderer.DrawText({ 1.1f, 20.4f }, fmt::color::white, "m_JumpBufferTickTimer: " + std::to_string(m_JumpBufferTickTimer));
+	Cori::Layer::m_DebugImGuiRenderer.DrawText({ 1.1f, 20.1f }, fmt::color::white, "m_JumpCoyoteTimeTickTimer: " + std::to_string(m_JumpCoyoteTimeTickTimer));
 
-	Cori::Layer::debug_renderer.DrawText({ 1.1f, 19.5f }, fmt::color::white, "m_WallJumpBufferTickTimer: " + std::to_string(m_WallJumpBufferTickTimer));
-	Cori::Layer::debug_renderer.DrawText({ 1.1f, 19.2f }, fmt::color::white, "m_WallJumpVariableTickTimer: " + std::to_string(m_WallJumpVariableTickTimer));
+	Cori::Layer::m_DebugImGuiRenderer.DrawText({ 1.1f, 19.5f }, fmt::color::white, "m_WallJumpBufferTickTimer: " + std::to_string(m_WallJumpBufferTickTimer));
+	Cori::Layer::m_DebugImGuiRenderer.DrawText({ 1.1f, 19.2f }, fmt::color::white, "m_WallJumpVariableTickTimer: " + std::to_string(m_WallJumpVariableTickTimer));
 
-	Cori::Layer::debug_renderer.DrawText({ 1.1f, 18.6f }, fmt::color::white, "m_DoubleJumpVariableTickTimer: " + std::to_string(m_DoubleJumpVariableTickTimer));
+	Cori::Layer::m_DebugImGuiRenderer.DrawText({ 1.1f, 18.6f }, fmt::color::white, "m_DoubleJumpVariableTickTimer: " + std::to_string(m_DoubleJumpVariableTickTimer));
 
-	Cori::Layer::debug_renderer.DrawText({ 1.1f, 18.0f }, fmt::color::white, "m_NearGround: " + Cori::Logger::BoolAlpha(m_NearGround));
-	Cori::Layer::debug_renderer.DrawText({ 1.1f, 17.7f }, fmt::color::white, "m_NearWall: " + Cori::Logger::BoolAlpha(m_NearWall));
+	Cori::Layer::m_DebugImGuiRenderer.DrawText({ 1.1f, 18.0f }, fmt::color::white, "m_NearGround: " + Cori::Logger::BoolAlpha(m_NearGround));
+	Cori::Layer::m_DebugImGuiRenderer.DrawText({ 1.1f, 17.7f }, fmt::color::white, "m_NearWall: " + Cori::Logger::BoolAlpha(m_NearWall));
 
-	Cori::Layer::debug_renderer.DrawText({ 1.1f, 17.1f }, fmt::color::white, "m_Gravity: " + std::to_string(m_Gravity));
+	Cori::Layer::m_DebugImGuiRenderer.DrawText({ 1.1f, 17.1f }, fmt::color::white, "m_Gravity: " + std::to_string(m_Gravity));
 
-	Cori::Layer::debug_renderer.DrawText({ 1.1f, 16.5f }, fmt::color::white, "m_Jumping: " + Cori::Logger::BoolAlpha(m_Jumping));
-	Cori::Layer::debug_renderer.DrawText({ 1.1f, 16.2f }, fmt::color::white, "m_WallJumping: " + Cori::Logger::BoolAlpha(m_WallJumping));
-	Cori::Layer::debug_renderer.DrawText({ 1.1f, 15.9f }, fmt::color::white, "m_DoubleJumping: " + Cori::Logger::BoolAlpha(m_DoubleJumping));
-	Cori::Layer::debug_renderer.DrawText({ 1.1f, 15.6f }, fmt::color::white, "m_CanWallJump: " + Cori::Logger::BoolAlpha(m_CanWallJump));
-	Cori::Layer::debug_renderer.DrawText({ 1.1f, 15.3f }, fmt::color::white, "m_CanDoubleJump: " + Cori::Logger::BoolAlpha(m_CanDoubleJump));
-	Cori::Layer::debug_renderer.DrawText({ 1.1f, 15.0f }, fmt::color::white, "m_OnGround: " + Cori::Logger::BoolAlpha(m_OnGround));
-	Cori::Layer::debug_renderer.DrawText({ 1.1f, 14.7f }, fmt::color::white, "m_WallJumpDirection: " + std::to_string(m_WallJumpDirection));
+	Cori::Layer::m_DebugImGuiRenderer.DrawText({ 1.1f, 16.5f }, fmt::color::white, "m_Jumping: " + Cori::Logger::BoolAlpha(m_Jumping));
+	Cori::Layer::m_DebugImGuiRenderer.DrawText({ 1.1f, 16.2f }, fmt::color::white, "m_WallJumping: " + Cori::Logger::BoolAlpha(m_WallJumping));
+	Cori::Layer::m_DebugImGuiRenderer.DrawText({ 1.1f, 15.9f }, fmt::color::white, "m_DoubleJumping: " + Cori::Logger::BoolAlpha(m_DoubleJumping));
+	Cori::Layer::m_DebugImGuiRenderer.DrawText({ 1.1f, 15.6f }, fmt::color::white, "m_CanWallJump: " + Cori::Logger::BoolAlpha(m_CanWallJump));
+	Cori::Layer::m_DebugImGuiRenderer.DrawText({ 1.1f, 15.3f }, fmt::color::white, "m_CanDoubleJump: " + Cori::Logger::BoolAlpha(m_CanDoubleJump));
+	Cori::Layer::m_DebugImGuiRenderer.DrawText({ 1.1f, 15.0f }, fmt::color::white, "m_OnGround: " + Cori::Logger::BoolAlpha(m_OnGround));
+	Cori::Layer::m_DebugImGuiRenderer.DrawText({ 1.1f, 14.7f }, fmt::color::white, "m_WallJumpDirection: " + std::to_string(m_WallJumpDirection));
 
-	Cori::Layer::debug_renderer.DrawText({ 1.1f, 14.1f }, fmt::color::white, "Current Player State: " + std::string(m_Player.GetComponents<Cori::Components::Entity::StateMachine>().GetCurrentState()->GetDebugName()));
+	Cori::Layer::m_DebugImGuiRenderer.DrawText({ 1.1f, 14.1f }, fmt::color::white, "Current Player State: " + std::string(m_Player.GetComponents<Cori::Components::Entity::StateMachine>().GetCurrentState()->GetDebugName()));
 }
 
 void Mover::SolveMove(const float timeStep, float throttle) {
@@ -672,7 +683,7 @@ void Mover::SaveSettings(const std::filesystem::path& filepath) {
 	currentParams.minSpeedForRunState = m_MinSpeedForRunState;
 
 	if (auto result = Cori::JsonSerializer::Save(currentParams, filepath); !result) {
-		CORI_INFO_TAGGED({ "Mover" }, "Failed to save mover settings to: {} : {}", filepath.string(), result.error());
+		CORI_INFO_TAGGED({ "Mover" }, "Failed to save mover settings to: {} : {}", filepath.string(), result.error().what());
 	}
 	else {
 		CORI_INFO_TAGGED({ "Mover" }, "Mover settings saved successfully to: {} ", filepath.string());
@@ -683,7 +694,7 @@ void Mover::LoadSettings(const std::filesystem::path& filepath) {
 	auto loadedParamsResult = Cori::JsonSerializer::Load<Params>(filepath);
 
 	if (!loadedParamsResult) {
-		CORI_INFO_TAGGED({ "Mover" }, "Failed to load mover settings from: {} : {}", filepath.string(), loadedParamsResult.error());
+		CORI_INFO_TAGGED({ "Mover" }, "Failed to load mover settings from: {} : {}", filepath.string(), loadedParamsResult.error().what());
 		return;
 	}
 

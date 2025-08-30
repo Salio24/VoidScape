@@ -46,7 +46,8 @@ project(VoidScape)
         #add_compile_options(-fsanitize=address)
     endif()
 	
-	add_executable(${EXECUTABLE_NAME} ${MY_SOURCES})
+	add_executable(${EXECUTABLE_NAME} ${MY_SOURCES}
+            src/Player/ParticleAnimation.hpp)
 
     target_include_directories(${EXECUTABLE_NAME} PRIVATE
             ${PROJECT_SOURCE_DIR}/thirdparty/PerlinNoise
