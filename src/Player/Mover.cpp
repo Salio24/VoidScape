@@ -181,7 +181,7 @@ void Mover::OnTickUpdate(const float timeStep, MainCamera& mainCamera) {
 				m_Velocity.y = -m_WallSlideSpeed;
 			}
 			throttle -= 1.0f;
-			if (m_OnGround && std::abs(m_Velocity.x) > 0.0f) {
+			if (m_OnGround && std::abs(m_Velocity.x) > m_MinSpeedForRunState) {
 				fsm.SetStateIfNotInState<States::Player::Run>();
 			}
 		}
@@ -192,7 +192,7 @@ void Mover::OnTickUpdate(const float timeStep, MainCamera& mainCamera) {
 				m_Velocity.y = -m_WallSlideSpeed;
 			}
 			throttle += 1.0f;
-			if (m_OnGround && std::abs(m_Velocity.x) > 0.0f) {
+			if (m_OnGround && std::abs(m_Velocity.x) > m_MinSpeedForRunState) {
 				fsm.SetStateIfNotInState<States::Player::Run>();
 			}
 		}

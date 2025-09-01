@@ -6,7 +6,6 @@
 class Mover {
 public:
 	struct Params {
-
 		float jumpStartSpeed{ 10.0f };
 		float jumpVariableSpeed{ 1.0f };
 		int   jumpVariableTicks{ 10 };

@@ -25,12 +25,12 @@ static void TickParticleUpdate(const Cori::Entity& player) {
 					auto& pt = landingParticles->GetComponents<Cori::Components::Entity::Transform>();
 					if (oneShot) {
 						auto& pa = landingParticles->GetComponents<Cori::Components::Entity::QuadAnimator>();
-						pa.StartSingle(Animations::Player::Particles::Landing);
+						pa.StartSingle(Animations::Player::Particles::LandingO);
 						oneShot = false;
 					} else {
 						pt.SetFrozenState(true);
 						auto& pa = landingParticles->GetComponents<Cori::Components::Entity::QuadAnimator>();
-						bool running = pa.UpdateSingle(Animations::Player::Particles::Landing);
+						bool running = pa.UpdateSingle(Animations::Player::Particles::LandingO);
 						if (!running) {
 							landingParticles->SetActive(false);
 							pt.SetFrozenState(false);
@@ -52,13 +52,13 @@ static void TickParticleUpdate(const Cori::Entity& player) {
 				auto& pt = jumpingParticles->GetComponents<Cori::Components::Entity::Transform>();
 				if (oneShot) {
 					auto& pa = jumpingParticles->GetComponents<Cori::Components::Entity::QuadAnimator>();
-					pa.StartSingle(Animations::Player::Particles::Jump);
+					pa.StartSingle(Animations::Player::Particles::JumpO);
 					oneShot = false;
 				}
 				else {
 					pt.SetFrozenState(true);
 					auto& pa = jumpingParticles->GetComponents<Cori::Components::Entity::QuadAnimator>();
-					bool running = pa.UpdateSingle(Animations::Player::Particles::Jump);
+					bool running = pa.UpdateSingle(Animations::Player::Particles::JumpO);
 					if (!running) {
 						jumpingParticles->SetActive(false);
 						pt.SetFrozenState(false);
@@ -77,13 +77,13 @@ static void TickParticleUpdate(const Cori::Entity& player) {
 				auto& pt = wallJumpParticles->GetComponents<Cori::Components::Entity::Transform>();
 				if (oneShot) {
 					auto& pa = wallJumpParticles->GetComponents<Cori::Components::Entity::QuadAnimator>();
-					pa.StartSingle(Animations::Player::Particles::WallJump);
+					pa.StartSingle(Animations::Player::Particles::WallJumpO);
 					oneShot = false;
 				}
 				else {
 					pt.SetFrozenState(true);
 					auto& pa = wallJumpParticles->GetComponents<Cori::Components::Entity::QuadAnimator>();
-					bool running = pa.UpdateSingle(Animations::Player::Particles::WallJump);
+					bool running = pa.UpdateSingle(Animations::Player::Particles::WallJumpO);
 					if (!running) {
 						wallJumpParticles->SetActive(false);
 						pt.SetFrozenState(false);
@@ -102,13 +102,13 @@ static void TickParticleUpdate(const Cori::Entity& player) {
 				auto& pt = doubleJumpParticles->GetComponents<Cori::Components::Entity::Transform>();
 				if (oneShot) {
 					auto& pa = doubleJumpParticles->GetComponents<Cori::Components::Entity::QuadAnimator>();
-					pa.StartSingle(Animations::Player::Particles::DoubleJump);
+					pa.StartSingle(Animations::Player::Particles::DoubleJumpO);
 					oneShot = false;
 				}
 				else {
 					pt.SetFrozenState(true);
 					auto& pa = doubleJumpParticles->GetComponents<Cori::Components::Entity::QuadAnimator>();
-					bool running = pa.UpdateSingle(Animations::Player::Particles::DoubleJump);
+					bool running = pa.UpdateSingle(Animations::Player::Particles::DoubleJumpO);
 					if (!running) {
 						doubleJumpParticles->SetActive(false);
 						pt.SetFrozenState(false);
@@ -124,10 +124,4 @@ static void TickParticleUpdate(const Cori::Entity& player) {
 	else {
 		CORI_ERROR("Failed to retrieve child entity: Movement Particles Independent Root. Error: {}", particles.error().what());
 	}
-
-
-
-
-
-
 }

@@ -3,6 +3,7 @@
 #include "Player/States.hpp"
 #include "Tags.hpp"
 #include "Player/ParticleAnimation.hpp"
+#include "Player/AnimationPacks.hpp"
 
 static bool manualStep = false;
 
@@ -18,15 +19,17 @@ void LevelLayer::OnAttach() {
 	int screenWidth = Cori::Application::GetWindow().GetWidth();
 	int screenHeight = Cori::Application::GetWindow().GetHeight();
 
-	ActiveScene.GetActiveCamera().CreateOrthoCamera(0, static_cast<float>(screenWidth) / static_cast<float>(screenHeight / 360.0f), 0, 360, -50, 0);
+	ActiveScene.GetActiveCamera().CreateOrthoCamera(0, static_cast<float>(screenWidth) / (screenHeight / 360.0f), 0, 360, -50, 0);
 
 	m_MainCamera.SetWorldBound({{16, 16}, {1264, 784}});
 
 	// player creation
 	m_Player = ActiveScene.CreateEntity("Player Root", Tags::Character);
 
+	Cori::AssetManager::PreloadAnimationPacks({AnimationPacks::PlayerMovement});
+
 	m_Player.AddComponent<Cori::Components::Entity::QuadRenderer>();
-	m_Player.AddComponent<Cori::Components::Entity::QuadAnimator>("../../assets/textures/player/PlayerSheet.json", m_Player, 1.0f / 60.0f, AnimatorNames::PlayerMainAnimator);
+	m_Player.AddComponent<Cori::Components::Entity::QuadAnimatorNew>(m_Player);
 	m_Player.AddComponent<Cori::Components::Entity::Spawnpoint>(glm::vec2{ 160.0f, 160.0f });
 	{
 		auto& transform = m_Player.GetComponents<Cori::Components::Entity::Transform>();
@@ -93,7 +96,6 @@ void LevelLayer::OnAttach() {
 	}
 
 
-
 	auto& fsm = m_Player.AddComponent <Cori::Components::Entity::StateMachine>(m_Player);
 
 	fsm.Register<States::Player::Idle>();
@@ -146,34 +148,7 @@ void LevelLayer::OnUpdate(const Cori::GameTimer& gameTimer) {
 }
 
 void LevelLayer::OnTickUpdate(const float timeStep) {
-	if (!manualStep) {
-		m_Mover->OnTickUpdate(timeStep, m_MainCamera);
-	}
-	else {
-		static bool oneshot = true;
-		if (Cori::Input::IsKeyPressed(Cori::CORI_KEY_K)) {
-			if (oneshot) {
-				m_Mover->OnTickUpdate(timeStep, m_MainCamera);
-				oneshot = false;
-			}
-		}
-		else {
-			oneshot = true;
-		}
-	}
-
-	static bool oneshot2 = true;
-
-	if (Cori::Input::IsKeyPressed(Cori::CORI_KEY_J)) {
-		if (oneshot2) {
-			manualStep = !manualStep;
-			oneshot2 = false;
-		}
-	}
-	else {
-		oneshot2 = true;
-	}
-
+	m_Mover->OnTickUpdate(timeStep, m_MainCamera);
 	TickParticleUpdate(m_Player);
 
 	glm::vec2 playerPos = m_Player.GetComponents<Cori::Components::Entity::Transform>().GetLocalPosition();
@@ -195,7 +170,9 @@ void LevelLayer::OnImGuiRender(const double deltaTime) {
 
 	ImGui::Checkbox("Box2d debug draw", &m_PhysicsDebugDraw);
 	ImGui::Checkbox("Mover debug draw", &m_MoverDebugDraw);
-	ImGui::Checkbox("Manual Step(J - enable/disable, K - step)", &manualStep);
+	if (ImGui::Checkbox("Manual Step(disable, K - step)", &manualStep)) {
+		Cori::Application::SetManualTickStep(manualStep);
+	}
 
 	if (ImGui::Button("Add dynamic box")) {
 		auto ent = ActiveScene.CreateEntity("Dynamic Box", Tags::ForTest);
