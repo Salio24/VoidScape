@@ -20,15 +20,6 @@ namespace Animations {
 		inline constexpr uint32_t JumpMid = 6;
 
 		namespace Particles {
-			inline constexpr Cori::AnimationDescriptor RunFrontO(3, true, AnimatorNames::PlayerParticleAnimator);
-			inline constexpr Cori::AnimationDescriptor RunBackO(4, true, AnimatorNames::PlayerParticleAnimator);
-
-			inline constexpr Cori::AnimationDescriptor JumpO(7, false, AnimatorNames::PlayerParticleAnimator);
-			inline constexpr Cori::AnimationDescriptor LandingO(8, false, AnimatorNames::PlayerParticleAnimator);
-			inline constexpr Cori::AnimationDescriptor WallJumpO(14, false, AnimatorNames::PlayerParticleAnimator);
-			inline constexpr Cori::AnimationDescriptor WallSlideO(15, true, AnimatorNames::PlayerParticleAnimator);
-
-			inline constexpr Cori::AnimationDescriptor DoubleJumpO(10, false, AnimatorNames::PlayerParticleAnimator);
 
 			inline constexpr uint32_t RunFront = 3;
 			inline constexpr uint32_t RunBack = 4;
