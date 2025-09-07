@@ -26,10 +26,10 @@ void LevelLoader::LoadLevel(Cori::SceneHandle& scene, const std::string& path) {
 
 				auto image = Cori::Image::Create(tileset.getImagePath());
 				auto atlas = Cori::SpriteAtlas::Create(tileset.getName(), image, glm::ivec2{tileSize.x, tileSize.y});
-				if (atlas) {
-					SpriteAtlases.push_back(atlas.value());
+				if (atlas->GetSuccessStatus()) {
+					SpriteAtlases.push_back(atlas);
 				} else {
-					CORI_ERROR_TAGGED({ "Level Loader" }, "Failed to load a tileset from a tmx file. Tmx path: '{}', Tileset path: '{}'. Error: {}", path, tileset.getImagePath(), atlas.error().what());
+					CORI_ERROR_TAGGED({ "Level Loader" }, "Failed to load a tileset from a tmx file. Tmx path: '{}', Tileset path: '{}'", path, tileset.getImagePath());
 				}
 
 				GDIs.emplace_back(tileset.getFirstGID(), tileset.getLastGID());

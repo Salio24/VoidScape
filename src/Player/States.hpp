@@ -8,7 +8,7 @@ namespace States {
 		class Run final : public Cori::State {
 		public:
 			void OnEnter(Cori::Entity& player) override {
-				const auto pack = Cori::AssetManager::GetAnimationPack(AnimationPacks::PlayerMovement);
+				const auto pack = Cori::AssetManager::Get(AnimationPacks::PlayerMovement);
 
 				auto& ar = player.GetComponents<Cori::Components::Entity::QuadAnimatorNew>();
 				const auto anim = std::make_pair(pack->GetAnimation(Animations::Player::Run), Cori::Graphics::Animation::PlayParams{ .LoopedInSequence = true });
@@ -18,7 +18,7 @@ namespace States {
 				if (particles1) {
 					particles1->SetActive(true);
 
-					const auto FXpack = Cori::AssetManager::GetAnimationPack(AnimationPacks::PlayerMovementFX);
+					const auto FXpack = Cori::AssetManager::Get(AnimationPacks::PlayerMovementFX);
 					auto& qa = particles1->GetComponents<Cori::Components::Entity::QuadAnimatorNew>();
 					const auto FXanim = std::make_pair(FXpack->GetAnimation(Animations::Player::Particles::RunFront), Cori::Graphics::Animation::PlayParams{ .LoopedInSequence = true });
 					qa.Play(FXanim);
@@ -33,7 +33,8 @@ namespace States {
 
 					particles2->SetActive(true);
 
-					const auto FXpack = Cori::AssetManager::GetAnimationPack(AnimationPacks::PlayerMovementFX);
+					//const auto FXpack = Cori::AssetManager::GetAnimationPack(AnimationPacks::PlayerMovementFX);
+					const auto FXpack = Cori::AssetManager::Get(AnimationPacks::PlayerMovementFX);
 					auto& qa = particles2->GetComponents<Cori::Components::Entity::QuadAnimatorNew>();
 					const auto FXanim = std::make_pair(FXpack->GetAnimation(Animations::Player::Particles::RunBack), Cori::Graphics::Animation::PlayParams{ .LoopedInSequence = true });
 					qa.Play(FXanim);
@@ -89,7 +90,7 @@ namespace States {
 		class Idle final : public Cori::State {
 		public:
 			void OnEnter(Cori::Entity& player) override {
-				const auto pack = Cori::AssetManager::GetAnimationPack(AnimationPacks::PlayerMovement);
+				const auto pack = Cori::AssetManager::Get(AnimationPacks::PlayerMovement);
 
 				auto& ar = player.GetComponents<Cori::Components::Entity::QuadAnimatorNew>();
 				const auto anim = std::make_pair(pack->GetAnimation(Animations::Player::Idle), Cori::Graphics::Animation::PlayParams{ .LoopedInSequence = true });
@@ -113,7 +114,7 @@ namespace States {
 		class Jump final : public Cori::State {
 		public:
 			void OnEnter(Cori::Entity& player) override {
-				const auto pack = Cori::AssetManager::GetAnimationPack(AnimationPacks::PlayerMovement);
+				const auto pack = Cori::AssetManager::Get(AnimationPacks::PlayerMovement);
 
 				auto& ar = player.GetComponents<Cori::Components::Entity::QuadAnimatorNew>();
 				const auto jumpStart = std::make_pair(pack->GetAnimation(Animations::Player::JumpStart), Cori::Graphics::Animation::PlayParams{ .LoopedInSequence = false });
@@ -128,7 +129,7 @@ namespace States {
 					if (jumpingParticles) {
 						jumpingParticles->SetActive(true);
 
-						const auto FXpack = Cori::AssetManager::GetAnimationPack(AnimationPacks::PlayerMovementFX);
+						const auto FXpack = Cori::AssetManager::Get(AnimationPacks::PlayerMovementFX);
 						auto& qa = jumpingParticles->GetComponents<Cori::Components::Entity::QuadAnimatorNew>();
 						const auto anim = std::make_pair(FXpack->GetAnimation(Animations::Player::Particles::Jump), Cori::Graphics::Animation::PlayParams{.LoopedInSequence = false});
 						qa.Play(anim);
@@ -171,7 +172,7 @@ namespace States {
 		class Fall final : public Cori::State {
 		public:
 			void OnEnter(Cori::Entity& player) override {
-				const auto pack = Cori::AssetManager::GetAnimationPack(AnimationPacks::PlayerMovement);
+				const auto pack = Cori::AssetManager::Get(AnimationPacks::PlayerMovement);
 
 				auto& ar = player.GetComponents<Cori::Components::Entity::QuadAnimatorNew>();
 				const auto anim = std::make_pair(pack->GetAnimation(Animations::Player::Fall), Cori::Graphics::Animation::PlayParams{ .LoopedInSequence = true });
@@ -194,7 +195,7 @@ namespace States {
 						if (landingParticles) {
 							landingParticles->SetActive(true);
 
-							const auto FXpack = Cori::AssetManager::GetAnimationPack(AnimationPacks::PlayerMovementFX);
+							const auto FXpack = Cori::AssetManager::Get(AnimationPacks::PlayerMovementFX);
 							auto& qa = landingParticles->GetComponents<Cori::Components::Entity::QuadAnimatorNew>();
 							const auto FXanim = std::make_pair(FXpack->GetAnimation(Animations::Player::Particles::Landing), Cori::Graphics::Animation::PlayParams{.LoopedInSequence = false});
 							qa.Play(FXanim);
@@ -231,7 +232,7 @@ namespace States {
 		class DoubleJump final : public Cori::State {
 		public:
 			void OnEnter(Cori::Entity& player) override {
-				const auto pack = Cori::AssetManager::GetAnimationPack(AnimationPacks::PlayerMovement);
+				const auto pack = Cori::AssetManager::Get(AnimationPacks::PlayerMovement);
 
 				auto& ar = player.GetComponents<Cori::Components::Entity::QuadAnimatorNew>();
 				const auto anim = std::make_pair(pack->GetAnimation(Animations::Player::DoubleJump), Cori::Graphics::Animation::PlayParams{ .LoopedInSequence = false });
@@ -246,7 +247,7 @@ namespace States {
 						t.SetDetachedState(true);
 						doubleJumpParticles->SetActive(true);
 
-						const auto FXpack = Cori::AssetManager::GetAnimationPack(AnimationPacks::PlayerMovementFX);
+						const auto FXpack = Cori::AssetManager::Get(AnimationPacks::PlayerMovementFX);
 						auto& qa = doubleJumpParticles->GetComponents<Cori::Components::Entity::QuadAnimatorNew>();
 						const auto FXanim = std::make_pair(FXpack->GetAnimation(Animations::Player::Particles::DoubleJump), Cori::Graphics::Animation::PlayParams{.LoopedInSequence = false});
 						qa.Play(FXanim);
@@ -283,7 +284,7 @@ namespace States {
 		class WallJump final : public Cori::State {
 		public:
 			void OnEnter(Cori::Entity& player) override {
-				const auto pack = Cori::AssetManager::GetAnimationPack(AnimationPacks::PlayerMovement);
+				const auto pack = Cori::AssetManager::Get(AnimationPacks::PlayerMovement);
 
 				auto& ar = player.GetComponents<Cori::Components::Entity::QuadAnimatorNew>();
 				const auto anim = std::make_pair(pack->GetAnimation(Animations::Player::WallJump), Cori::Graphics::Animation::PlayParams{ .LoopedInSequence = false });
@@ -295,7 +296,7 @@ namespace States {
 					if (wallJumpParticles) {
 						wallJumpParticles->SetActive(true);
 
-						const auto FXpack = Cori::AssetManager::GetAnimationPack(AnimationPacks::PlayerMovementFX);
+						const auto FXpack = Cori::AssetManager::Get(AnimationPacks::PlayerMovementFX);
 						auto& qa = wallJumpParticles->GetComponents<Cori::Components::Entity::QuadAnimatorNew>();
 						const auto FXanim = std::make_pair(FXpack->GetAnimation(Animations::Player::Particles::WallJump), Cori::Graphics::Animation::PlayParams{.LoopedInSequence = false});
 						qa.Play(FXanim);
@@ -339,7 +340,7 @@ namespace States {
 		class WallSlide final : public Cori::State {
 		public:
 			void OnEnter(Cori::Entity& player) override {
-				const auto pack = Cori::AssetManager::GetAnimationPack(AnimationPacks::PlayerMovement);
+				const auto pack = Cori::AssetManager::Get(AnimationPacks::PlayerMovement);
 
 				auto& ar = player.GetComponents<Cori::Components::Entity::QuadAnimatorNew>();
 				const auto anim = std::make_pair(pack->GetAnimation(Animations::Player::WallSlide), Cori::Graphics::Animation::PlayParams{ .LoopedInSequence = true });
@@ -349,7 +350,7 @@ namespace States {
 				if (particles) {
 					particles->SetActive(true);
 
-					const auto FXpack = Cori::AssetManager::GetAnimationPack(AnimationPacks::PlayerMovementFX);
+					const auto FXpack = Cori::AssetManager::Get(AnimationPacks::PlayerMovementFX);
 					auto& qa = particles->GetComponents<Cori::Components::Entity::QuadAnimatorNew>();
 					const auto FXanim = std::make_pair(FXpack->GetAnimation(Animations::Player::Particles::WallSlide), Cori::Graphics::Animation::PlayParams{ .LoopedInSequence = true });
 					qa.Play(FXanim);
@@ -385,7 +386,7 @@ namespace States {
 		class Ascending final : public Cori::State {
 		public:
 			void OnEnter(Cori::Entity& player) override {
-				const auto pack = Cori::AssetManager::GetAnimationPack(AnimationPacks::PlayerMovement);
+				const auto pack = Cori::AssetManager::Get(AnimationPacks::PlayerMovement);
 
 				auto& ar = player.GetComponents<Cori::Components::Entity::QuadAnimatorNew>();
 				const auto anim = std::make_pair(pack->GetAnimation(Animations::Player::JumpMid), Cori::Graphics::Animation::PlayParams{ .LoopedInSequence = true });

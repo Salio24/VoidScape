@@ -7,7 +7,7 @@
 
 static bool manualStep = false;
 
-LevelLayer::LevelLayer() : Cori::Layer("Level Layer") {
+LevelLayer::LevelLayer() : Layer("Level Layer") {
 
 }
 
@@ -19,14 +19,14 @@ void LevelLayer::OnAttach() {
 	int screenWidth = Cori::Application::GetWindow().GetWidth();
 	int screenHeight = Cori::Application::GetWindow().GetHeight();
 
-	ActiveScene.GetActiveCamera().CreateOrthoCamera(0, static_cast<float>(screenWidth) / (screenHeight / 360.0f), 0, 360, -50, 0);
+	ActiveScene.GetActiveCamera().CreateOrthoCamera(0, static_cast<float>(screenWidth) / (static_cast<float>(screenHeight) / 360.0f), 0, 360, -50, 0);
 
 	m_MainCamera.SetWorldBound({{16, 16}, {1264, 784}});
 
 	// player creation
 	m_Player = ActiveScene.CreateEntity(EntityNames::PlayerRoot, Tags::Character);
 
-	Cori::AssetManager::PreloadAnimationPacks({AnimationPacks::PlayerMovement, AnimationPacks::PlayerMovementFX});
+	Cori::AssetManager::Preload({AnimationPacks::PlayerMovement, AnimationPacks::PlayerMovementFX});
 
 	m_Player.AddComponent<Cori::Components::Entity::QuadRenderer>();
 	m_Player.AddComponent<Cori::Components::Entity::QuadAnimatorNew>(m_Player);
@@ -143,8 +143,6 @@ void LevelLayer::OnUpdate(const Cori::GameTimer& gameTimer) {
 	//Cori::Renderer2D::SubmitScreenSpaceColoredQuad(ActiveScene.GetActiveCamera().GetSize() / 2.0f, {0.2f, 100}, {1, 1, 1});
 	//Cori::Renderer2D::SubmitScreenSpaceColoredQuad(ActiveScene.GetActiveCamera().GetSize() / 2.0f, {100, 0.2f}, {1, 1, 1});
 
-	Cori::Renderer2D::Test();
-
 	m_Mover->OnUpdate(gameTimer.GetDeltaTime(), gameTimer.GetTickAlpha());
 	m_MainCamera.OnUpdate(gameTimer, ActiveScene.GetActiveCamera());
 }
@@ -231,7 +229,7 @@ void LevelLayer::OnEvent(Cori::Event& event) {
 	Cori::EventDispatcher dispatcher(event);
 
 	dispatcher.Dispatch<Cori::WindowResizeEvent>([this](const Cori::WindowResizeEvent& e) -> bool {
-		ActiveScene.GetActiveCamera().CreateOrthoCamera(0, static_cast<float>(e.GetWidth()) / static_cast<float>(e.GetHeight() / 360.0f), 0, 360, -50, 0);
+		ActiveScene.GetActiveCamera().CreateOrthoCamera(0, static_cast<float>(e.GetWidth()) / static_cast<float>(e.GetHeight()) / 360.0f, 0, 360, -50, 0);
 			return true;
 		});
 
