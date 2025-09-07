@@ -30,46 +30,53 @@ project(VoidScape)
         set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Release>:>")
     endif ()
 
+    if (NOT (
+            (EXISTS "${PROJECT_SOURCE_DIR}/thirdparty/PerlinNoise/LICENSE") AND
+            (EXISTS "${PROJECT_SOURCE_DIR}/CoriEngine/CMakeLists.txt")
+            ))
+        message(FATAL_ERROR "VoidScape thirdparty dependencies not found. Are you sure you cloned the repo recursively? Try running 'git submodule update --init --recursive' to download dependencies.")
+    endif()
+
     set(CMAKE_CXX_STANDARD 23)
 
     add_compile_options(-mavx2)
 
     add_subdirectory(${PROJECT_SOURCE_DIR}/CoriEngine)
 
-	set(EXECUTABLE_NAME ${PROJECT_NAME})
-	
-	set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/bin/$<CONFIG>)
-	file(GLOB_RECURSE MY_SOURCES CONFIGURE_DEPENDS ${PROJECT_SOURCE_DIR}/src/*.cpp)
+    set(EXECUTABLE_NAME ${PROJECT_NAME})
 
-	if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/bin/$<CONFIG>)
+    file(GLOB_RECURSE MY_SOURCES CONFIGURE_DEPENDS ${PROJECT_SOURCE_DIR}/src/*.cpp)
+
+    if(CMAKE_BUILD_TYPE STREQUAL "Debug")
         add_compile_options(-g)
         #add_compile_options(-fsanitize=address)
     endif()
-	
-	add_executable(${EXECUTABLE_NAME} ${MY_SOURCES})
+
+    add_executable(${EXECUTABLE_NAME} ${MY_SOURCES})
 
     target_include_directories(${EXECUTABLE_NAME} PRIVATE
             ${PROJECT_SOURCE_DIR}/thirdparty/PerlinNoise
             ${PROJECT_SOURCE_DIR}/src
         )
 
-	
-	#target_compile_options(${EXECUTABLE_NAME} PRIVATE -Wall -Wextra)
+
+    #target_compile_options(${EXECUTABLE_NAME} PRIVATE -Wall -Wextra)
     target_compile_options(${EXECUTABLE_NAME} PRIVATE -w)
-	
-	target_compile_definitions(${EXECUTABLE_NAME} PRIVATE
+
+    target_compile_definitions(${EXECUTABLE_NAME} PRIVATE
         $<$<CONFIG:Debug>:DEBUG_BUILD>
         $<$<CONFIG:RelWithDebInfo>:DEBUG_BUILD>
         $<$<CONFIG:Release>:RELEASE_BUILD>
     )
-	
-	target_link_libraries(${EXECUTABLE_NAME} PRIVATE CoriEngine_static)
-	
-	set(ENGINE_ASSETS_SOURCE_DIR "${PROJECT_SOURCE_DIR}/CoriEngine/CoriEngine/assets")
+
+    target_link_libraries(${EXECUTABLE_NAME} PRIVATE CoriEngine_static)
+
+    set(ENGINE_ASSETS_SOURCE_DIR "${PROJECT_SOURCE_DIR}/CoriEngine/CoriEngine/assets")
 
     set(ENGINE_ASSETS_DEST_DIR "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/assets/engine")
-	
-	 # copy asset files from engine dir
+
+    # copy asset files from engine dir
     if(EXISTS "${ENGINE_ASSETS_SOURCE_DIR}")
         file(GLOB_RECURSE ENGINE_ASSET_FILES
                 FOLLOW_SYMLINKS
