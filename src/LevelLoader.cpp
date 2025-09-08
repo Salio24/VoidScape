@@ -1,6 +1,6 @@
 #include "LevelLoader.hpp"
 
-void LevelLoader::LoadLevel(Cori::SceneHandle& scene, const std::string& path) {
+void LevelLoader::LoadLevel(Cori::World::SceneHandle& scene, const std::string& path) {
 	// temp vvv
 	int blockSize = CORI_PIXELS_PER_METER;
 
@@ -8,7 +8,7 @@ void LevelLoader::LoadLevel(Cori::SceneHandle& scene, const std::string& path) {
 
 	std::vector<std::pair<uint32_t, uint32_t>> GDIs;
 
-	std::vector<std::shared_ptr<Cori::SpriteAtlas>> SpriteAtlases;
+	std::vector<std::shared_ptr<Cori::Graphics::SpriteAtlas>> SpriteAtlases;
 
 	if (map.load(path)) {
 		auto gridSize = map.getTileSize();
@@ -24,8 +24,8 @@ void LevelLoader::LoadLevel(Cori::SceneHandle& scene, const std::string& path) {
 			for (const auto& tileset : tilesets) {
 				auto tileSize = tileset.getTileSize();
 
-				auto image = Cori::Image::Create(tileset.getImagePath());
-				auto atlas = Cori::SpriteAtlas::Create(tileset.getName(), image, glm::ivec2{tileSize.x, tileSize.y});
+				auto image = Cori::Graphics::Image::Create(tileset.getImagePath());
+				auto atlas = Cori::Graphics::SpriteAtlas::Create(tileset.getName(), image, glm::ivec2{tileSize.x, tileSize.y});
 				if (atlas->GetSuccessStatus()) {
 					SpriteAtlases.push_back(atlas);
 				} else {
@@ -73,8 +73,8 @@ void LevelLoader::LoadLevel(Cori::SceneHandle& scene, const std::string& path) {
 								static uint32_t count = 1;
 
 								auto tile = scene.CreateEntity("Tile " + std::to_string(count), Tags::StaticTile);
-								tile.AddComponent<Cori::Components::Entity::QuadRenderer>(glm::vec2{ blockSize / 2.0f, blockSize / 2.0f }, SpriteAtlases.at(tilesetID)->GetTexture(), SpriteAtlases.at(tilesetID)->GetSpriteUVsAtIndex(tileID - GDIs.at(tilesetID).first));
-								auto& transform = tile.GetComponents<Cori::Components::Entity::Transform>();
+								tile.AddComponent<Cori::World::Components::Entity::QuadRenderer>(glm::vec2{ blockSize / 2.0f, blockSize / 2.0f }, SpriteAtlases.at(tilesetID)->GetTexture(), SpriteAtlases.at(tilesetID)->GetSpriteUVsAtIndex(tileID - GDIs.at(tilesetID).first));
+								auto& transform = tile.GetComponents<Cori::World::Components::Entity::Transform>();
 								transform.SetLocalPosition(glm::vec2{ j * blockSize + blockSize / 2.0f, ((height - i) * blockSize) - blockSize / 2.0f });
 								transform.SetLocalDepth(1.0f);
 
@@ -125,7 +125,7 @@ void LevelLoader::LoadLevel(Cori::SceneHandle& scene, const std::string& path) {
 							bp.position = Cori::Physics::ToMeters(glm::vec2{ pos.x, ((height - pos.y))});
 						
 
-							auto& rb = col.AddComponent<Cori::Components::Entity::Rigidbody>(scene.GetPhysicsWorld(), bp, col);
+							auto& rb = col.AddComponent<Cori::World::Components::Entity::Rigidbody>(scene.GetPhysicsWorld(), bp, col);
 
 							Cori::Physics::Chain::Params cp;
 							cp.count = b2points.size();

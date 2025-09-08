@@ -1,6 +1,6 @@
 #include "Mover.hpp"
 
-Mover::Mover(const Cori::Physics::Capsule& capsule, Cori::Physics::WorldRef world, Cori::Entity& player, const Params& def) : // GOD FUCKING LORD THATS A HUGE INIT-LIST
+Mover::Mover(const Cori::Physics::Capsule& capsule, Cori::Physics::WorldRef world, Cori::World::Entity& player, const Params& def) : // GOD FUCKING LORD THATS A HUGE INIT-LIST
 	m_JumpStartSpeed(def.jumpStartSpeed), m_JumpVariableSpeed(def.jumpVariableSpeed), m_JumpVariableTicks(def.jumpVariableTicks),
 	m_JumpBufferTicks(def.jumpBufferTicks), m_JumpCoyoteTimeTicks(def.jumpCoyoteTimeTicks),
 		m_WallJumpStartSpeed(def.wallJumpStartSpeed), m_WallJumpVariableSpeed(def.wallJumpVariableSpeed), m_WallJumpStartSideSpeed(def.wallJumpStartSideSpeed),
@@ -13,7 +13,7 @@ Mover::Mover(const Cori::Physics::Capsule& capsule, Cori::Physics::WorldRef worl
 	m_SegmentOffset(def.segmentOffset), m_WallSlideSpeed(def.wallSlideSpeed), m_MinSpeedForRunState(def.minSpeedForRunState), m_World(world),
 	m_Capsule(capsule), m_Player(player) {
 
-	glm::vec2 spawn = player.GetComponents<Cori::Components::Entity::Spawnpoint>().m_Spawnpoint;
+	glm::vec2 spawn = player.GetComponents<Cori::World::Components::Entity::Spawnpoint>().m_Spawnpoint;
 
 	m_Transform = { Cori::Physics::ToMeters(spawn), b2Rot_identity };
 
@@ -24,7 +24,7 @@ Mover::Mover(const Cori::Physics::Capsule& capsule, Cori::Physics::WorldRef worl
 	bp.fixedRotation = true;
 	bp.rotation = b2Rot_identity;
 
-	auto& rb = m_Player.AddComponent<Cori::Components::Entity::Rigidbody>(world, bp, m_Player);
+	auto& rb = m_Player.AddComponent<Cori::World::Components::Entity::Rigidbody>(world, bp, m_Player);
 
 	Cori::Physics::Shape::Params sp;
 	sp.filter.maskBits = Cori::Physics::CollisionBits::SensorBit;
@@ -34,8 +34,8 @@ Mover::Mover(const Cori::Physics::Capsule& capsule, Cori::Physics::WorldRef worl
 }
 
 void Mover::OnUpdate(const double deltaTime, const double tickAlpha) {
-	auto& transform = m_Player.GetComponents<Cori::Components::Entity::Transform>();
-	auto& renderer = m_Player.GetComponents<Cori::Components::Entity::QuadRenderer>();
+	auto& transform = m_Player.GetComponents<Cori::World::Components::Entity::Transform>();
+	auto& renderer = m_Player.GetComponents<Cori::World::Components::Entity::QuadRenderer>();
 
 	// actual rendering position interpolation between ticks
 	glm::vec2 halfSize = renderer.GetHalfSize();
@@ -69,7 +69,7 @@ void Mover::OnUpdate(const double deltaTime, const double tickAlpha) {
 }
 
 void Mover::OnTickUpdate(const float timeStep, MainCamera& mainCamera) {
-	auto& fsm = m_Player.GetComponents < Cori::Components::Entity::StateMachine>();
+	auto& fsm = m_Player.GetComponents < Cori::World::Components::Entity::StateMachine>();
 	
 	// vvv double jump raycast checks, to avoid double jumping when player is almoust touching the ground or the wall 
 	{
@@ -175,7 +175,7 @@ void Mover::OnTickUpdate(const float timeStep, MainCamera& mainCamera) {
 
 	// vvv left/right movement and wall slide
 	{
-		if (Cori::Input::IsKeyPressed(Cori::CORI_KEY_A)) {
+		if (Cori::Core::Input::IsKeyPressed(Cori::Core::CORI_KEY_A)) {
 			if (m_CanWallJump && m_WallJumpDirection == 1 && m_Velocity.y < -0.1f - m_Gravity * timeStep) {
 				m_Gravity = 0.0f;
 				m_Velocity.y = -m_WallSlideSpeed;
@@ -186,7 +186,7 @@ void Mover::OnTickUpdate(const float timeStep, MainCamera& mainCamera) {
 			}
 		}
 
-		if (Cori::Input::IsKeyPressed(Cori::CORI_KEY_D)) {
+		if (Cori::Core::Input::IsKeyPressed(Cori::Core::CORI_KEY_D)) {
 			if (m_CanWallJump && m_WallJumpDirection == -1 && m_Velocity.y < -0.1f - m_Gravity * timeStep) {
 				m_Gravity = 0.0f;
 				m_Velocity.y = -m_WallSlideSpeed;
@@ -217,7 +217,7 @@ void Mover::OnTickUpdate(const float timeStep, MainCamera& mainCamera) {
 			m_CanDoubleJump = true;
 		}
 
-		if (Cori::Input::IsKeyPressed(Cori::CORI_KEY_SPACE)) {
+		if (Cori::Core::Input::IsKeyPressed(Cori::Core::CORI_KEY_SPACE)) {
 			if (m_CanDoubleJump && !m_OnGround && !m_CanWallJump && m_JumpButtonReleased && !m_Jumping && !m_NearGround && !m_NearWall && m_JumpCoyoteTimeTickTimer > m_JumpCoyoteTimeTicks) { // double jump initial action
 				m_Velocity.y = m_DoubleJumpStartSpeed;
 				m_JumpButtonReleased = false;
@@ -327,7 +327,7 @@ void Mover::OnTickUpdate(const float timeStep, MainCamera& mainCamera) {
 	SolveMove(timeStep, throttle);
 
 	// update kinematic body position meant for sensor use
-	auto& rb = m_Player.GetComponents<Cori::Components::Entity::Rigidbody>();
+	auto& rb = m_Player.GetComponents<Cori::World::Components::Entity::Rigidbody>();
 	constexpr float tolerance = 0.01f;
 	b2Vec2 delta = m_OldTransform.p - m_Transform.p;
 	if (std::abs(delta.x) > tolerance * tolerance || std::abs(delta.y) > tolerance * tolerance) {
@@ -452,13 +452,13 @@ void Mover::UpdateGui() {
 void Mover::DebugDraw(float test) {
 	if (m_CastResult.hit == false) {
 		b2Vec2 delta = m_Translation + m_Velocity * (1.0f / 60.0f);
-		Cori::Layer::m_DebugImGuiRenderer.DrawLine(m_Origin + m_Velocity * (1.0f / 60.0f), m_Origin + delta, b2_colorPurple);
-		Cori::Layer::m_DebugImGuiRenderer.DrawLine(m_Segment.point1 + delta, m_Segment.point2 + delta, b2_colorPurple);
+		Cori::Core::Layer::m_DebugImGuiRenderer.DrawLine(m_Origin + m_Velocity * (1.0f / 60.0f), m_Origin + delta, b2_colorPurple);
+		Cori::Core::Layer::m_DebugImGuiRenderer.DrawLine(m_Segment.point1 + delta, m_Segment.point2 + delta, b2_colorPurple);
 	}
 	else {
 		b2Vec2 delta = m_CastResult.fraction * m_Translation + m_Velocity * (1.0f / 60.0f);
-		Cori::Layer::m_DebugImGuiRenderer.DrawLine(m_Origin + m_Velocity * (1.0f / 60.0f), m_Origin + delta, b2_colorPurple);
-		Cori::Layer::m_DebugImGuiRenderer.DrawLine(m_Segment.point1 + delta, m_Segment.point2 + delta, b2_colorPlum);
+		Cori::Core::Layer::m_DebugImGuiRenderer.DrawLine(m_Origin + m_Velocity * (1.0f / 60.0f), m_Origin + delta, b2_colorPurple);
+		Cori::Core::Layer::m_DebugImGuiRenderer.DrawLine(m_Segment.point1 + delta, m_Segment.point2 + delta, b2_colorPlum);
 	}
 
 	int count = m_PlaneCount;
@@ -467,47 +467,47 @@ void Mover::DebugDraw(float test) {
 		b2Plane plane = m_Planes[i].plane;
 		b2Vec2 p1 = m_Transform.p + (plane.offset - m_Capsule.radius) * plane.normal;
 		b2Vec2 p2 = p1 + 0.1f * plane.normal;
-		Cori::Layer::m_DebugImGuiRenderer.DrawPoint(p1, 5.0f, b2_colorYellow);
-		Cori::Layer::m_DebugImGuiRenderer.DrawLine(p1, p2, b2_colorYellow);
+		Cori::Core::Layer::m_DebugImGuiRenderer.DrawPoint(p1, 5.0f, b2_colorYellow);
+		Cori::Core::Layer::m_DebugImGuiRenderer.DrawLine(p1, p2, b2_colorYellow);
 	}
 
 	b2HexColor color = m_OnGround ? b2_colorOrange : b2_colorAquamarine;
-	Cori::Layer::m_DebugImGuiRenderer.DrawCapsuleFilled(m_P1, m_P2, m_Capsule.radius, color);
-	Cori::Layer::m_DebugImGuiRenderer.DrawLine(m_Transform.p, m_Transform.p + m_Velocity, b2_colorPurple);
+	Cori::Core::Layer::m_DebugImGuiRenderer.DrawCapsuleFilled(m_P1, m_P2, m_Capsule.radius, color);
+	Cori::Core::Layer::m_DebugImGuiRenderer.DrawLine(m_Transform.p, m_Transform.p + m_Velocity, b2_colorPurple);
 
-	Cori::Layer::m_DebugImGuiRenderer.DrawPoint(m_P1, 8.0f, b2_colorPink);
+	Cori::Core::Layer::m_DebugImGuiRenderer.DrawPoint(m_P1, 8.0f, b2_colorPink);
 
-	Cori::Layer::m_DebugImGuiRenderer.DrawLine(m_GroundRayStart, m_GroundRayEnd, b2_colorWhite);
+	Cori::Core::Layer::m_DebugImGuiRenderer.DrawLine(m_GroundRayStart, m_GroundRayEnd, b2_colorWhite);
 
-	Cori::Layer::m_DebugImGuiRenderer.DrawLine(m_WallRayStart, m_WallRayEnd, b2_colorWhite);
+	Cori::Core::Layer::m_DebugImGuiRenderer.DrawLine(m_WallRayStart, m_WallRayEnd, b2_colorWhite);
 
-	Cori::Layer::m_DebugImGuiRenderer.DrawText({ 1.1f, 21.9f }, fmt::color::white, "Velocity: " + Cori::Physics::Vec2ToString(m_Velocity));
-	Cori::Layer::m_DebugImGuiRenderer.DrawText({ 1.1f, 21.6f }, fmt::color::white, "Velocity * ts: " + Cori::Physics::Vec2ToString({ m_Velocity.x * (1.0f / 60.0f), m_Velocity.y * (1.0f / 60.0f) }));
-	Cori::Layer::m_DebugImGuiRenderer.DrawText({ 1.1f, 21.3f }, fmt::color::white, "Position: " + Cori::Physics::Vec2ToString(m_Transform.p));
+	Cori::Core::Layer::m_DebugImGuiRenderer.DrawText({ 1.1f, 21.9f }, fmt::color::white, "Velocity: " + Cori::Physics::Vec2ToString(m_Velocity));
+	Cori::Core::Layer::m_DebugImGuiRenderer.DrawText({ 1.1f, 21.6f }, fmt::color::white, "Velocity * ts: " + Cori::Physics::Vec2ToString({ m_Velocity.x * (1.0f / 60.0f), m_Velocity.y * (1.0f / 60.0f) }));
+	Cori::Core::Layer::m_DebugImGuiRenderer.DrawText({ 1.1f, 21.3f }, fmt::color::white, "Position: " + Cori::Physics::Vec2ToString(m_Transform.p));
 
-	Cori::Layer::m_DebugImGuiRenderer.DrawText({ 1.1f, 20.7f }, fmt::color::white, "m_JumpVariableTickTimer: " + std::to_string(m_JumpVariableTickTimer));
-	Cori::Layer::m_DebugImGuiRenderer.DrawText({ 1.1f, 20.4f }, fmt::color::white, "m_JumpBufferTickTimer: " + std::to_string(m_JumpBufferTickTimer));
-	Cori::Layer::m_DebugImGuiRenderer.DrawText({ 1.1f, 20.1f }, fmt::color::white, "m_JumpCoyoteTimeTickTimer: " + std::to_string(m_JumpCoyoteTimeTickTimer));
+	Cori::Core::Layer::m_DebugImGuiRenderer.DrawText({ 1.1f, 20.7f }, fmt::color::white, "m_JumpVariableTickTimer: " + std::to_string(m_JumpVariableTickTimer));
+	Cori::Core::Layer::m_DebugImGuiRenderer.DrawText({ 1.1f, 20.4f }, fmt::color::white, "m_JumpBufferTickTimer: " + std::to_string(m_JumpBufferTickTimer));
+	Cori::Core::Layer::m_DebugImGuiRenderer.DrawText({ 1.1f, 20.1f }, fmt::color::white, "m_JumpCoyoteTimeTickTimer: " + std::to_string(m_JumpCoyoteTimeTickTimer));
 
-	Cori::Layer::m_DebugImGuiRenderer.DrawText({ 1.1f, 19.5f }, fmt::color::white, "m_WallJumpBufferTickTimer: " + std::to_string(m_WallJumpBufferTickTimer));
-	Cori::Layer::m_DebugImGuiRenderer.DrawText({ 1.1f, 19.2f }, fmt::color::white, "m_WallJumpVariableTickTimer: " + std::to_string(m_WallJumpVariableTickTimer));
+	Cori::Core::Layer::m_DebugImGuiRenderer.DrawText({ 1.1f, 19.5f }, fmt::color::white, "m_WallJumpBufferTickTimer: " + std::to_string(m_WallJumpBufferTickTimer));
+	Cori::Core::Layer::m_DebugImGuiRenderer.DrawText({ 1.1f, 19.2f }, fmt::color::white, "m_WallJumpVariableTickTimer: " + std::to_string(m_WallJumpVariableTickTimer));
 
-	Cori::Layer::m_DebugImGuiRenderer.DrawText({ 1.1f, 18.6f }, fmt::color::white, "m_DoubleJumpVariableTickTimer: " + std::to_string(m_DoubleJumpVariableTickTimer));
+	Cori::Core::Layer::m_DebugImGuiRenderer.DrawText({ 1.1f, 18.6f }, fmt::color::white, "m_DoubleJumpVariableTickTimer: " + std::to_string(m_DoubleJumpVariableTickTimer));
 
-	Cori::Layer::m_DebugImGuiRenderer.DrawText({ 1.1f, 18.0f }, fmt::color::white, "m_NearGround: " + Cori::Logger::BoolAlpha(m_NearGround));
-	Cori::Layer::m_DebugImGuiRenderer.DrawText({ 1.1f, 17.7f }, fmt::color::white, "m_NearWall: " + Cori::Logger::BoolAlpha(m_NearWall));
+	Cori::Core::Layer::m_DebugImGuiRenderer.DrawText({ 1.1f, 18.0f }, fmt::color::white, "m_NearGround: " + Cori::Logger::BoolAlpha(m_NearGround));
+	Cori::Core::Layer::m_DebugImGuiRenderer.DrawText({ 1.1f, 17.7f }, fmt::color::white, "m_NearWall: " + Cori::Logger::BoolAlpha(m_NearWall));
 
-	Cori::Layer::m_DebugImGuiRenderer.DrawText({ 1.1f, 17.1f }, fmt::color::white, "m_Gravity: " + std::to_string(m_Gravity));
+	Cori::Core::Layer::m_DebugImGuiRenderer.DrawText({ 1.1f, 17.1f }, fmt::color::white, "m_Gravity: " + std::to_string(m_Gravity));
 
-	Cori::Layer::m_DebugImGuiRenderer.DrawText({ 1.1f, 16.5f }, fmt::color::white, "m_Jumping: " + Cori::Logger::BoolAlpha(m_Jumping));
-	Cori::Layer::m_DebugImGuiRenderer.DrawText({ 1.1f, 16.2f }, fmt::color::white, "m_WallJumping: " + Cori::Logger::BoolAlpha(m_WallJumping));
-	Cori::Layer::m_DebugImGuiRenderer.DrawText({ 1.1f, 15.9f }, fmt::color::white, "m_DoubleJumping: " + Cori::Logger::BoolAlpha(m_DoubleJumping));
-	Cori::Layer::m_DebugImGuiRenderer.DrawText({ 1.1f, 15.6f }, fmt::color::white, "m_CanWallJump: " + Cori::Logger::BoolAlpha(m_CanWallJump));
-	Cori::Layer::m_DebugImGuiRenderer.DrawText({ 1.1f, 15.3f }, fmt::color::white, "m_CanDoubleJump: " + Cori::Logger::BoolAlpha(m_CanDoubleJump));
-	Cori::Layer::m_DebugImGuiRenderer.DrawText({ 1.1f, 15.0f }, fmt::color::white, "m_OnGround: " + Cori::Logger::BoolAlpha(m_OnGround));
-	Cori::Layer::m_DebugImGuiRenderer.DrawText({ 1.1f, 14.7f }, fmt::color::white, "m_WallJumpDirection: " + std::to_string(m_WallJumpDirection));
+	Cori::Core::Layer::m_DebugImGuiRenderer.DrawText({ 1.1f, 16.5f }, fmt::color::white, "m_Jumping: " + Cori::Logger::BoolAlpha(m_Jumping));
+	Cori::Core::Layer::m_DebugImGuiRenderer.DrawText({ 1.1f, 16.2f }, fmt::color::white, "m_WallJumping: " + Cori::Logger::BoolAlpha(m_WallJumping));
+	Cori::Core::Layer::m_DebugImGuiRenderer.DrawText({ 1.1f, 15.9f }, fmt::color::white, "m_DoubleJumping: " + Cori::Logger::BoolAlpha(m_DoubleJumping));
+	Cori::Core::Layer::m_DebugImGuiRenderer.DrawText({ 1.1f, 15.6f }, fmt::color::white, "m_CanWallJump: " + Cori::Logger::BoolAlpha(m_CanWallJump));
+	Cori::Core::Layer::m_DebugImGuiRenderer.DrawText({ 1.1f, 15.3f }, fmt::color::white, "m_CanDoubleJump: " + Cori::Logger::BoolAlpha(m_CanDoubleJump));
+	Cori::Core::Layer::m_DebugImGuiRenderer.DrawText({ 1.1f, 15.0f }, fmt::color::white, "m_OnGround: " + Cori::Logger::BoolAlpha(m_OnGround));
+	Cori::Core::Layer::m_DebugImGuiRenderer.DrawText({ 1.1f, 14.7f }, fmt::color::white, "m_WallJumpDirection: " + std::to_string(m_WallJumpDirection));
 
-	Cori::Layer::m_DebugImGuiRenderer.DrawText({ 1.1f, 14.1f }, fmt::color::white, "Current Player State: " + std::string(m_Player.GetComponents<Cori::Components::Entity::StateMachine>().GetCurrentState()->GetDebugName()));
+	Cori::Core::Layer::m_DebugImGuiRenderer.DrawText({ 1.1f, 14.1f }, fmt::color::white, "Current Player State: " + std::string(m_Player.GetComponents<Cori::World::Components::Entity::StateMachine>().GetCurrentState()->GetDebugName()));
 }
 
 void Mover::SolveMove(const float timeStep, float throttle) {
@@ -682,7 +682,7 @@ void Mover::SaveSettings(const std::filesystem::path& filepath) {
 	currentParams.wallSlideSpeed = m_WallSlideSpeed;
 	currentParams.minSpeedForRunState = m_MinSpeedForRunState;
 
-	if (auto result = Cori::JsonSerializer::Save(currentParams, filepath); !result) {
+	if (auto result = Cori::FileSystem::JsonSerializer::Save(currentParams, filepath); !result) {
 		CORI_INFO_TAGGED({ "Mover" }, "Failed to save mover settings to: {} : {}", filepath.string(), result.error().what());
 	}
 	else {
@@ -691,7 +691,7 @@ void Mover::SaveSettings(const std::filesystem::path& filepath) {
 }
 
 void Mover::LoadSettings(const std::filesystem::path& filepath) {
-	auto loadedParamsResult = Cori::JsonSerializer::Load<Params>(filepath);
+	auto loadedParamsResult = Cori::FileSystem::JsonSerializer::Load<Params>(filepath);
 
 	if (!loadedParamsResult) {
 		CORI_INFO_TAGGED({ "Mover" }, "Failed to load mover settings from: {} : {}", filepath.string(), loadedParamsResult.error().what());

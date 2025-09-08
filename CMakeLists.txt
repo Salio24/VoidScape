@@ -72,9 +72,9 @@ project(VoidScape)
 
     target_link_libraries(${EXECUTABLE_NAME} PRIVATE CoriEngine_static)
 
-    set(ENGINE_ASSETS_SOURCE_DIR "${PROJECT_SOURCE_DIR}/CoriEngine/CoriEngine/assets")
+    set(ENGINE_ASSETS_SOURCE_DIR "${PROJECT_SOURCE_DIR}/CoriEngine/Engine/enginedata")
 
-    set(ENGINE_ASSETS_DEST_DIR "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/assets/engine")
+    set(ENGINE_ASSETS_DEST_DIR "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/enginedata")
 
     # copy asset files from engine dir
     if(EXISTS "${ENGINE_ASSETS_SOURCE_DIR}")

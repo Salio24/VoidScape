@@ -4,7 +4,7 @@
 #include "Triggers/TriggerScripts.hpp"
 #include "Components.hpp"
 
-class LevelLayer : public Cori::Layer {
+class LevelLayer final : public Cori::Core::Layer {
 public:
 	LevelLayer();
 
@@ -13,17 +13,17 @@ public:
 	void OnAttach() override;
 	void OnDetach() override;
 
-	void OnUpdate(const Cori::GameTimer& gameTimer) override;
+	void OnUpdate(const Cori::Core::GameTimer& gameTimer) override;
 	void OnTickUpdate(const float timeStep) override;
 	void OnImGuiRender(const double deltaTime) override;
 
-	void OnEvent(Cori::Event& event) override;
+	void OnEvent(Cori::Core::Event& event) override;
 
 private:
 	bool m_PhysicsDebugDraw{ false };
 	bool m_MoverDebugDraw{ false };
 
-	Cori::Entity m_Player;
+	Cori::World::Entity m_Player;
 
 	MainCamera m_MainCamera;
 

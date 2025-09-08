@@ -1,19 +1,19 @@
 #pragma once
 #include <Cori.hpp>
 
-class TestTrigger : public Cori::Physics::TriggerBehaviour {
+class TestTrigger : public Cori::World::TriggerBehaviour {
 public:
 	TestTrigger() = default;
-	void OnEnter(Cori::Entity& entity) override {
+	void OnEnter(Cori::World::Entity& entity) override {
 
 		CORI_TRACE_TAGGED({ "Trigger" }, "Enter by: {}", entity.GetName());
 	}
 
-	void OnTickUpdate(Cori::Entity& entity, const float timeStep) override {
+	void OnTickUpdate(Cori::World::Entity& entity, const float timeStep) override {
 		//CORI_TRACE_TAGGED({ "Trigger" }, "Update");
 	}
 
-	void OnExit(Cori::Entity& entity) override {
+	void OnExit(Cori::World::Entity& entity) override {
 		CORI_TRACE_TAGGED({ "Trigger" }, "Exit");
 	};
 

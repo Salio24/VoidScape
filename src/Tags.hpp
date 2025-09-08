@@ -1,5 +1,5 @@
 #pragma once
-#include "Core/Utility/HashedTag.hpp"
+#include "Utility/HashedTag.hpp"
 
 namespace Tags {
 	CORI_DECLARE_TAG(Character);
