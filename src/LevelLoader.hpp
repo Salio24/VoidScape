@@ -8,5 +8,5 @@
 
 class LevelLoader {
 public:
-	static void LoadLevel(Cori::SceneHandle& scene, const std::string& path);
+	static void LoadLevel(Cori::World::SceneHandle& scene, const std::string& path);
 };

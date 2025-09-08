@@ -7,9 +7,9 @@
 #include "GameLayer.hpp"
 
 
-class VoidScape : public Cori::Application {
+class VoidScape : public Cori::Core::Application {
 public:
-	VoidScape() : Cori::Application("VoidScape") {
+	VoidScape() : Application("VoidScape") {
 		PushLayer(new GameLayer());
 
 		SetBackgroundColor(glm::vec4(14.0f / 256.0f, 7.0f / 256.0f, 27.0f / 256.0f, 1.0f));
@@ -22,6 +22,6 @@ public:
 	}
 };
 
-Cori::Application* Cori::CreateApplication() {
+Cori::Core::Application* Cori::Core::CreateApplication() {
 	return new VoidScape();
 }

@@ -42,7 +42,7 @@ public:
 		float minSpeedForRunState{ 4.0f };
 	};
 
-	Mover(const Cori::Physics::Capsule& capsule, Cori::Physics::WorldRef world, Cori::Entity& player, const Params& def);
+	Mover(const Cori::Physics::Capsule& capsule, Cori::Physics::WorldRef world, Cori::World::Entity& player, const Params& def);
 	~Mover() = default;
 
 	void OnUpdate(const double deltaTime, const double tickAlpha);
@@ -52,12 +52,12 @@ public:
 	void UpdateGui();
 	void DebugDraw(float test);
 
-	void BindPlayer(const Cori::Entity& player) {
+	void BindPlayer(const Cori::World::Entity& player) {
 		m_Player = player;
 	}
 
 	void UnbindPlayer() {
-		m_Player = Cori::Entity{};
+		m_Player = Cori::World::Entity{};
 	}
 
 	float m_JumpStartSpeed;
@@ -171,7 +171,7 @@ private:
 
 	float test1{ 1.0f };
 
-	Cori::Entity m_Player;
+	Cori::World::Entity m_Player;
 };
 
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Mover::Params,

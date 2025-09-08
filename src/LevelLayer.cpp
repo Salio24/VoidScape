@@ -16,8 +16,8 @@ LevelLayer::~LevelLayer() {
 }
 
 void LevelLayer::OnAttach() {
-	int screenWidth = Cori::Application::GetWindow().GetWidth();
-	int screenHeight = Cori::Application::GetWindow().GetHeight();
+	int screenWidth = Cori::Core::Application::GetWindow().GetWidth();
+	int screenHeight = Cori::Core::Application::GetWindow().GetHeight();
 
 	ActiveScene.GetActiveCamera().CreateOrthoCamera(0, static_cast<float>(screenWidth) / (static_cast<float>(screenHeight) / 360.0f), 0, 360, -50, 0);
 
@@ -28,75 +28,75 @@ void LevelLayer::OnAttach() {
 
 	Cori::AssetManager::Preload({AnimationPacks::PlayerMovement, AnimationPacks::PlayerMovementFX});
 
-	m_Player.AddComponent<Cori::Components::Entity::QuadRenderer>();
-	m_Player.AddComponent<Cori::Components::Entity::QuadAnimatorNew>(m_Player);
-	m_Player.AddComponent<Cori::Components::Entity::Spawnpoint>(glm::vec2{ 160.0f, 160.0f });
+	m_Player.AddComponent<Cori::World::Components::Entity::QuadRenderer>();
+	m_Player.AddComponent<Cori::World::Components::Entity::QuadAnimatorNew>(m_Player);
+	m_Player.AddComponent<Cori::World::Components::Entity::Spawnpoint>(glm::vec2{ 160.0f, 160.0f });
 	{
-		auto& transform = m_Player.GetComponents<Cori::Components::Entity::Transform>();
+		auto& transform = m_Player.GetComponents<Cori::World::Components::Entity::Transform>();
 		transform.SetLocalDepth(4);
 	}
 
-	Cori::Entity playerParticles1 = ActiveScene.CreateEntity("Movement Particles Part 1", Tags::Character);
-	playerParticles1.AddComponent<Cori::Components::Entity::QuadRenderer>();
-	playerParticles1.AddComponent<Cori::Components::Entity::QuadAnimatorNew>(playerParticles1);
+	Cori::World::Entity playerParticles1 = ActiveScene.CreateEntity("Movement Particles Part 1", Tags::Character);
+	playerParticles1.AddComponent<Cori::World::Components::Entity::QuadRenderer>();
+	playerParticles1.AddComponent<Cori::World::Components::Entity::QuadAnimatorNew>(playerParticles1);
 	CORI_CHECK_EXPECTED(playerParticles1.SetParent(m_Player));
 	playerParticles1.SetActive(false);
 	{
-		auto& transform = playerParticles1.GetComponents<Cori::Components::Entity::Transform>();
+		auto& transform = playerParticles1.GetComponents<Cori::World::Components::Entity::Transform>();
 		transform.SetLocalDepth(-1);
 	}
 
-	Cori::Entity playerParticles2 = ActiveScene.CreateEntity("Movement Particles Part 2", Tags::Character);
-	playerParticles2.AddComponent<Cori::Components::Entity::QuadRenderer>();
-	playerParticles2.AddComponent<Cori::Components::Entity::QuadAnimatorNew>(playerParticles2);
+	Cori::World::Entity playerParticles2 = ActiveScene.CreateEntity("Movement Particles Part 2", Tags::Character);
+	playerParticles2.AddComponent<Cori::World::Components::Entity::QuadRenderer>();
+	playerParticles2.AddComponent<Cori::World::Components::Entity::QuadAnimatorNew>(playerParticles2);
 	CORI_CHECK_EXPECTED(playerParticles2.SetParent(m_Player));
 	playerParticles2.SetActive(false);
 	{
-		auto& transform = playerParticles2.GetComponents<Cori::Components::Entity::Transform>();
+		auto& transform = playerParticles2.GetComponents<Cori::World::Components::Entity::Transform>();
 		transform.SetLocalDepth(-1);
 	}
 
-	Cori::Entity playerParticlesIndependent = ActiveScene.CreateEntity("Movement Particles Independent Root", Tags::Character);
+	Cori::World::Entity playerParticlesIndependent = ActiveScene.CreateEntity("Movement Particles Independent Root", Tags::Character);
 	CORI_CHECK_EXPECTED(playerParticlesIndependent.SetParent(m_Player));
 	{
-		auto& transform = playerParticlesIndependent.GetComponents<Cori::Components::Entity::Transform>();
+		auto& transform = playerParticlesIndependent.GetComponents<Cori::World::Components::Entity::Transform>();
 		transform.SetLocalDepth(-1);
 	}
 
 	{
-		Cori::Entity particles = ActiveScene.CreateEntity("Landing Particles", Tags::Character);
-		particles.AddComponent<Cori::Components::Entity::QuadRenderer>();
-		particles.AddComponent<Cori::Components::Entity::QuadAnimatorNew>(particles);
+		Cori::World::Entity particles = ActiveScene.CreateEntity("Landing Particles", Tags::Character);
+		particles.AddComponent<Cori::World::Components::Entity::QuadRenderer>();
+		particles.AddComponent<Cori::World::Components::Entity::QuadAnimatorNew>(particles);
 		CORI_CHECK_EXPECTED(particles.SetParent(playerParticlesIndependent));
 		particles.SetActive(false);
 	}
 
 	{
-		Cori::Entity particles = ActiveScene.CreateEntity("Jumping Particles", Tags::Character);
-		particles.AddComponent<Cori::Components::Entity::QuadRenderer>();
-		particles.AddComponent<Cori::Components::Entity::QuadAnimatorNew>(particles);
+		Cori::World::Entity particles = ActiveScene.CreateEntity("Jumping Particles", Tags::Character);
+		particles.AddComponent<Cori::World::Components::Entity::QuadRenderer>();
+		particles.AddComponent<Cori::World::Components::Entity::QuadAnimatorNew>(particles);
 		CORI_CHECK_EXPECTED(particles.SetParent(playerParticlesIndependent));
 		particles.SetActive(false);
 	}
 
 	{
-		Cori::Entity particles = ActiveScene.CreateEntity("WallJump Particles", Tags::Character);
-		particles.AddComponent<Cori::Components::Entity::QuadRenderer>();
-		particles.AddComponent<Cori::Components::Entity::QuadAnimatorNew>(particles);
+		Cori::World::Entity particles = ActiveScene.CreateEntity("WallJump Particles", Tags::Character);
+		particles.AddComponent<Cori::World::Components::Entity::QuadRenderer>();
+		particles.AddComponent<Cori::World::Components::Entity::QuadAnimatorNew>(particles);
 		CORI_CHECK_EXPECTED(particles.SetParent(playerParticlesIndependent));
 		particles.SetActive(false);
 	}
 
 	{
-		Cori::Entity particles = ActiveScene.CreateEntity("DoubleJump Particles", Tags::Character);
-		particles.AddComponent<Cori::Components::Entity::QuadRenderer>();
-		particles.AddComponent<Cori::Components::Entity::QuadAnimatorNew>(particles);
+		Cori::World::Entity particles = ActiveScene.CreateEntity("DoubleJump Particles", Tags::Character);
+		particles.AddComponent<Cori::World::Components::Entity::QuadRenderer>();
+		particles.AddComponent<Cori::World::Components::Entity::QuadAnimatorNew>(particles);
 		CORI_CHECK_EXPECTED(particles.SetParent(playerParticlesIndependent));
 		particles.SetActive(false);
 	}
 
 
-	auto& fsm = m_Player.AddComponent <Cori::Components::Entity::StateMachine>(m_Player);
+	auto& fsm = m_Player.AddComponent <Cori::World::Components::Entity::StateMachine>(m_Player);
 
 	fsm.Register<States::Player::Idle>();
 	fsm.SetState<States::Player::Idle>();
@@ -121,7 +121,7 @@ void LevelLayer::OnAttach() {
 	bp.position = { 2.0f, 5.0f };
 	bp.name = "TestTrigger";
 
-	auto& rb = tr.AddComponent<Cori::Components::Entity::Rigidbody>(ActiveScene.GetPhysicsWorld(), bp, tr);
+	auto& rb = tr.AddComponent<Cori::World::Components::Entity::Rigidbody>(ActiveScene.GetPhysicsWorld(), bp, tr);
 
 	Cori::Physics::Shape::Params spa;
 	spa.filter.categoryBits = Cori::Physics::CollisionBits::SensorBit;
@@ -131,7 +131,7 @@ void LevelLayer::OnAttach() {
 	rb.CreateShape(Cori::Physics::DestroyWithParent, spa, Cori::Physics::Polygon::CreateBox({ 2.0f, 2.0f }));
 	//rb.CreateShape(Cori::Physics::DestroyWithParent, spa, Cori::Physics::Circle::Create({ 5.0f, 5.0f }, 2.0f));
 
-	auto& trig = tr.AddComponent<Cori::Components::Entity::Trigger>(tr);
+	auto& trig = tr.AddComponent<Cori::World::Components::Entity::Trigger>(tr);
 	trig.SetBehavior<TestTrigger>();
 }
 
@@ -139,7 +139,7 @@ void LevelLayer::OnDetach() {
 
 }
 
-void LevelLayer::OnUpdate(const Cori::GameTimer& gameTimer) {
+void LevelLayer::OnUpdate(const Cori::Core::GameTimer& gameTimer) {
 	//Cori::Renderer2D::SubmitScreenSpaceColoredQuad(ActiveScene.GetActiveCamera().GetSize() / 2.0f, {0.2f, 100}, {1, 1, 1});
 	//Cori::Renderer2D::SubmitScreenSpaceColoredQuad(ActiveScene.GetActiveCamera().GetSize() / 2.0f, {100, 0.2f}, {1, 1, 1});
 
@@ -150,8 +150,8 @@ void LevelLayer::OnUpdate(const Cori::GameTimer& gameTimer) {
 void LevelLayer::OnTickUpdate(const float timeStep) {
 	m_Mover->OnTickUpdate(timeStep, m_MainCamera);
 
-	glm::vec2 playerPos = m_Player.GetComponents<Cori::Components::Entity::Transform>().GetLocalPosition();
-	glm::vec2 playerHalfSize = m_Player.GetComponents<Cori::Components::Entity::QuadRenderer>().GetHalfSize();
+	glm::vec2 playerPos = m_Player.GetComponents<Cori::World::Components::Entity::Transform>().GetLocalPosition();
+	glm::vec2 playerHalfSize = m_Player.GetComponents<Cori::World::Components::Entity::QuadRenderer>().GetHalfSize();
 	m_MainCamera.OnTickUpdate(timeStep, playerPos, playerHalfSize, Cori::Physics::ToPixels(m_Mover->m_Velocity) ,ActiveScene.GetActiveCamera());
 }
 
@@ -171,7 +171,7 @@ void LevelLayer::OnImGuiRender(const double deltaTime) {
 		ImGui::Checkbox("Mover debug draw", &m_MoverDebugDraw);
 	}
 	if (ImGui::Checkbox("Manual Step(disable, K - step)", &manualStep)) {
-		Cori::Application::SetManualTickStep(manualStep);
+		Cori::Core::Application::SetManualTickStep(manualStep);
 	}
 
 	if (ImGui::Button("Add dynamic box")) {
@@ -181,7 +181,7 @@ void LevelLayer::OnImGuiRender(const double deltaTime) {
 		bp.type = b2_dynamicBody;
 		bp.position = { 4.0f, 4.0f };
 	
-		auto& rb = ent.AddComponent<Cori::Components::Entity::Rigidbody>(ActiveScene.GetPhysicsWorld(), bp, ent);
+		auto& rb = ent.AddComponent<Cori::World::Components::Entity::Rigidbody>(ActiveScene.GetPhysicsWorld(), bp, ent);
 	
 		Cori::Physics::Shape::Params sp;
 	
@@ -225,10 +225,10 @@ void LevelLayer::OnImGuiRender(const double deltaTime) {
 
 }
 
-void LevelLayer::OnEvent(Cori::Event& event) {
-	Cori::EventDispatcher dispatcher(event);
+void LevelLayer::OnEvent(Cori::Core::Event& event) {
+	Cori::Core::EventDispatcher dispatcher(event);
 
-	dispatcher.Dispatch<Cori::WindowResizeEvent>([this](const Cori::WindowResizeEvent& e) -> bool {
+	dispatcher.Dispatch<Cori::Core::WindowResizeEvent>([this](const Cori::Core::WindowResizeEvent& e) -> bool {
 		ActiveScene.GetActiveCamera().CreateOrthoCamera(0, static_cast<float>(e.GetWidth()) / static_cast<float>(e.GetHeight()) / 360.0f, 0, 360, -50, 0);
 			return true;
 		});

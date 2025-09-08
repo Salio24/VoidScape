@@ -17,7 +17,7 @@ public:
 
 	~MainCamera() = default;
 
-	void OnUpdate(const Cori::GameTimer& gameTimer, Cori::CameraController& actualCamera) {
+	void OnUpdate(const Cori::Core::GameTimer& gameTimer, Cori::Graphics::CameraController& actualCamera) {
 
 		if (m_GetPosOneshot) {
 			m_CameraPosition = actualCamera.GetPosition();
@@ -42,7 +42,7 @@ public:
 		actualCamera.RecalculateVP();
 	}
 
-	void OnTickUpdate(const float timeStep, const glm::vec2 playerPos, const glm::vec2 playerHalfSize, const glm::vec2 playerVelocity, const Cori::CameraController& actualCamera) {
+	void OnTickUpdate(const float timeStep, const glm::vec2 playerPos, const glm::vec2 playerHalfSize, const glm::vec2 playerVelocity, const Cori::Graphics::CameraController& actualCamera) {
 		m_OldCameraPosition = m_CameraPosition;
 
 		glm::vec2 camSize = actualCamera.GetSize();
