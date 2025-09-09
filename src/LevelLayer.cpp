@@ -208,6 +208,7 @@ void LevelLayer::OnImGuiRender(const double deltaTime) {
 		ActiveScene.GetActiveCamera().SetZoomLevel(scale);
 		ActiveScene.GetActiveCamera().RecalculateVP();
 	}
+
 	if (ImGui::Button("Add 0.5 trauma")) {
 		m_MainCamera.AddTrauma(0.5f);
 	}
@@ -229,7 +230,7 @@ void LevelLayer::OnEvent(Cori::Core::Event& event) {
 	Cori::Core::EventDispatcher dispatcher(event);
 
 	dispatcher.Dispatch<Cori::Core::WindowResizeEvent>([this](const Cori::Core::WindowResizeEvent& e) -> bool {
-		ActiveScene.GetActiveCamera().CreateOrthoCamera(0, static_cast<float>(e.GetWidth()) / static_cast<float>(e.GetHeight()) / 360.0f, 0, 360, -50, 0);
+		ActiveScene.GetActiveCamera().CreateOrthoCamera(0, static_cast<float>(e.GetWidth()) / (static_cast<float>(e.GetHeight()) / 360.0f), 0, 360, -50, 0);
 			return true;
 		});
 

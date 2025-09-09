@@ -39,7 +39,9 @@ project(VoidScape)
 
     set(CMAKE_CXX_STANDARD 23)
 
-    add_compile_options(-mavx2)
+    if (NOT MSVC)
+        add_compile_options(-march=native)
+    endif()
 
     add_subdirectory(${PROJECT_SOURCE_DIR}/CoriEngine)
 
@@ -47,11 +49,6 @@ project(VoidScape)
 
     set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/bin/$<CONFIG>)
     file(GLOB_RECURSE MY_SOURCES CONFIGURE_DEPENDS ${PROJECT_SOURCE_DIR}/src/*.cpp)
-
-    if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-        add_compile_options(-g)
-        #add_compile_options(-fsanitize=address)
-    endif()
 
     add_executable(${EXECUTABLE_NAME} ${MY_SOURCES})
 
@@ -71,31 +68,3 @@ project(VoidScape)
     )
 
     target_link_libraries(${EXECUTABLE_NAME} PRIVATE CoriEngine_static)
-
-    set(ENGINE_ASSETS_SOURCE_DIR "${PROJECT_SOURCE_DIR}/CoriEngine/Engine/enginedata")
-
-    set(ENGINE_ASSETS_DEST_DIR "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/enginedata")
-
-    # copy asset files from engine dir
-    if(EXISTS "${ENGINE_ASSETS_SOURCE_DIR}")
-        file(GLOB_RECURSE ENGINE_ASSET_FILES
-                FOLLOW_SYMLINKS
-                CONFIGURE_DEPENDS
-                "${ENGINE_ASSETS_SOURCE_DIR}/*"
-        )
-    
-        add_custom_target(copy_engine_assets_for_voidscape ALL
-            COMMAND ${CMAKE_COMMAND} -E copy_directory_if_different
-                    "${ENGINE_ASSETS_SOURCE_DIR}"
-                    "${ENGINE_ASSETS_DEST_DIR}"
-            DEPENDS ${ENGINE_ASSET_FILES}
-    
-            COMMENT "Copying engine assets from ${ENGINE_ASSETS_SOURCE_DIR} to ${ENGINE_ASSETS_DEST_DIR} if changed."
-            VERBATIM
-        )
-    
-        add_dependencies(${EXECUTABLE_NAME} copy_engine_assets_for_voidscape)
-    
-    else()
-        message(WARNING "Engine asset source directory not found, skipping copy: ${ENGINE_ASSETS_SOURCE_DIR}")
-    endif()
