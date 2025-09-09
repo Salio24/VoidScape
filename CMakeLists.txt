@@ -25,9 +25,7 @@ endif ()
 
 project(VoidScape)
     if(CLANG_VARIANT STREQUAL "OTHER" AND CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND CMAKE_SYSTEM_NAME STREQUAL "Windows")
-        set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
-        set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:RelWithDebInfo>:Debug>")
-        set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Release>:>")
+        set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<OR:$<CONFIG:Debug>,$<CONFIG:RelWithDebInfo>>:Debug>")
     endif ()
 
     if (NOT (
@@ -39,9 +37,7 @@ project(VoidScape)
 
     set(CMAKE_CXX_STANDARD 23)
 
-    if (NOT MSVC)
-        add_compile_options(-march=native)
-    endif()
+    add_compile_options(-march=native)
 
     add_subdirectory(${PROJECT_SOURCE_DIR}/CoriEngine)
 
