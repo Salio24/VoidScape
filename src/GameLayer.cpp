@@ -1,6 +1,6 @@
 #include "GameLayer.hpp"
 #include "LevelLayer.hpp"
-#include "LevelLoader.hpp"
+#include <PathDefinesGenerated.hpp>
 
 GameLayer::GameLayer() : Layer("Game Layer") {
 
@@ -11,38 +11,30 @@ GameLayer::~GameLayer() {
 }
 
 void GameLayer::OnAttach() {
+	auto level = new LevelLayer();
 
+	auto result = Cori::Core::Application::PushLayer(level);
+	if (!result) {
+		CORI_ERROR("Failed to push LevelLayer, Error: {}", result.error().what());
+	}
+
+	level->LoadLevel(GetVoidScapeRootDir() / "assets/levels/testlevel.tmx");
 }
 
 void GameLayer::OnDetach() {
 
 }
 
-void GameLayer::OnUpdate(const Cori::Core::GameTimer& gameTimer) {
+void GameLayer::OnUpdate(Cori::Core::GameTimer& gameTimer) {
 
 }
 
-void GameLayer::OnTickUpdate(const float timeStep) {
+void GameLayer::OnTickUpdate(Cori::Core::GameTimer& gameTimer) {
 
 }
 
-void GameLayer::OnImGuiRender(const double deltaTime) {
+void GameLayer::OnImGuiRender(Cori::Core::GameTimer& gameTimer) {
 	ImGui::Begin("Game Layer UI");
-
-	if (ImGui::Button("Start")) {
-		Layer* level = new LevelLayer();
-		if (Cori::World::SceneManager::CreateScene("Test Level")) {
-			level->BindScene("Test Level");
-			//level->ActiveScene->ActiveCamera.CreateOrthoCamera(0, 640, 0, 360);
-			LevelLoader::LoadLevel(level->ActiveScene, "../../assets/levels/testlevel.tmx");
-			//LevelLoader::LoadLevel(level->ActiveScene, "../../../Source/levels/GameLevels/32p/Level_1.tmx");
-		}
-
-		auto result = Cori::Core::Application::PushLayer(level);
-		if (!result) {
-			CORI_ERROR("Failed to push LevelLayer, Error: {}", result.error().what());
-		}
-	}
 
 	ImGui::SeparatorText("Graphical Settings");
 

@@ -2,6 +2,7 @@
 #include <Cori.hpp>
 #include "States.hpp"
 #include "Components.hpp"
+#include "MainCamera.hpp"
 
 class Mover {
 public:
@@ -42,15 +43,19 @@ public:
 		float minSpeedForRunState{ 4.0f };
 	};
 
-	Mover(const Cori::Physics::Capsule& capsule, Cori::Physics::WorldRef world, Cori::World::Entity& player, const Params& def);
+	Mover(const Cori::Physics::Capsule& moverCapsule, const Cori::Physics::Capsule& sensorCapsule, Cori::Physics::WorldRef world, Cori::World::Entity& player, const Params& def);
 	~Mover() = default;
 
 	void OnUpdate(const double deltaTime, const double tickAlpha);
 
-	void OnTickUpdate(const float timeStep, MainCamera& mainCamera);
+	void OnTickUpdate(const float timeStep, MainCamera& mainCamera, const bool playerResponsive);
 
 	void UpdateGui();
 	void DebugDraw(float test);
+
+	void TeleportToSpawn();
+
+	void ResetState();
 
 	void BindPlayer(const Cori::World::Entity& player) {
 		m_Player = player;
@@ -113,6 +118,8 @@ private:
 	void LoadSettings(const std::filesystem::path& filepath);
 
 	//Cori::Physics::BodyRef m_SensorVisitorBody;
+
+	glm::vec2 m_Spawn;
 
 	Cori::Physics::WorldRef m_World;
 	Cori::Physics::Capsule m_Capsule;

@@ -1,5 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.11.1" orientation="orthogonal" renderorder="left-up" width="80" height="50" tilewidth="16" tileheight="16" infinite="0" nextlayerid="3" nextobjectid="94">
+<map version="1.10" tiledversion="1.11.2" orientation="orthogonal" renderorder="left-up" width="80" height="50" tilewidth="16" tileheight="16" infinite="0" nextlayerid="5" nextobjectid="101">
+ <properties>
+  <property name="InitialPlayerTime" type="float" value="70"/>
+  <property name="RegularOrbBonus" type="float" value="15"/>
+ </properties>
  <tileset firstgid="1" source="Bridge.tsx"/>
  <tileset firstgid="64" source="Bushes.tsx"/>
  <tileset firstgid="183" source="Construction.tsx"/>
@@ -93,6 +97,28 @@
   </object>
   <object id="93" x="112" y="704">
    <polygon points="0,0 0,-16 160,-16 160,-112 144,-112 144,-176 112,-176 112,-192 336,-192 336,-176 304,-176 304,-16 288,-16 288,-176 160,-176 160,-128 176,-128 176,0"/>
+  </object>
+ </objectgroup>
+ <objectgroup id="3" name="Points">
+  <object id="94" name="ActorSpawn" x="192" y="672">
+   <point/>
+  </object>
+  <object id="99" name="EscapePortal" x="416" y="768">
+   <point/>
+  </object>
+ </objectgroup>
+ <objectgroup id="4" name="RegularOrbs">
+  <object id="95" x="368" y="416">
+   <point/>
+  </object>
+  <object id="96" x="288" y="432">
+   <point/>
+  </object>
+  <object id="97" x="448" y="448">
+   <point/>
+  </object>
+  <object id="98" x="352" y="480">
+   <point/>
   </object>
  </objectgroup>
 </map>

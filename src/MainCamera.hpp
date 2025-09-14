@@ -17,7 +17,7 @@ public:
 
 	~MainCamera() = default;
 
-	void OnUpdate(const Cori::Core::GameTimer& gameTimer, Cori::Graphics::CameraController& actualCamera) {
+	void OnUpdate(const Cori::Core::GameTimer& gameTimer, Cori::Graphics::CameraController& actualCamera, const bool shakeActive) {
 
 		if (m_GetPosOneshot) {
 			m_CameraPosition = actualCamera.GetPosition();
@@ -28,7 +28,12 @@ public:
 		glm::vec2 interpolatedPos = { m_CameraPosition * static_cast<float>(gameTimer.GetTickAlpha()) + m_OldCameraPosition * (1.0f - static_cast<float>(gameTimer.GetTickAlpha())) };
 
 		//float clampedTrauma = std::clamp(m_Trauma, 0.0f, 1.0f);
-		float shake = m_Trauma * m_Trauma;
+		float shake = 0.0f;
+		if (shakeActive) {
+			shake = m_Trauma * m_Trauma;
+		} else {
+			m_Trauma = 0.0f;
+		}
 
 		interpolatedPos.x += m_MaxTransformShakeX * shake * m_TransformShakeNoiseX.noise1D(gameTimer.GetMilliseconds() * m_TransformShakeFrequencyModifier);
 		interpolatedPos.y += m_MaxTransformShakeY * shake * m_TransformShakeNoiseY.noise1D(gameTimer.GetMilliseconds() * m_TransformShakeFrequencyModifier);

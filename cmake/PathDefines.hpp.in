@@ -1,0 +1,6 @@
+#pragma once
+
+inline std::filesystem::path& GetVoidScapeRootDir() {
+    static std::filesystem::path VoidScapeRootDir = "@VOIDSCAPE_ROOT_DIR@";
+    return VoidScapeRootDir;
+}

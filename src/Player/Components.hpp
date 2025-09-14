@@ -1,0 +1,46 @@
+#pragma once
+#include <Cori.hpp>
+#include "States.hpp"
+#include "Events.hpp"
+
+namespace Components {
+	struct Health {
+		Health() = default;
+		Health(const float initialValue, const Cori::World::Entity& entity) : m_TimeMS(initialValue), m_InitialValue(initialValue), m_Player(entity) {}
+
+		void OnTickUpdate(const float timeStep, const bool levelComplete) {
+			auto& fsm = m_Player.GetComponents<Cori::World::Components::Entity::StateMachine>();
+
+			if (!fsm.IsInState<States::Player::Dead>()) {
+				if (m_TimeMS > 0.0f && !levelComplete) {
+					m_TimeMS -= timeStep;
+				} else if (!levelComplete) {
+					m_LastTime = m_TimeMS;
+					auto event = Events::PlayerDied(m_Player);
+					Cori::Core::Application::EmitEvent(event);
+					fsm.SetState<States::Player::Dead>();
+					return;
+				}
+
+				m_LastTime = m_TimeMS;
+			}
+		}
+
+		void Reset() {
+			m_TimeMS = m_InitialValue;
+		}
+
+		double m_TimeMS;
+		double m_LastTime;
+	private:
+		float m_InitialValue;
+		Cori::World::Entity m_Player;
+	};
+
+	struct Spawnpoint {
+		Spawnpoint() = default;
+		explicit Spawnpoint(const glm::vec2& point)
+			: m_Spawnpoint(point) {}
+		glm::vec2 m_Spawnpoint{ 0.0f, 0.0f };
+	};
+}

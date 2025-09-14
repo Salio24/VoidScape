@@ -1,6 +1,6 @@
 #include "Mover.hpp"
 
-Mover::Mover(const Cori::Physics::Capsule& capsule, Cori::Physics::WorldRef world, Cori::World::Entity& player, const Params& def) : // GOD FUCKING LORD THATS A HUGE INIT-LIST
+Mover::Mover(const Cori::Physics::Capsule& moverCapsule, const Cori::Physics::Capsule& sensorCapsule, Cori::Physics::WorldRef world, Cori::World::Entity& player, const Params& def) : // GOD FUCKING LORD THATS A HUGE INIT-LIST
 	m_JumpStartSpeed(def.jumpStartSpeed), m_JumpVariableSpeed(def.jumpVariableSpeed), m_JumpVariableTicks(def.jumpVariableTicks),
 	m_JumpBufferTicks(def.jumpBufferTicks), m_JumpCoyoteTimeTicks(def.jumpCoyoteTimeTicks),
 		m_WallJumpStartSpeed(def.wallJumpStartSpeed), m_WallJumpVariableSpeed(def.wallJumpVariableSpeed), m_WallJumpStartSideSpeed(def.wallJumpStartSideSpeed),
@@ -11,11 +11,11 @@ Mover::Mover(const Cori::Physics::Capsule& capsule, Cori::Physics::WorldRef worl
 	m_Acceleration(def.acceleration), m_AirSteer(def.airSteer), m_Friction(def.friction), m_GravityDefault(def.gravityDefault), m_FastFallGravityModifier(def.fastFallGravityModifier),
 	m_PogoHertz(def.pogoHertz), m_PogoDampingRatio(def.pogoDampingRatio), m_PogoLengthScale(def.pogoLengthScale),
 	m_SegmentOffset(def.segmentOffset), m_WallSlideSpeed(def.wallSlideSpeed), m_MinSpeedForRunState(def.minSpeedForRunState), m_World(world),
-	m_Capsule(capsule), m_Player(player) {
+	m_Capsule(moverCapsule), m_Player(player) {
 
-	glm::vec2 spawn = player.GetComponents<Cori::World::Components::Entity::Spawnpoint>().m_Spawnpoint;
+	m_Spawn = player.GetComponents<Components::Spawnpoint>().m_Spawnpoint;
 
-	m_Transform = { Cori::Physics::ToMeters(spawn), b2Rot_identity };
+	TeleportToSpawn();
 
 	//a hack to allow sensor use with an entity that is operated via mover
 	Cori::Physics::Body::Params bp;
@@ -30,7 +30,7 @@ Mover::Mover(const Cori::Physics::Capsule& capsule, Cori::Physics::WorldRef worl
 	sp.filter.maskBits = Cori::Physics::CollisionBits::SensorBit;
 	sp.enableSensorEvents = true;
 
-	rb.CreateShape(Cori::Physics::DestroyWithParent, sp, m_Capsule);
+	rb.CreateShape(Cori::Physics::DestroyWithParent, sp, sensorCapsule);
 }
 
 void Mover::OnUpdate(const double deltaTime, const double tickAlpha) {
@@ -68,7 +68,7 @@ void Mover::OnUpdate(const double deltaTime, const double tickAlpha) {
 	}
 }
 
-void Mover::OnTickUpdate(const float timeStep, MainCamera& mainCamera) {
+void Mover::OnTickUpdate(const float timeStep, MainCamera& mainCamera, const bool playerResponsive) {
 	auto& fsm = m_Player.GetComponents < Cori::World::Components::Entity::StateMachine>();
 	
 	// vvv double jump raycast checks, to avoid double jumping when player is almoust touching the ground or the wall 
@@ -148,7 +148,7 @@ void Mover::OnTickUpdate(const float timeStep, MainCamera& mainCamera) {
 	{
 		b2Plane plane = m_Planes[i].plane;
 
-		if (std::abs(std::round(plane.normal.x * 10000.0f)) == 10000) {
+		if (std::abs(std::round(plane.normal.x * 10000.0f)) == 10000 && playerResponsive) {
 			m_CanWallJump = true;
 			bufferFallState = false;
 			bufferAscendingState = false;
@@ -161,11 +161,11 @@ void Mover::OnTickUpdate(const float timeStep, MainCamera& mainCamera) {
 		}
 	}
 
-	if (bufferFallState && !m_CanWallJump) {
+	if (bufferFallState && !m_CanWallJump && playerResponsive) {
 		fsm.SetStateIfNotInState<States::Player::Fall>();
 	}
 
-	if (bufferAscendingState && !m_CanWallJump) {
+	if (bufferAscendingState && !m_CanWallJump && playerResponsive) {
 		if (fsm.IsInState<States::Player::WallSlide>()) {
 			fsm.SetState<States::Player::Ascending>();
 		}
@@ -175,7 +175,7 @@ void Mover::OnTickUpdate(const float timeStep, MainCamera& mainCamera) {
 
 	// vvv left/right movement and wall slide
 	{
-		if (Cori::Core::Input::IsKeyPressed(Cori::Core::CORI_KEY_A)) {
+		if (Cori::Core::Input::IsKeyDown(Cori::Core::CORI_KEY_A) && playerResponsive) {
 			if (m_CanWallJump && m_WallJumpDirection == 1 && m_Velocity.y < -0.1f - m_Gravity * timeStep) {
 				m_Gravity = 0.0f;
 				m_Velocity.y = -m_WallSlideSpeed;
@@ -186,7 +186,7 @@ void Mover::OnTickUpdate(const float timeStep, MainCamera& mainCamera) {
 			}
 		}
 
-		if (Cori::Core::Input::IsKeyPressed(Cori::Core::CORI_KEY_D)) {
+		if (Cori::Core::Input::IsKeyDown(Cori::Core::CORI_KEY_D) && playerResponsive) {
 			if (m_CanWallJump && m_WallJumpDirection == -1 && m_Velocity.y < -0.1f - m_Gravity * timeStep) {
 				m_Gravity = 0.0f;
 				m_Velocity.y = -m_WallSlideSpeed;
@@ -217,7 +217,7 @@ void Mover::OnTickUpdate(const float timeStep, MainCamera& mainCamera) {
 			m_CanDoubleJump = true;
 		}
 
-		if (Cori::Core::Input::IsKeyPressed(Cori::Core::CORI_KEY_SPACE)) {
+		if (Cori::Core::Input::IsKeyDown(Cori::Core::CORI_KEY_SPACE) && playerResponsive) {
 			if (m_CanDoubleJump && !m_OnGround && !m_CanWallJump && m_JumpButtonReleased && !m_Jumping && !m_NearGround && !m_NearWall && m_JumpCoyoteTimeTickTimer > m_JumpCoyoteTimeTicks) { // double jump initial action
 				m_Velocity.y = m_DoubleJumpStartSpeed;
 				m_JumpButtonReleased = false;
@@ -266,7 +266,7 @@ void Mover::OnTickUpdate(const float timeStep, MainCamera& mainCamera) {
 			//m_WallJumpDirection = 0;
 		}
 
-		if (m_CanWallJump && !m_OnGround && m_WallJumpBufferTickTimer <= m_WallJumpBufferTicks && !m_Jumping) { // wall jump initial action
+		if ((m_CanWallJump && !m_OnGround && m_WallJumpBufferTickTimer <= m_WallJumpBufferTicks && !m_Jumping) && playerResponsive) { // wall jump initial action
 			m_Velocity.y = m_WallJumpStartSpeed;
 			m_Velocity.x = m_WallJumpStartSideSpeed * m_WallJumpDirection;
 			m_CanWallJump = false;
@@ -287,7 +287,7 @@ void Mover::OnTickUpdate(const float timeStep, MainCamera& mainCamera) {
 		}
 
 
-		if ((m_OnGround || m_JumpCoyoteTimeTickTimer <= m_JumpCoyoteTimeTicks) && m_JumpBufferTickTimer <= m_JumpBufferTicks && !m_WallJumping) { // jump initial action
+		if (((m_OnGround || m_JumpCoyoteTimeTickTimer <= m_JumpCoyoteTimeTicks) && m_JumpBufferTickTimer <= m_JumpBufferTicks && !m_WallJumping) && playerResponsive) { // jump initial action
 			m_Velocity.y = m_JumpStartSpeed;
 
 			if (m_JumpCoyoteTimeTickTimer <= m_JumpCoyoteTimeTicks) {
@@ -318,7 +318,7 @@ void Mover::OnTickUpdate(const float timeStep, MainCamera& mainCamera) {
 	// ^^^
 
 	// set idle if still
-	if ((m_OnGround && std::abs(m_Velocity.x) < m_MinSpeedForRunState && typeid(fsm.GetLastState()) != typeid(States::Player::Fall)) || (m_OnGround && std::abs(m_Velocity.x) < 0.05f && typeid(fsm.GetLastState()) == typeid(States::Player::Fall))) {
+	if (((m_OnGround && std::abs(m_Velocity.x) < m_MinSpeedForRunState && typeid(fsm.GetLastState()) != typeid(States::Player::Fall)) || (m_OnGround && std::abs(m_Velocity.x) < 0.05f && typeid(fsm.GetLastState()) == typeid(States::Player::Fall))) && playerResponsive) {
 		fsm.SetStateIfNotInState<States::Player::Idle>();
 	}
 
@@ -508,6 +508,66 @@ void Mover::DebugDraw(float test) {
 	Cori::Core::Layer::m_DebugImGuiRenderer.DrawText({ 1.1f, 14.7f }, fmt::color::white, "m_WallJumpDirection: " + std::to_string(m_WallJumpDirection));
 
 	Cori::Core::Layer::m_DebugImGuiRenderer.DrawText({ 1.1f, 14.1f }, fmt::color::white, "Current Player State: " + std::string(m_Player.GetComponents<Cori::World::Components::Entity::StateMachine>().GetCurrentState()->GetDebugName()));
+}
+
+void Mover::TeleportToSpawn() {
+	m_Transform = { Cori::Physics::ToMeters(m_Spawn), b2Rot_identity };
+	m_RenderingPosition = Cori::Physics::ToMeters(m_Spawn);
+	m_OldRenderingPosition = Cori::Physics::ToMeters(m_Spawn);
+}
+
+void Mover::ResetState() {
+	m_Velocity = { 0.0f, 0.0f };
+
+	m_CastResult = {};
+
+	for (uint32_t i = 0; i < m_PlaneCount; ++i ) {
+		m_Planes[i] = {};
+	}
+
+	m_Transform = {};
+	m_OldTransform = {};
+	m_Translation = {};
+	m_Origin = { 0.0f, 0.0f };
+	m_P1 = {};
+	m_P2 = {};
+
+	m_GroundRayStart = {};
+	m_GroundRayEnd = {};
+
+	m_WallRayStart = {};
+	m_WallRayEnd = {};
+
+	m_PlaneCount = 0;
+	m_PogoVelocity = 0.0f;
+
+	m_OnGround = false;
+	m_OldOnGround = false;
+	m_JumpButtonReleased = true;
+	m_Jumping = false;
+	m_WallJumping = false;
+	m_DoubleJumping = false;
+
+	m_ResetDistanceNextTick = false;
+
+	m_CanWallJump = false;
+	m_CanDoubleJump = false;
+	m_WallJumpDirection = 0;
+
+	m_JumpVariableTickTimer = 128;
+	m_JumpBufferTickTimer = 128;
+	m_JumpCoyoteTimeTickTimer = 128;
+
+	m_WallJumpBufferTickTimer = 128;
+	m_WallJumpVariableTickTimer = 128;
+
+	m_DoubleJumpVariableTickTimer = 128;
+
+	m_NearGround = false;
+	m_NearWall = false;
+
+	m_LastFallingDistance = 0.0f;
+
 }
 
 void Mover::SolveMove(const float timeStep, float throttle) {

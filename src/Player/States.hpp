@@ -406,6 +406,26 @@ namespace States {
 				return "AscendingState";
 			}
 		};
+
+		class Dead final : public Cori::World::EntityState {
+			void OnEnter(Cori::World::Entity& player) override {
+				const auto pack = Cori::AssetManager::Get(AnimationPacks::PlayerMovement);
+
+				auto& ar = player.GetComponents<Cori::World::Components::Entity::QuadAnimatorNew>();
+				const auto anim = std::make_pair(pack->GetAnimation(Animations::Player::Dead), Cori::Graphics::Animation::PlayParams{});
+				ar.Play(anim);
+			}
+
+			void OnTickUpdate(Cori::World::Entity& player, float deltaTime) override {
+			}
+
+			void OnExit(Cori::World::Entity& player, const std::type_info& nextStateType) override {
+			}
+
+			const char* GetDebugName() const override {
+				return "Dead";
+			}
+		};
 	}
 
 }

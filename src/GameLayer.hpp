@@ -10,9 +10,9 @@ public:
 	void OnAttach() override;
 	void OnDetach() override;
 
-	void OnUpdate(const Cori::Core::GameTimer& gameTimer) override;
-	void OnTickUpdate(const float timeStep) override;
-	void OnImGuiRender(const double deltaTime) override;
+	void OnUpdate(Cori::Core::GameTimer& gameTimer) override;
+	void OnTickUpdate(Cori::Core::GameTimer& gameTimer) override;
+	void OnImGuiRender(Cori::Core::GameTimer& gameTimer) override;
 
 	void OnEvent(Cori::Core::Event& event) override;
 };

@@ -1,11 +1,4 @@
 #pragma once
-#include <Cori.hpp>
-
-namespace AnimatorNames {
-
-	inline constexpr char PlayerParticleAnimator[] = "Player Particle Animator";
-
-}
 
 namespace Animations {
 	namespace Player {
@@ -18,6 +11,8 @@ namespace Animations {
 		inline constexpr uint32_t Fall = 7;
 		inline constexpr uint32_t JumpStart = 5;
 		inline constexpr uint32_t JumpMid = 6;
+		inline constexpr uint32_t Dead = 41;
+
 
 		namespace Particles {
 

@@ -38,11 +38,11 @@
             "scaleInEditor": 3
         },
         "testlevel.tmx": {
-            "scale": 3,
-            "selectedLayer": 1,
+            "scale": 1,
+            "selectedLayer": 2,
             "viewCenter": {
-                "x": 365.8333333333333,
-                "y": 562.3333333333333
+                "x": 561,
+                "y": 420
             }
         }
     },
@@ -58,6 +58,7 @@
         "testlevel.tmx"
     ],
     "project": "project.tiled-project",
+    "property.type": "float",
     "recentFiles": [
         "Walls.tsx",
         "testlevel.tmx"
