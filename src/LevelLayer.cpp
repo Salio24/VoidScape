@@ -15,14 +15,6 @@
 static bool manualStep = false;
 
 LevelLayer::LevelLayer() : Layer("Level Layer") {
-
-}
-
-LevelLayer::~LevelLayer() {
-	ActiveScene.DestroyEntity(m_Player);
-}
-
-void LevelLayer::OnAttach() {
 	const auto success = Cori::World::SceneManager::CreateScene("Level Scene");
 	CORI_ASSERT(success, "Failed to create Level Scene. Error: {}", success.error().what());
 	const auto success_ = BindScene("Level Scene");
@@ -31,11 +23,17 @@ void LevelLayer::OnAttach() {
 	const int screenWidth = Cori::Core::Application::GetWindow().GetWidth();
 	const int screenHeight = Cori::Core::Application::GetWindow().GetHeight();
 
-	ActiveScene.GetActiveCamera().CreateOrthoCamera(0, static_cast<float>(screenWidth) / (static_cast<float>(screenHeight) / 360.0f), 0, 360, -50, 0);
+	ActiveScene.GetActiveCamera().CreateOrthoCamera(0, static_cast<float>(screenWidth) / (static_cast<float>(screenHeight) / 360.0f), 0, 360);
+}
+
+LevelLayer::~LevelLayer() {
+	ActiveScene.DestroyEntity(m_Player);
+}
+
+void LevelLayer::OnAttach() {
 }
 
 void LevelLayer::OnDetach() {
-
 }
 
 void LevelLayer::OnUpdate(Cori::Core::GameTimer& gameTimer) {
@@ -44,14 +42,14 @@ void LevelLayer::OnUpdate(Cori::Core::GameTimer& gameTimer) {
 
 		const auto& fsm = m_Player.GetComponents<Cori::World::Components::Entity::StateMachine>();
 
-		std::string timerText = "Skill Issue Lol";
+		static std::string timerText;
 		glm::mat3 textPos;
 		Cori::Graphics::Renderer2D::TextAlignment drawSpace = Cori::Graphics::Renderer2D::RIGHT;
 
 		if (!fsm.IsInState<States::Player::Dead>() && !m_LevelCompleted) {
 			drawSpace = Cori::Graphics::Renderer2D::LEFT;
 			textPos = glm::translate(glm::mat3(1.0f), glm::vec2(15.0f, 330.0f));
-			timerText = std::to_string(hp.m_TimeMS);
+			timerText = Cori::Core::GameTimer::FormatTime_S_to_M_S_MS(hp.m_TimeS);
 		}
 		else if (fsm.IsInState<States::Player::Dead>()) {
 			drawSpace = Cori::Graphics::Renderer2D::CENTER;
@@ -61,10 +59,10 @@ void LevelLayer::OnUpdate(Cori::Core::GameTimer& gameTimer) {
 		else if (m_LevelCompleted) {
 			drawSpace = Cori::Graphics::Renderer2D::CENTER;
 			textPos = glm::translate(glm::mat3(1.0f), ActiveScene.GetActiveCamera().GetSize() / 2.0f);
-			timerText = std::format("You escaped, now do it faster. \nTime left in the bank: {}", std::to_string(hp.m_LastTime));
+			timerText = std::format("You escaped, now do it faster. \nTime left in the bank: {}", Cori::Core::GameTimer::FormatTime_S_to_M_S_MS(hp.m_TimeS));
 		}
 
-		Cori::Graphics::Renderer2D::SubmitText(Cori::Graphics::Renderer2D::SCREEN_SPACE, drawSpace, textPos, 20, timerText, glm::vec4(1.0f), Cori::AssetManager::Get(Assets::GlobalFont), 20, 1000.0f, 0.0f, 0.0f);
+		Cori::Graphics::Renderer2D::SubmitText(Cori::Graphics::Renderer2D::SCREEN_SPACE, drawSpace, textPos, 20, timerText, glm::vec4(1.0f), Cori::AssetManager::Get(Assets::GlobalFont).get(), 20, 1000.0f, 0.0f, 0.0f);
 
 		m_Mover->OnUpdate(gameTimer.GetDeltaTime(), gameTimer.GetTickAlpha());
 		m_MainCamera.OnUpdate(gameTimer, ActiveScene.GetActiveCamera(), !m_LevelCompleted);
@@ -120,7 +118,7 @@ void LevelLayer::OnImGuiRender(Cori::Core::GameTimer& gameTimer) {
 			ImGui::Checkbox("Mover debug draw", &m_MoverDebugDraw);
 		}
 		if (ImGui::Checkbox("Manual Step(disable, K - step)", &manualStep)) {
-			Cori::Core::Application::SetManualTickStep(manualStep);
+			Cori::Core::Application::GetGameTimer().SetManualTickStep(manualStep);
 		}
 
 		if (ImGui::Button("Add dynamic box")) {
@@ -154,7 +152,7 @@ void LevelLayer::OnImGuiRender(Cori::Core::GameTimer& gameTimer) {
 		ImGui::Separator();
 
 		if (ImGui::SliderFloat("Camera Scale", &scale, -0.25, 4.0f, "%.2f")) {
-			ActiveScene.GetActiveCamera().SetZoomLevel(scale);
+			ActiveScene.GetActiveCamera().SetScale(glm::vec2(scale));
 			ActiveScene.GetActiveCamera().RecalculateVP();
 		}
 
@@ -179,7 +177,7 @@ void LevelLayer::OnEvent(Cori::Core::Event& event) {
 	Cori::Core::EventDispatcher dispatcher(event);
 
 	dispatcher.Dispatch<Cori::Core::WindowResizeEvent>([this](const Cori::Core::WindowResizeEvent& e) -> bool {
-		ActiveScene.GetActiveCamera().CreateOrthoCamera(0, static_cast<float>(e.GetWidth()) / (static_cast<float>(e.GetHeight()) / 360.0f), 0, 360, -50, 0);
+		ActiveScene.GetActiveCamera().CreateOrthoCamera(0, static_cast<float>(e.GetWidth()) / (static_cast<float>(e.GetHeight()) / 360.0f), 0, 360);
 		return true;
 	});
 

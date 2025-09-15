@@ -13,12 +13,12 @@ GameLayer::~GameLayer() {
 void GameLayer::OnAttach() {
 	auto level = new LevelLayer();
 
+	level->LoadLevel(GetVoidScapeRootDir() / "assets/levels/testlevel.tmx");
+
 	auto result = Cori::Core::Application::PushLayer(level);
 	if (!result) {
 		CORI_ERROR("Failed to push LevelLayer, Error: {}", result.error().what());
 	}
-
-	level->LoadLevel(GetVoidScapeRootDir() / "assets/levels/testlevel.tmx");
 }
 
 void GameLayer::OnDetach() {

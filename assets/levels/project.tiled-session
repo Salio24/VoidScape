@@ -3,7 +3,7 @@
         "height": 4300,
         "width": 2
     },
-    "activeFile": "testlevel.tmx",
+    "activeFile": "Walls.tsx",
     "expandedProjectPaths": [
         "."
     ],
@@ -16,10 +16,10 @@
         },
         "Construction.tsx": {
             "scaleInDock": 2,
-            "scaleInEditor": 1
+            "scaleInEditor": 5.5
         },
         "ConstructionOverlay.tsx": {
-            "scaleInDock": 1
+            "scaleInDock": 4
         },
         "Ledges.tsx": {
             "scaleInDock": 1
@@ -35,14 +35,14 @@
         },
         "Walls.tsx": {
             "scaleInDock": 1,
-            "scaleInEditor": 3
+            "scaleInEditor": 2
         },
         "testlevel.tmx": {
-            "scale": 1,
-            "selectedLayer": 2,
+            "scale": 2,
+            "selectedLayer": 0,
             "viewCenter": {
-                "x": 561,
-                "y": 420
+                "x": 369,
+                "y": 478
             }
         }
     },
@@ -55,13 +55,15 @@
     "map.width": 40,
     "openFiles": [
         "Walls.tsx",
-        "testlevel.tmx"
+        "testlevel.tmx",
+        "Construction.tsx"
     ],
     "project": "project.tiled-project",
     "property.type": "float",
     "recentFiles": [
-        "Walls.tsx",
-        "testlevel.tmx"
+        "Construction.tsx",
+        "testlevel.tmx",
+        "Walls.tsx"
     ],
     "tileset.lastUsedFormat": "tsx",
     "tileset.tileSize": {

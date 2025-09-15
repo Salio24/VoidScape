@@ -6,7 +6,7 @@ namespace Assets {
 	inline const Cori::Graphics::Font::Descriptor GlobalFont {
 		"Main Font",
 		GetVoidScapeRootDir() / std::filesystem::path("assets/fonts/definetlyaninvalidfont.forsure"),
-		{ Cori::Graphics::Font::CharsetRanges::Latin, Cori::Graphics::Font::CharsetRanges::LatinExtendedA, Cori::Graphics::Font::CharsetRanges::LatinExtendedB }
+		{ Cori::Graphics::Font::CharsetRanges::Latin, Cori::Graphics::Font::CharsetRanges::LatinExtendedA, Cori::Graphics::Font::CharsetRanges::LatinExtendedB },
 	};
 
 	inline const Cori::Graphics::SpriteAtlas::Descriptor Coin {

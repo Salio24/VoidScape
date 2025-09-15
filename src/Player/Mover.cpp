@@ -37,15 +37,30 @@ void Mover::OnUpdate(const double deltaTime, const double tickAlpha) {
 	auto& transform = m_Player.GetComponents<Cori::World::Components::Entity::Transform>();
 	auto& renderer = m_Player.GetComponents<Cori::World::Components::Entity::QuadRenderer>();
 
+	constexpr bool tickAlignedRender = false;
+
 	// actual rendering position interpolation between ticks
 	glm::vec2 halfSize = renderer.GetHalfSize();
-	if (m_PixelAlignedRender) {
-		glm::vec2 pos = Cori::Physics::ToPixels((m_RenderingPosition * tickAlpha + m_OldRenderingPosition * (1.0f - tickAlpha))) + glm::vec2{ 0.0f, halfSize.y };
-		transform.SetLocalPosition({static_cast<int>(pos.x), static_cast<int>(pos.y)});
+	if (!tickAlignedRender) {
+		if (m_PixelAlignedRender) {
+			glm::vec2 pos = Cori::Physics::ToPixels((m_RenderingPosition * tickAlpha + m_OldRenderingPosition * (1.0f - tickAlpha))) + glm::vec2{ 0.0f, halfSize.y };
+			transform.SetLocalPosition({static_cast<int>(pos.x), static_cast<int>(pos.y)});
+		}
+		else {
+			transform.SetLocalPosition(Cori::Physics::ToPixels((m_RenderingPosition * tickAlpha + m_OldRenderingPosition * (1.0f - tickAlpha))) + glm::vec2{ 0.0f, halfSize.y });
+		}
+	} else {
+		transform.SetLocalPosition(Cori::Physics::ToPixels(m_RenderingPosition) + glm::vec2{ 0.0f, halfSize.y });
 	}
-	else {
-		transform.SetLocalPosition(Cori::Physics::ToPixels((m_RenderingPosition * tickAlpha + m_OldRenderingPosition * (1.0f - tickAlpha))) + glm::vec2{ 0.0f, halfSize.y });
-	}
+
+	//TODO: cast a ray between the capsule bottom and pogo feet, if there is an intersection the overlap point is out rendering pos, it there is no intersection, then the pogo feet is our rendering pos
+
+	Cori::Graphics::Renderer2D::SubmitColoredQuad(Cori::Graphics::Renderer2D::WORLD_SPACE, Cori::Physics::ToPixels(m_RenderingPosition), glm::vec2(2.0f, 0.5f), glm::vec3(1.0f, 0.0f, 0.0f));
+
+	Cori::Graphics::Renderer2D::SubmitColoredQuad(Cori::Graphics::Renderer2D::WORLD_SPACE, Cori::Physics::ToPixels(m_OldRenderingPosition), glm::vec2(4.0f, 0.5f), glm::vec3(0.0f, 1.0f, 0.0f));
+
+	Cori::Graphics::Renderer2D::SubmitColoredQuad(Cori::Graphics::Renderer2D::WORLD_SPACE, Cori::Physics::ToPixels((m_RenderingPosition * tickAlpha + m_OldRenderingPosition * (1.0f - tickAlpha))), glm::vec2(6.0f, 0.5f), glm::vec3(1.0f, 0.0f, 1.0f));
+
 
 	if (m_Velocity.x < 0.0f) {
 		transform.SetLocalScale({ -1.0f, 1.0f });

@@ -35,14 +35,16 @@ public:
 			m_Trauma = 0.0f;
 		}
 
-		interpolatedPos.x += m_MaxTransformShakeX * shake * m_TransformShakeNoiseX.noise1D(gameTimer.GetMilliseconds() * m_TransformShakeFrequencyModifier);
-		interpolatedPos.y += m_MaxTransformShakeY * shake * m_TransformShakeNoiseY.noise1D(gameTimer.GetMilliseconds() * m_TransformShakeFrequencyModifier);
+		interpolatedPos.x += m_MaxTransformShakeX * shake * m_TransformShakeNoiseX.noise1D(gameTimer.GetElapsedMilliseconds() * m_TransformShakeFrequencyModifier);
+		interpolatedPos.y += m_MaxTransformShakeY * shake * m_TransformShakeNoiseY.noise1D(gameTimer.GetElapsedMilliseconds() * m_TransformShakeFrequencyModifier);
 
 		float rotation = 0.0f;
 
-		rotation += m_MaxRotationalShake * shake * m_RotationalShakeNoise.noise1D(gameTimer.GetMilliseconds() * m_RotationalShakeFrequencyModifier);
+		rotation += m_MaxRotationalShake * shake * m_RotationalShakeNoise.noise1D(gameTimer.GetElapsedMilliseconds() * m_RotationalShakeFrequencyModifier);
 
 		actualCamera.SetRotation(rotation);
+		//actualCamera.SetPosition(m_CameraPosition);
+
 		actualCamera.SetPosition(interpolatedPos);
 		actualCamera.RecalculateVP();
 	}

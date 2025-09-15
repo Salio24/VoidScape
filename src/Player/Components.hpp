@@ -6,31 +6,35 @@
 namespace Components {
 	struct Health {
 		Health() = default;
-		Health(const float initialValue, const Cori::World::Entity& entity) : m_TimeMS(initialValue), m_InitialValue(initialValue), m_Player(entity) {}
+		Health(const float initialValue, const Cori::World::Entity& entity) : m_TimeS(initialValue), m_InitialValue(initialValue), m_Player(entity) {}
 
 		void OnTickUpdate(const float timeStep, const bool levelComplete) {
 			auto& fsm = m_Player.GetComponents<Cori::World::Components::Entity::StateMachine>();
 
 			if (!fsm.IsInState<States::Player::Dead>()) {
-				if (m_TimeMS > 0.0f && !levelComplete) {
-					m_TimeMS -= timeStep;
+				if (m_TimeS > 0.0f && !levelComplete) {
+					m_TimeS -= timeStep;
 				} else if (!levelComplete) {
-					m_LastTime = m_TimeMS;
+					m_LastTime = m_TimeS;
 					auto event = Events::PlayerDied(m_Player);
 					Cori::Core::Application::EmitEvent(event);
 					fsm.SetState<States::Player::Dead>();
 					return;
 				}
 
-				m_LastTime = m_TimeMS;
+				m_LastTime = m_TimeS;
 			}
 		}
 
-		void Reset() {
-			m_TimeMS = m_InitialValue;
+		void TakeDamage(const float timeDamage, const uint32_t invisibilityTicks) {
+
 		}
 
-		double m_TimeMS;
+		void Reset() {
+			m_TimeS = m_InitialValue;
+		}
+
+		double m_TimeS;
 		double m_LastTime;
 	private:
 		float m_InitialValue;
