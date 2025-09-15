@@ -333,7 +333,7 @@ void Mover::OnTickUpdate(const float timeStep, MainCamera& mainCamera, const boo
 	// ^^^
 
 	// set idle if still
-	if (((m_OnGround && std::abs(m_Velocity.x) < m_MinSpeedForRunState && typeid(fsm.GetLastState()) != typeid(States::Player::Fall)) || (m_OnGround && std::abs(m_Velocity.x) < 0.05f && typeid(fsm.GetLastState()) == typeid(States::Player::Fall))) && playerResponsive) {
+	if (((m_OnGround && std::abs(m_Velocity.x) < m_MinSpeedForRunState && typeid(*fsm.GetLastState()) != typeid(States::Player::Fall)) || (m_OnGround && std::abs(m_Velocity.x) < 0.05f && typeid(*fsm.GetLastState()) == typeid(States::Player::Fall))) && playerResponsive) {
 		fsm.SetStateIfNotInState<States::Player::Idle>();
 	}
 

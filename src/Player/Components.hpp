@@ -8,6 +8,9 @@ namespace Components {
 		Health() = default;
 		Health(const float initialValue, const Cori::World::Entity& entity) : m_TimeS(initialValue), m_InitialValue(initialValue), m_Player(entity) {}
 
+		Health(const Health&) = delete;
+		Health& operator=(const Health&) = delete;
+
 		void OnTickUpdate(const float timeStep, const bool levelComplete) {
 			auto& fsm = m_Player.GetComponents<Cori::World::Components::Entity::StateMachine>();
 
@@ -26,16 +29,12 @@ namespace Components {
 			}
 		}
 
-		void TakeDamage(const float timeDamage, const uint32_t invisibilityTicks) {
-
-		}
-
 		void Reset() {
 			m_TimeS = m_InitialValue;
 		}
 
 		double m_TimeS;
-		double m_LastTime;
+		double m_LastTime{ 0 };
 	private:
 		float m_InitialValue;
 		Cori::World::Entity m_Player;

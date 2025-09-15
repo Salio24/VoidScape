@@ -87,7 +87,7 @@ void LevelLayer::OnTickUpdate(Cori::Core::GameTimer& gameTimer) {
 void LevelLayer::OnImGuiRender(Cori::Core::GameTimer& gameTimer) {
 	if (m_LevelLoaded) {
 		if (m_PhysicsDebugDraw) {
-			Cori::ImGuiPresets::Box2dDebugDraw(ActiveScene.GetActiveCamera().GetSize(), CORI_PIXELS_PER_METER, this, true, ActiveScene.GetActiveCamera().GetPosition(), 2000.0f);
+			Cori::ImGuiPresets::Box2dDebugDraw(ActiveScene.GetActiveCamera().GetSize(), ActiveScene.GetActiveCamera().GetPosition(), CORI_PIXELS_PER_METER, this, true, 2000.0f);
 		}
 
 		ImGui::Begin("Layer Layer UI");
@@ -553,8 +553,10 @@ void LevelLayer::AddRegularOrb(const float orbBonus, const Cori::Physics::Vec2 p
 
 	auto& trig = tr.AddComponent<Cori::World::Components::Entity::Trigger>(tr);
 	trig.SetBehavior<Triggers::RegularOrb>();
-	auto* behavior = trig.GetBehavior<Triggers::RegularOrb>();
-	behavior->m_TimeBonus = orbBonus;
+	const auto behavior = trig.GetBehavior<Triggers::RegularOrb>();
+	if (behavior) {
+		behavior.value()->m_TimeBonus = orbBonus;
+	}
 
 	const auto atlas = Cori::AssetManager::Get(Assets::Coin);
 	auto& trtr = tr.GetComponents<Cori::World::Components::Entity::Transform>();

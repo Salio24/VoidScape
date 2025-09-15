@@ -7,7 +7,7 @@ namespace States {
 	namespace Player {
 		class Run final : public Cori::World::EntityState {
 		public:
-			void OnEnter(Cori::World::Entity& player) override {
+			void OnEnter(Cori::World::Entity& player, const std::type_index& lastStateType) override {
 				const auto pack = Cori::AssetManager::Get(AnimationPacks::PlayerMovement);
 
 				auto& ar = player.GetComponents<Cori::World::Components::Entity::QuadAnimatorNew>();
@@ -52,7 +52,7 @@ namespace States {
 			void OnTickUpdate(Cori::World::Entity& player, float deltaTime) override {
 			}
 
-			void OnExit(Cori::World::Entity& player, const std::type_info& nextStateType) override {
+			void OnExit(Cori::World::Entity& player, const std::type_index& nextStateType) override {
 				auto& ar = player.GetComponents<Cori::World::Components::Entity::QuadAnimatorNew>();
 				ar.Stop(true);
 
@@ -89,7 +89,7 @@ namespace States {
 
 		class Idle final : public Cori::World::EntityState {
 		public:
-			void OnEnter(Cori::World::Entity& player) override {
+			void OnEnter(Cori::World::Entity& player, const std::type_index& lastStateType) override {
 				const auto pack = Cori::AssetManager::Get(AnimationPacks::PlayerMovement);
 
 				auto& ar = player.GetComponents<Cori::World::Components::Entity::QuadAnimatorNew>();
@@ -98,10 +98,9 @@ namespace States {
 			}
 
 			void OnTickUpdate(Cori::World::Entity& player, float deltaTime) override {
-
 			}
 
-			void OnExit(Cori::World::Entity& player, const std::type_info& nextStateType) override {
+			void OnExit(Cori::World::Entity& player, const std::type_index& nextStateType) override {
 				auto& ar = player.GetComponents<Cori::World::Components::Entity::QuadAnimatorNew>();
 				ar.Stop(true);
 			}
@@ -113,7 +112,7 @@ namespace States {
 
 		class Jump final : public Cori::World::EntityState {
 		public:
-			void OnEnter(Cori::World::Entity& player) override {
+			void OnEnter(Cori::World::Entity& player, const std::type_index& lastStateType) override {
 				const auto pack = Cori::AssetManager::Get(AnimationPacks::PlayerMovement);
 
 				auto& ar = player.GetComponents<Cori::World::Components::Entity::QuadAnimatorNew>();
@@ -159,7 +158,7 @@ namespace States {
 			void OnTickUpdate(Cori::World::Entity& player, float deltaTime) override {
 			}
 
-			void OnExit(Cori::World::Entity& player, const std::type_info& nextStateType) override {
+			void OnExit(Cori::World::Entity& player, const std::type_index& nextStateType) override {
 				auto& ar = player.GetComponents<Cori::World::Components::Entity::QuadAnimatorNew>();
 				ar.Stop(true);
 			}
@@ -171,7 +170,7 @@ namespace States {
 
 		class Fall final : public Cori::World::EntityState {
 		public:
-			void OnEnter(Cori::World::Entity& player) override {
+			void OnEnter(Cori::World::Entity& player, const std::type_index& lastStateType) override {
 				const auto pack = Cori::AssetManager::Get(AnimationPacks::PlayerMovement);
 
 				auto& ar = player.GetComponents<Cori::World::Components::Entity::QuadAnimatorNew>();
@@ -183,7 +182,7 @@ namespace States {
 			void OnTickUpdate(Cori::World::Entity& player, float deltaTime) override {
 			}
 
-			void OnExit(Cori::World::Entity& player, const std::type_info& nextStateType) override {
+			void OnExit(Cori::World::Entity& player, const std::type_index& nextStateType) override {
 				if (nextStateType == typeid(Idle) || nextStateType == typeid(Jump) || nextStateType == typeid(Run)) {
 					auto& ar = player.GetComponents<Cori::World::Components::Entity::QuadAnimatorNew>();
 					ar.Stop(true);
@@ -231,7 +230,7 @@ namespace States {
 
 		class DoubleJump final : public Cori::World::EntityState {
 		public:
-			void OnEnter(Cori::World::Entity& player) override {
+			void OnEnter(Cori::World::Entity& player, const std::type_index& lastStateType) override {
 				const auto pack = Cori::AssetManager::Get(AnimationPacks::PlayerMovement);
 
 				auto& ar = player.GetComponents<Cori::World::Components::Entity::QuadAnimatorNew>();
@@ -271,7 +270,7 @@ namespace States {
 
 			}
 
-			void OnExit(Cori::World::Entity& player, const std::type_info& nextStateType) override {
+			void OnExit(Cori::World::Entity& player, const std::type_index& nextStateType) override {
 				auto& ar = player.GetComponents<Cori::World::Components::Entity::QuadAnimatorNew>();
 				ar.Stop(true);
 			}
@@ -283,7 +282,7 @@ namespace States {
 
 		class WallJump final : public Cori::World::EntityState {
 		public:
-			void OnEnter(Cori::World::Entity& player) override {
+			void OnEnter(Cori::World::Entity& player, const std::type_index& lastStateType) override {
 				const auto pack = Cori::AssetManager::Get(AnimationPacks::PlayerMovement);
 
 				auto& ar = player.GetComponents<Cori::World::Components::Entity::QuadAnimatorNew>();
@@ -327,7 +326,7 @@ namespace States {
 
 			}
 
-			void OnExit(Cori::World::Entity& player, const std::type_info& nextStateType) override {
+			void OnExit(Cori::World::Entity& player, const std::type_index& nextStateType) override {
 				auto& ar = player.GetComponents<Cori::World::Components::Entity::QuadAnimatorNew>();
 				ar.Stop(true);
 			}
@@ -339,7 +338,7 @@ namespace States {
 
 		class WallSlide final : public Cori::World::EntityState {
 		public:
-			void OnEnter(Cori::World::Entity& player) override {
+			void OnEnter(Cori::World::Entity& player, const std::type_index& lastStateType) override {
 				const auto pack = Cori::AssetManager::Get(AnimationPacks::PlayerMovement);
 
 				auto& ar = player.GetComponents<Cori::World::Components::Entity::QuadAnimatorNew>();
@@ -363,7 +362,7 @@ namespace States {
 
 			}
 
-			void OnExit(Cori::World::Entity& player, const std::type_info& nextStateType) override {
+			void OnExit(Cori::World::Entity& player, const std::type_index& nextStateType) override {
 				auto& ar = player.GetComponents<Cori::World::Components::Entity::QuadAnimatorNew>();
 				ar.Stop(true);
 
@@ -385,7 +384,7 @@ namespace States {
 		// this one exists only to change animation when player was touching the wall but now he is above it and didn't move to one of the sides
 		class Ascending final : public Cori::World::EntityState {
 		public:
-			void OnEnter(Cori::World::Entity& player) override {
+			void OnEnter(Cori::World::Entity& player, const std::type_index& lastStateType) override {
 				const auto pack = Cori::AssetManager::Get(AnimationPacks::PlayerMovement);
 
 				auto& ar = player.GetComponents<Cori::World::Components::Entity::QuadAnimatorNew>();
@@ -397,7 +396,7 @@ namespace States {
 
 			}
 
-			void OnExit(Cori::World::Entity& player, const std::type_info& nextStateType) override {
+			void OnExit(Cori::World::Entity& player, const std::type_index& nextStateType) override {
 				auto& ar = player.GetComponents<Cori::World::Components::Entity::QuadAnimatorNew>();
 				ar.Stop(true);
 			}
@@ -408,7 +407,7 @@ namespace States {
 		};
 
 		class Dead final : public Cori::World::EntityState {
-			void OnEnter(Cori::World::Entity& player) override {
+			void OnEnter(Cori::World::Entity& player, const std::type_index& lastStateType) override {
 				const auto pack = Cori::AssetManager::Get(AnimationPacks::PlayerMovement);
 
 				auto& ar = player.GetComponents<Cori::World::Components::Entity::QuadAnimatorNew>();
@@ -419,7 +418,7 @@ namespace States {
 			void OnTickUpdate(Cori::World::Entity& player, float deltaTime) override {
 			}
 
-			void OnExit(Cori::World::Entity& player, const std::type_info& nextStateType) override {
+			void OnExit(Cori::World::Entity& player, const std::type_index& nextStateType) override {
 			}
 
 			const char* GetDebugName() const override {
