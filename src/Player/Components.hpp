@@ -33,10 +33,10 @@ namespace Components {
 			m_TimeS = m_InitialValue;
 		}
 
-		double m_TimeS;
-		double m_LastTime{ 0 };
+		double m_TimeS{ 0.0 };
+		double m_LastTime{ 0.0 };
 	private:
-		float m_InitialValue;
+		float m_InitialValue{ 0.0f };
 		Cori::World::Entity m_Player;
 	};
 

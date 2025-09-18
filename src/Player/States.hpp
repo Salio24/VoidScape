@@ -10,7 +10,7 @@ namespace States {
 			void OnEnter(Cori::World::Entity& player, const std::type_index& lastStateType) override {
 				const auto pack = Cori::AssetManager::Get(AnimationPacks::PlayerMovement);
 
-				auto& ar = player.GetComponents<Cori::World::Components::Entity::QuadAnimatorNew>();
+				auto& ar = player.GetComponents<Cori::World::Components::Entity::QuadAnimator>();
 				const auto anim = std::make_pair(pack->GetAnimation(Animations::Player::Run), Cori::Graphics::Animation::PlayParams{ .LoopedInSequence = true });
 				ar.Play(anim);
 
@@ -19,7 +19,7 @@ namespace States {
 					particles1->SetActive(true);
 
 					const auto FXpack = Cori::AssetManager::Get(AnimationPacks::PlayerMovementFX);
-					auto& qa = particles1->GetComponents<Cori::World::Components::Entity::QuadAnimatorNew>();
+					auto& qa = particles1->GetComponents<Cori::World::Components::Entity::QuadAnimator>();
 					const auto FXanim = std::make_pair(FXpack->GetAnimation(Animations::Player::Particles::RunFront), Cori::Graphics::Animation::PlayParams{ .LoopedInSequence = true });
 					qa.Play(FXanim);
 				} else {
@@ -35,7 +35,7 @@ namespace States {
 
 					//const auto FXpack = Cori::AssetManager::GetAnimationPack(AnimationPacks::PlayerMovementFX);
 					const auto FXpack = Cori::AssetManager::Get(AnimationPacks::PlayerMovementFX);
-					auto& qa = particles2->GetComponents<Cori::World::Components::Entity::QuadAnimatorNew>();
+					auto& qa = particles2->GetComponents<Cori::World::Components::Entity::QuadAnimator>();
 					const auto FXanim = std::make_pair(FXpack->GetAnimation(Animations::Player::Particles::RunBack), Cori::Graphics::Animation::PlayParams{ .LoopedInSequence = true });
 					qa.Play(FXanim);
 
@@ -53,13 +53,13 @@ namespace States {
 			}
 
 			void OnExit(Cori::World::Entity& player, const std::type_index& nextStateType) override {
-				auto& ar = player.GetComponents<Cori::World::Components::Entity::QuadAnimatorNew>();
+				auto& ar = player.GetComponents<Cori::World::Components::Entity::QuadAnimator>();
 				ar.Stop(true);
 
 				auto particles1 = player.FindChildByName("Movement Particles Part 1");
 				if (particles1) {
 					particles1->SetActive(false);
-					auto& qa = particles1->GetComponents<Cori::World::Components::Entity::QuadAnimatorNew>();
+					auto& qa = particles1->GetComponents<Cori::World::Components::Entity::QuadAnimator>();
 					qa.Stop(true);
 				} else {
 					CORI_ERROR("Failed to retrieve sub entity: Movement Particles Part 1. Error: {}", particles1.error().what());
@@ -69,7 +69,7 @@ namespace States {
 				if (particles2) {
 
 					auto& t = particles2->GetComponents<Cori::World::Components::Entity::Transform>();
-					auto& qa = particles2->GetComponents<Cori::World::Components::Entity::QuadAnimatorNew>();
+					auto& qa = particles2->GetComponents<Cori::World::Components::Entity::QuadAnimator>();
 					if (qa.GetTicksElapsed() > 1) {
 						t.SetDetachedState(true);
 						qa.Stop(false);
@@ -82,7 +82,7 @@ namespace States {
 				}
 			}
 
-			const char* GetDebugName() const override {
+			[[nodiscard]] const char* GetDebugName() const override {
 				return "RunState";
 			}
 		};
@@ -92,7 +92,7 @@ namespace States {
 			void OnEnter(Cori::World::Entity& player, const std::type_index& lastStateType) override {
 				const auto pack = Cori::AssetManager::Get(AnimationPacks::PlayerMovement);
 
-				auto& ar = player.GetComponents<Cori::World::Components::Entity::QuadAnimatorNew>();
+				auto& ar = player.GetComponents<Cori::World::Components::Entity::QuadAnimator>();
 				const auto anim = std::make_pair(pack->GetAnimation(Animations::Player::Idle), Cori::Graphics::Animation::PlayParams{ .LoopedInSequence = true });
 				ar.Play(anim);
 			}
@@ -101,11 +101,11 @@ namespace States {
 			}
 
 			void OnExit(Cori::World::Entity& player, const std::type_index& nextStateType) override {
-				auto& ar = player.GetComponents<Cori::World::Components::Entity::QuadAnimatorNew>();
+				auto& ar = player.GetComponents<Cori::World::Components::Entity::QuadAnimator>();
 				ar.Stop(true);
 			}
 
-			const char* GetDebugName() const override {
+			[[nodiscard]] const char* GetDebugName() const override {
 				return "IdleState";
 			}
 		};
@@ -115,7 +115,7 @@ namespace States {
 			void OnEnter(Cori::World::Entity& player, const std::type_index& lastStateType) override {
 				const auto pack = Cori::AssetManager::Get(AnimationPacks::PlayerMovement);
 
-				auto& ar = player.GetComponents<Cori::World::Components::Entity::QuadAnimatorNew>();
+				auto& ar = player.GetComponents<Cori::World::Components::Entity::QuadAnimator>();
 				const auto jumpStart = std::make_pair(pack->GetAnimation(Animations::Player::JumpStart), Cori::Graphics::Animation::PlayParams{ .LoopedInSequence = false });
 				const auto jumpMid = std::make_pair(pack->GetAnimation(Animations::Player::JumpMid), Cori::Graphics::Animation::PlayParams{ .LoopedInSequence = true });
 				ar.Play(jumpStart, jumpMid);
@@ -129,7 +129,7 @@ namespace States {
 						jumpingParticles->SetActive(true);
 
 						const auto FXpack = Cori::AssetManager::Get(AnimationPacks::PlayerMovementFX);
-						auto& qa = jumpingParticles->GetComponents<Cori::World::Components::Entity::QuadAnimatorNew>();
+						auto& qa = jumpingParticles->GetComponents<Cori::World::Components::Entity::QuadAnimator>();
 						const auto anim = std::make_pair(FXpack->GetAnimation(Animations::Player::Particles::Jump), Cori::Graphics::Animation::PlayParams{.LoopedInSequence = false});
 						qa.Play(anim);
 
@@ -159,11 +159,11 @@ namespace States {
 			}
 
 			void OnExit(Cori::World::Entity& player, const std::type_index& nextStateType) override {
-				auto& ar = player.GetComponents<Cori::World::Components::Entity::QuadAnimatorNew>();
+				auto& ar = player.GetComponents<Cori::World::Components::Entity::QuadAnimator>();
 				ar.Stop(true);
 			}
 
-			const char* GetDebugName() const override {
+			[[nodiscard]] const char* GetDebugName() const override {
 				return "JumpState";
 			}
 		};
@@ -173,7 +173,7 @@ namespace States {
 			void OnEnter(Cori::World::Entity& player, const std::type_index& lastStateType) override {
 				const auto pack = Cori::AssetManager::Get(AnimationPacks::PlayerMovement);
 
-				auto& ar = player.GetComponents<Cori::World::Components::Entity::QuadAnimatorNew>();
+				auto& ar = player.GetComponents<Cori::World::Components::Entity::QuadAnimator>();
 				const auto anim = std::make_pair(pack->GetAnimation(Animations::Player::Fall), Cori::Graphics::Animation::PlayParams{ .LoopedInSequence = true });
 				ar.Play(anim);
 
@@ -184,7 +184,7 @@ namespace States {
 
 			void OnExit(Cori::World::Entity& player, const std::type_index& nextStateType) override {
 				if (nextStateType == typeid(Idle) || nextStateType == typeid(Jump) || nextStateType == typeid(Run)) {
-					auto& ar = player.GetComponents<Cori::World::Components::Entity::QuadAnimatorNew>();
+					auto& ar = player.GetComponents<Cori::World::Components::Entity::QuadAnimator>();
 					ar.Stop(true);
 
 					auto independentParticlesRoot = player.FindChildByName("Movement Particles Independent Root");
@@ -195,7 +195,7 @@ namespace States {
 							landingParticles->SetActive(true);
 
 							const auto FXpack = Cori::AssetManager::Get(AnimationPacks::PlayerMovementFX);
-							auto& qa = landingParticles->GetComponents<Cori::World::Components::Entity::QuadAnimatorNew>();
+							auto& qa = landingParticles->GetComponents<Cori::World::Components::Entity::QuadAnimator>();
 							const auto FXanim = std::make_pair(FXpack->GetAnimation(Animations::Player::Particles::Landing), Cori::Graphics::Animation::PlayParams{.LoopedInSequence = false});
 							qa.Play(FXanim);
 
@@ -223,7 +223,7 @@ namespace States {
 				}
 			}
 
-			const char* GetDebugName() const override {
+			[[nodiscard]] const char* GetDebugName() const override {
 				return "FallState";
 			}
 		};
@@ -233,7 +233,7 @@ namespace States {
 			void OnEnter(Cori::World::Entity& player, const std::type_index& lastStateType) override {
 				const auto pack = Cori::AssetManager::Get(AnimationPacks::PlayerMovement);
 
-				auto& ar = player.GetComponents<Cori::World::Components::Entity::QuadAnimatorNew>();
+				auto& ar = player.GetComponents<Cori::World::Components::Entity::QuadAnimator>();
 				const auto anim = std::make_pair(pack->GetAnimation(Animations::Player::DoubleJump), Cori::Graphics::Animation::PlayParams{ .LoopedInSequence = false });
 				ar.Play(anim);
 
@@ -247,7 +247,7 @@ namespace States {
 						doubleJumpParticles->SetActive(true);
 
 						const auto FXpack = Cori::AssetManager::Get(AnimationPacks::PlayerMovementFX);
-						auto& qa = doubleJumpParticles->GetComponents<Cori::World::Components::Entity::QuadAnimatorNew>();
+						auto& qa = doubleJumpParticles->GetComponents<Cori::World::Components::Entity::QuadAnimator>();
 						const auto FXanim = std::make_pair(FXpack->GetAnimation(Animations::Player::Particles::DoubleJump), Cori::Graphics::Animation::PlayParams{.LoopedInSequence = false});
 						qa.Play(FXanim);
 
@@ -271,11 +271,11 @@ namespace States {
 			}
 
 			void OnExit(Cori::World::Entity& player, const std::type_index& nextStateType) override {
-				auto& ar = player.GetComponents<Cori::World::Components::Entity::QuadAnimatorNew>();
+				auto& ar = player.GetComponents<Cori::World::Components::Entity::QuadAnimator>();
 				ar.Stop(true);
 			}
 
-			const char* GetDebugName() const override {
+			[[nodiscard]] const char* GetDebugName() const override {
 				return "DoubleJumpState";
 			}
 		};
@@ -285,7 +285,7 @@ namespace States {
 			void OnEnter(Cori::World::Entity& player, const std::type_index& lastStateType) override {
 				const auto pack = Cori::AssetManager::Get(AnimationPacks::PlayerMovement);
 
-				auto& ar = player.GetComponents<Cori::World::Components::Entity::QuadAnimatorNew>();
+				auto& ar = player.GetComponents<Cori::World::Components::Entity::QuadAnimator>();
 				const auto anim = std::make_pair(pack->GetAnimation(Animations::Player::WallJump), Cori::Graphics::Animation::PlayParams{ .LoopedInSequence = false });
 				ar.Play(anim);
 
@@ -296,7 +296,7 @@ namespace States {
 						wallJumpParticles->SetActive(true);
 
 						const auto FXpack = Cori::AssetManager::Get(AnimationPacks::PlayerMovementFX);
-						auto& qa = wallJumpParticles->GetComponents<Cori::World::Components::Entity::QuadAnimatorNew>();
+						auto& qa = wallJumpParticles->GetComponents<Cori::World::Components::Entity::QuadAnimator>();
 						const auto FXanim = std::make_pair(FXpack->GetAnimation(Animations::Player::Particles::WallJump), Cori::Graphics::Animation::PlayParams{.LoopedInSequence = false});
 						qa.Play(FXanim);
 						auto& qr = wallJumpParticles->GetComponents<Cori::World::Components::Entity::QuadRenderer>();
@@ -327,11 +327,11 @@ namespace States {
 			}
 
 			void OnExit(Cori::World::Entity& player, const std::type_index& nextStateType) override {
-				auto& ar = player.GetComponents<Cori::World::Components::Entity::QuadAnimatorNew>();
+				auto& ar = player.GetComponents<Cori::World::Components::Entity::QuadAnimator>();
 				ar.Stop(true);
 			}
 
-			const char* GetDebugName() const override {
+			[[nodiscard]] const char* GetDebugName() const override {
 				return "WallJumpState";
 			}
 		};
@@ -341,7 +341,7 @@ namespace States {
 			void OnEnter(Cori::World::Entity& player, const std::type_index& lastStateType) override {
 				const auto pack = Cori::AssetManager::Get(AnimationPacks::PlayerMovement);
 
-				auto& ar = player.GetComponents<Cori::World::Components::Entity::QuadAnimatorNew>();
+				auto& ar = player.GetComponents<Cori::World::Components::Entity::QuadAnimator>();
 				const auto anim = std::make_pair(pack->GetAnimation(Animations::Player::WallSlide), Cori::Graphics::Animation::PlayParams{ .LoopedInSequence = true });
 				ar.Play(anim);
 
@@ -350,7 +350,7 @@ namespace States {
 					particles->SetActive(true);
 
 					const auto FXpack = Cori::AssetManager::Get(AnimationPacks::PlayerMovementFX);
-					auto& qa = particles->GetComponents<Cori::World::Components::Entity::QuadAnimatorNew>();
+					auto& qa = particles->GetComponents<Cori::World::Components::Entity::QuadAnimator>();
 					const auto FXanim = std::make_pair(FXpack->GetAnimation(Animations::Player::Particles::WallSlide), Cori::Graphics::Animation::PlayParams{ .LoopedInSequence = true });
 					qa.Play(FXanim);
 				} else {
@@ -363,12 +363,12 @@ namespace States {
 			}
 
 			void OnExit(Cori::World::Entity& player, const std::type_index& nextStateType) override {
-				auto& ar = player.GetComponents<Cori::World::Components::Entity::QuadAnimatorNew>();
+				auto& ar = player.GetComponents<Cori::World::Components::Entity::QuadAnimator>();
 				ar.Stop(true);
 
 				auto particles = player.FindChildByName("Movement Particles Part 1");
 				if (particles) {
-					auto& qa = particles->GetComponents<Cori::World::Components::Entity::QuadAnimatorNew>();
+					auto& qa = particles->GetComponents<Cori::World::Components::Entity::QuadAnimator>();
 					qa.Stop(true);
 					particles->SetActive(false);
 				} else {
@@ -376,7 +376,7 @@ namespace States {
 				}
 			}
 
-			const char* GetDebugName() const override {
+			[[nodiscard]] const char* GetDebugName() const override {
 				return "WallSlideState";
 			}
 		};
@@ -387,7 +387,7 @@ namespace States {
 			void OnEnter(Cori::World::Entity& player, const std::type_index& lastStateType) override {
 				const auto pack = Cori::AssetManager::Get(AnimationPacks::PlayerMovement);
 
-				auto& ar = player.GetComponents<Cori::World::Components::Entity::QuadAnimatorNew>();
+				auto& ar = player.GetComponents<Cori::World::Components::Entity::QuadAnimator>();
 				const auto anim = std::make_pair(pack->GetAnimation(Animations::Player::JumpMid), Cori::Graphics::Animation::PlayParams{ .LoopedInSequence = true });
 				ar.Play(anim);
 			}
@@ -397,11 +397,11 @@ namespace States {
 			}
 
 			void OnExit(Cori::World::Entity& player, const std::type_index& nextStateType) override {
-				auto& ar = player.GetComponents<Cori::World::Components::Entity::QuadAnimatorNew>();
+				auto& ar = player.GetComponents<Cori::World::Components::Entity::QuadAnimator>();
 				ar.Stop(true);
 			}
 
-			const char* GetDebugName() const override {
+			[[nodiscard]] const char* GetDebugName() const override {
 				return "AscendingState";
 			}
 		};
@@ -410,7 +410,7 @@ namespace States {
 			void OnEnter(Cori::World::Entity& player, const std::type_index& lastStateType) override {
 				const auto pack = Cori::AssetManager::Get(AnimationPacks::PlayerMovement);
 
-				auto& ar = player.GetComponents<Cori::World::Components::Entity::QuadAnimatorNew>();
+				auto& ar = player.GetComponents<Cori::World::Components::Entity::QuadAnimator>();
 				const auto anim = std::make_pair(pack->GetAnimation(Animations::Player::Dead), Cori::Graphics::Animation::PlayParams{});
 				ar.Play(anim);
 			}
@@ -421,7 +421,7 @@ namespace States {
 			void OnExit(Cori::World::Entity& player, const std::type_index& nextStateType) override {
 			}
 
-			const char* GetDebugName() const override {
+			[[nodiscard]] const char* GetDebugName() const override {
 				return "Dead";
 			}
 		};

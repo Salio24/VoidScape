@@ -24,7 +24,7 @@ Mover::Mover(const Cori::Physics::Capsule& moverCapsule, const Cori::Physics::Ca
 	bp.fixedRotation = true;
 	bp.rotation = b2Rot_identity;
 
-	auto& rb = m_Player.AddComponent<Cori::World::Components::Entity::Rigidbody>(world, bp, m_Player);
+	auto& rb = m_Player.AddComponent<Cori::World::Components::Entity::RigidBody>(world, bp, m_Player);
 
 	Cori::Physics::Shape::Params sp;
 	sp.filter.maskBits = Cori::Physics::CollisionBits::SensorBit;
@@ -40,10 +40,10 @@ void Mover::OnUpdate(const double deltaTime, const double tickAlpha) {
 	constexpr bool tickAlignedRender = false;
 
 	// actual rendering position interpolation between ticks
-	glm::vec2 halfSize = renderer.GetHalfSize();
-	if (!tickAlignedRender) {
+	const glm::vec2 halfSize = renderer.GetHalfSize();
+	if constexpr (!tickAlignedRender) {
 		if (m_PixelAlignedRender) {
-			glm::vec2 pos = Cori::Physics::ToPixels((m_RenderingPosition * tickAlpha + m_OldRenderingPosition * (1.0f - tickAlpha))) + glm::vec2{ 0.0f, halfSize.y };
+			const glm::vec2 pos = Cori::Physics::ToPixels((m_RenderingPosition * tickAlpha + m_OldRenderingPosition * (1.0f - tickAlpha))) + glm::vec2{ 0.0f, halfSize.y };
 			transform.SetLocalPosition({static_cast<int>(pos.x), static_cast<int>(pos.y)});
 		}
 		else {
@@ -342,7 +342,7 @@ void Mover::OnTickUpdate(const float timeStep, MainCamera& mainCamera, const boo
 	SolveMove(timeStep, throttle);
 
 	// update kinematic body position meant for sensor use
-	auto& rb = m_Player.GetComponents<Cori::World::Components::Entity::Rigidbody>();
+	auto& rb = m_Player.GetComponents<Cori::World::Components::Entity::RigidBody>();
 	constexpr float tolerance = 0.01f;
 	b2Vec2 delta = m_OldTransform.p - m_Transform.p;
 	if (std::abs(delta.x) > tolerance * tolerance || std::abs(delta.y) > tolerance * tolerance) {

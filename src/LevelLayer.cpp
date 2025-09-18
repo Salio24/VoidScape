@@ -31,6 +31,7 @@ LevelLayer::~LevelLayer() {
 }
 
 void LevelLayer::OnAttach() {
+
 }
 
 void LevelLayer::OnDetach() {
@@ -128,7 +129,7 @@ void LevelLayer::OnImGuiRender(Cori::Core::GameTimer& gameTimer) {
 			bp.type = b2_dynamicBody;
 			bp.position = { 4.0f, 4.0f };
 
-			auto& rb = ent.AddComponent<Cori::World::Components::Entity::Rigidbody>(ActiveScene.GetPhysicsWorld(), bp, ent);
+			auto& rb = ent.AddComponent<Cori::World::Components::Entity::RigidBody>(ActiveScene.GetPhysicsWorld(), bp, ent);
 
 			Cori::Physics::Shape::Params sp;
 
@@ -198,7 +199,7 @@ void LevelLayer::CreatePlayer(const float startingTime, const glm::vec2 spawnPos
 	Cori::AssetManager::Preload({AnimationPacks::PlayerMovement, AnimationPacks::PlayerMovementFX});
 
 	m_Player.AddComponent<Cori::World::Components::Entity::QuadRenderer>();
-	m_Player.AddComponent<Cori::World::Components::Entity::QuadAnimatorNew>(m_Player);
+	m_Player.AddComponent<Cori::World::Components::Entity::QuadAnimator>(m_Player);
 	m_Player.AddComponent<Components::Spawnpoint>(spawnPos);
 	{
 		auto& transform = m_Player.GetComponents<Cori::World::Components::Entity::Transform>();
@@ -207,7 +208,7 @@ void LevelLayer::CreatePlayer(const float startingTime, const glm::vec2 spawnPos
 
 	Cori::World::Entity playerParticles1 = ActiveScene.CreateEntity("Movement Particles Part 1", Tags::Character);
 	playerParticles1.AddComponent<Cori::World::Components::Entity::QuadRenderer>();
-	playerParticles1.AddComponent<Cori::World::Components::Entity::QuadAnimatorNew>(playerParticles1);
+	playerParticles1.AddComponent<Cori::World::Components::Entity::QuadAnimator>(playerParticles1);
 	CORI_CHECK_EXPECTED(playerParticles1.SetParent(m_Player));
 	playerParticles1.SetActive(false);
 	{
@@ -217,7 +218,7 @@ void LevelLayer::CreatePlayer(const float startingTime, const glm::vec2 spawnPos
 
 	Cori::World::Entity playerParticles2 = ActiveScene.CreateEntity("Movement Particles Part 2", Tags::Character);
 	playerParticles2.AddComponent<Cori::World::Components::Entity::QuadRenderer>();
-	playerParticles2.AddComponent<Cori::World::Components::Entity::QuadAnimatorNew>(playerParticles2);
+	playerParticles2.AddComponent<Cori::World::Components::Entity::QuadAnimator>(playerParticles2);
 	CORI_CHECK_EXPECTED(playerParticles2.SetParent(m_Player));
 	playerParticles2.SetActive(false);
 	{
@@ -235,7 +236,7 @@ void LevelLayer::CreatePlayer(const float startingTime, const glm::vec2 spawnPos
 	{
 		Cori::World::Entity particles = ActiveScene.CreateEntity("Landing Particles", Tags::Character);
 		particles.AddComponent<Cori::World::Components::Entity::QuadRenderer>();
-		particles.AddComponent<Cori::World::Components::Entity::QuadAnimatorNew>(particles);
+		particles.AddComponent<Cori::World::Components::Entity::QuadAnimator>(particles);
 		CORI_CHECK_EXPECTED(particles.SetParent(playerParticlesIndependent));
 		particles.SetActive(false);
 	}
@@ -243,7 +244,7 @@ void LevelLayer::CreatePlayer(const float startingTime, const glm::vec2 spawnPos
 	{
 		Cori::World::Entity particles = ActiveScene.CreateEntity("Jumping Particles", Tags::Character);
 		particles.AddComponent<Cori::World::Components::Entity::QuadRenderer>();
-		particles.AddComponent<Cori::World::Components::Entity::QuadAnimatorNew>(particles);
+		particles.AddComponent<Cori::World::Components::Entity::QuadAnimator>(particles);
 		CORI_CHECK_EXPECTED(particles.SetParent(playerParticlesIndependent));
 		particles.SetActive(false);
 	}
@@ -251,7 +252,7 @@ void LevelLayer::CreatePlayer(const float startingTime, const glm::vec2 spawnPos
 	{
 		Cori::World::Entity particles = ActiveScene.CreateEntity("WallJump Particles", Tags::Character);
 		particles.AddComponent<Cori::World::Components::Entity::QuadRenderer>();
-		particles.AddComponent<Cori::World::Components::Entity::QuadAnimatorNew>(particles);
+		particles.AddComponent<Cori::World::Components::Entity::QuadAnimator>(particles);
 		CORI_CHECK_EXPECTED(particles.SetParent(playerParticlesIndependent));
 		particles.SetActive(false);
 	}
@@ -259,7 +260,7 @@ void LevelLayer::CreatePlayer(const float startingTime, const glm::vec2 spawnPos
 	{
 		Cori::World::Entity particles = ActiveScene.CreateEntity("DoubleJump Particles", Tags::Character);
 		particles.AddComponent<Cori::World::Components::Entity::QuadRenderer>();
-		particles.AddComponent<Cori::World::Components::Entity::QuadAnimatorNew>(particles);
+		particles.AddComponent<Cori::World::Components::Entity::QuadAnimator>(particles);
 		CORI_CHECK_EXPECTED(particles.SetParent(playerParticlesIndependent));
 		particles.SetActive(false);
 	}
@@ -283,7 +284,7 @@ void LevelLayer::CreatePlayer(const float startingTime, const glm::vec2 spawnPos
 
 	Mover::Params mp;
 	mp.gravityDefault = 34.5f;
-	m_Mover = std::make_unique<Mover>(Cori::Physics::Capsule::Create({ 0.0f, -0.5f }, { 0.0f, 0.55f }, 0.37f), Cori::Physics::Capsule::Create({ 0.0f, -0.9f }, { 0.0f, 0.7f }, 0.45f), ActiveScene.GetPhysicsWorld(), m_Player, mp);
+	m_Mover = std::make_unique<Mover>(Cori::Physics::Capsule::Create({ 0.0f, -0.5f }, { 0.0f, 0.55f }, 0.37f), Cori::Physics::Capsule::Create({ 0.0f, -0.9f }, { 0.0f, 0.6f }, 0.45f), ActiveScene.GetPhysicsWorld(), m_Player, mp);
 }
 
 void LevelLayer::CreateEscapeDoor(const Cori::Physics::Vec2 pos) {
@@ -295,7 +296,7 @@ void LevelLayer::CreateEscapeDoor(const Cori::Physics::Vec2 pos) {
 	bp.position = pos + Cori::Physics::Vec2(0.0f, sizem.y / 2.0f - 1);
 	bp.name = "Escape Door";
 
-	auto& rb = tr.AddComponent<Cori::World::Components::Entity::Rigidbody>(ActiveScene.GetPhysicsWorld(), bp, tr);
+	auto& rb = tr.AddComponent<Cori::World::Components::Entity::RigidBody>(ActiveScene.GetPhysicsWorld(), bp, tr);
 
 	Cori::Physics::Shape::Params spa;
 	spa.filter.categoryBits = Cori::Physics::CollisionBits::SensorBit;
@@ -474,7 +475,7 @@ void LevelLayer::LoadLevel(const std::filesystem::path& path) {
 							bp.position = Cori::Physics::ToMeters(TiledPosToPixels(pos, { mapSize.x, mapSize.y }));
 
 
-							auto& rb = col.AddComponent<Cori::World::Components::Entity::Rigidbody>(ActiveScene.GetPhysicsWorld(), bp, col);
+							auto& rb = col.AddComponent<Cori::World::Components::Entity::RigidBody>(ActiveScene.GetPhysicsWorld(), bp, col);
 
 							Cori::Physics::Chain::Params cp;
 							cp.count = b2points.size();
@@ -540,7 +541,7 @@ void LevelLayer::AddRegularOrb(const float orbBonus, const Cori::Physics::Vec2 p
 	bp.position = pos;
 	bp.name = "Regular Orb";
 
-	auto& rb = tr.AddComponent<Cori::World::Components::Entity::Rigidbody>(ActiveScene.GetPhysicsWorld(), bp, tr);
+	auto& rb = tr.AddComponent<Cori::World::Components::Entity::RigidBody>(ActiveScene.GetPhysicsWorld(), bp, tr);
 
 	Cori::Physics::Shape::Params spa;
 	spa.filter.categoryBits = Cori::Physics::CollisionBits::SensorBit;

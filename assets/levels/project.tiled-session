@@ -3,7 +3,7 @@
         "height": 4300,
         "width": 2
     },
-    "activeFile": "Walls.tsx",
+    "activeFile": "testlevel.tmx",
     "expandedProjectPaths": [
         "."
     ],
@@ -41,8 +41,8 @@
             "scale": 2,
             "selectedLayer": 0,
             "viewCenter": {
-                "x": 640.25,
-                "y": 400.25
+                "x": 640.5,
+                "y": 400.5
             }
         }
     },
@@ -61,9 +61,9 @@
     "project": "project.tiled-project",
     "property.type": "float",
     "recentFiles": [
+        "Walls.tsx",
         "Construction.tsx",
-        "testlevel.tmx",
-        "Walls.tsx"
+        "testlevel.tmx"
     ],
     "tileset.lastUsedFormat": "tsx",
     "tileset.tileSize": {
