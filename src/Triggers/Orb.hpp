@@ -17,7 +17,7 @@ namespace Triggers {
 		void OnEnter(Cori::World::Entity& entity, Cori::World::Entity& trigger) override {
 			if (entity.GetComponents<Cori::World::Components::Entity::Tag>().m_Tag == Tags::Character) {
 				auto& hc = entity.GetComponents<Components::Health>();
-				hc.m_TimeS += m_TimeBonus;
+				hc.m_TimeHealth += m_TimeBonus;
 				trigger.SetActive(false);
 			}
 		}

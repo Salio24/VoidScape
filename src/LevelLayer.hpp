@@ -34,6 +34,4 @@ private:
 	Cori::World::Entity m_Player;
 
 	MainCamera m_MainCamera;
-
-	std::unique_ptr<Mover> m_Mover;
 };

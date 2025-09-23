@@ -77,8 +77,8 @@ public:
 
 	}
 
-	void AddTrauma(float value) {
-		float trauma = m_Trauma + value;
+	void AddTrauma(const float value) {
+		const float trauma = m_Trauma + std::clamp(value, 0.0f, 1.0f);
 		m_Trauma = std::clamp(trauma, 0.0f, 1.0f);
 	}
 

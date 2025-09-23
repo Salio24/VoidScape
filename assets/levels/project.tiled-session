@@ -46,7 +46,7 @@
             }
         }
     },
-    "last.imagePath": "C:/Users/salio/VSCode/VS2022/MyProject/VoidScape/assets/textures/level/Tilesets",
+    "last.imagePath": "/home/salio/CLionProjects/VoidScape/assets/textures/level/Spikes",
     "map.height": 23,
     "map.lastUsedFormat": "tmx",
     "map.renderOrder": "3",

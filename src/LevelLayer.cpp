@@ -4,6 +4,7 @@
 #include "Player/Components.hpp"
 #include "Player/States.hpp"
 #include "Tags.hpp"
+#include "Triggers/Trap.hpp"
 #include "Player/AnimationPacks.hpp"
 #include "EntityNameDefs.hpp"
 #include "AssetDescriptors.hpp"
@@ -50,7 +51,7 @@ void LevelLayer::OnUpdate(Cori::Core::GameTimer& gameTimer) {
 		if (!fsm.IsInState<States::Player::Dead>() && !m_LevelCompleted) {
 			drawSpace = Cori::Graphics::Renderer2D::LEFT;
 			textPos = glm::translate(glm::mat3(1.0f), glm::vec2(15.0f, 330.0f));
-			timerText = Cori::Core::GameTimer::FormatTime_S_to_M_S_MS(hp.m_TimeS);
+			timerText = Cori::Core::GameTimer::FormatTime_S_to_M_S_MS(hp.m_TimeHealth);
 		}
 		else if (fsm.IsInState<States::Player::Dead>()) {
 			drawSpace = Cori::Graphics::Renderer2D::CENTER;
@@ -60,12 +61,14 @@ void LevelLayer::OnUpdate(Cori::Core::GameTimer& gameTimer) {
 		else if (m_LevelCompleted) {
 			drawSpace = Cori::Graphics::Renderer2D::CENTER;
 			textPos = glm::translate(glm::mat3(1.0f), ActiveScene.GetActiveCamera().GetSize() / 2.0f);
-			timerText = std::format("You escaped, now do it faster. \nTime left in the bank: {}", Cori::Core::GameTimer::FormatTime_S_to_M_S_MS(hp.m_TimeS));
+			timerText = std::format("You escaped, now do it faster. \nTime left in the bank: {}", Cori::Core::GameTimer::FormatTime_S_to_M_S_MS(hp.m_TimeHealth));
 		}
 
 		Cori::Graphics::Renderer2D::SubmitText(Cori::Graphics::Renderer2D::SCREEN_SPACE, drawSpace, textPos, 20, timerText, glm::vec4(1.0f), Cori::AssetManager::Get(Assets::GlobalFont).get(), 20, 1000.0f, 0.0f, 0.0f);
 
-		m_Mover->OnUpdate(gameTimer.GetDeltaTime(), gameTimer.GetTickAlpha());
+		auto& mover = m_Player.GetComponents<Components::Mover>();
+
+		mover.OnUpdate(gameTimer.GetDeltaTime(), gameTimer.GetTickAlpha());
 		m_MainCamera.OnUpdate(gameTimer, ActiveScene.GetActiveCamera(), !m_LevelCompleted);
 	}
 }
@@ -77,11 +80,13 @@ void LevelLayer::OnTickUpdate(Cori::Core::GameTimer& gameTimer) {
 
 		const auto& fsm = m_Player.GetComponents<Cori::World::Components::Entity::StateMachine>();
 
-		m_Mover->OnTickUpdate(gameTimer.GetTimestep(),m_MainCamera, !fsm.IsInState<States::Player::Dead>() && !m_LevelCompleted);
+		auto& mover = m_Player.GetComponents<Components::Mover>();
+
+		mover.OnTickUpdate(gameTimer.GetTimestep(),m_MainCamera, !fsm.IsInState<States::Player::Dead>() && !m_LevelCompleted);
 
 		const glm::vec2 playerPos = m_Player.GetComponents<Cori::World::Components::Entity::Transform>().GetLocalPosition();
 		const glm::vec2 playerHalfSize = m_Player.GetComponents<Cori::World::Components::Entity::QuadRenderer>().GetHalfSize();
-		m_MainCamera.OnTickUpdate(gameTimer.GetTimestep(), playerPos, playerHalfSize, Cori::Physics::ToPixels(m_Mover->m_Velocity) ,ActiveScene.GetActiveCamera());
+		m_MainCamera.OnTickUpdate(gameTimer.GetTimestep(), playerPos, playerHalfSize, Cori::Physics::ToPixels(mover.m_Velocity) ,ActiveScene.GetActiveCamera());
 	}
 }
 
@@ -98,8 +103,9 @@ void LevelLayer::OnImGuiRender(Cori::Core::GameTimer& gameTimer) {
 			if (ImGui::Button("Restart")) {
 				m_Player.SetActive(true);
 				fsm.SetState<States::Player::Idle>();
-				m_Mover->ResetState();
-				m_Mover->TeleportToSpawn();
+				auto& mover = m_Player.GetComponents<Components::Mover>();
+				mover.ResetState();
+				mover.TeleportToSpawn();
 				auto view = ActiveScene.View<Cori::World::Components::Entity::Trigger>();
 				for (auto entity : view) {
 					entity.SetActive(true);
@@ -168,8 +174,9 @@ void LevelLayer::OnImGuiRender(Cori::Core::GameTimer& gameTimer) {
 		ImGui::End();
 
 		if (m_MoverDebugDraw) {
-			m_Mover->DebugDraw(static_cast<float>(gameTimer.GetDeltaTime()));
-			m_Mover->UpdateGui();
+			auto& mover = m_Player.GetComponents<Components::Mover>();
+			mover.DebugDraw(gameTimer.GetTimestep());
+			mover.UpdateGui();
 		}
 	}
 }
@@ -179,16 +186,26 @@ void LevelLayer::OnEvent(Cori::Core::Event& event) {
 
 	dispatcher.Dispatch<Cori::Core::WindowResizeEvent>([this](const Cori::Core::WindowResizeEvent& e) -> bool {
 		ActiveScene.GetActiveCamera().CreateOrthoCamera(0, static_cast<float>(e.GetWidth()) / (static_cast<float>(e.GetHeight()) / 360.0f), 0, 360);
-		return true;
+		return false;
 	});
 
 	dispatcher.Dispatch<Events::PlayerDied>([](const Events::PlayerDied& e) -> bool {
-		return true;
+		return false;
 	});
 
 	dispatcher.Dispatch<Events::PlayerEscaped>([this](const Events::PlayerEscaped& e) -> bool {
 		m_LevelCompleted = true;
-		return true;
+		return false;
+	});
+
+	dispatcher.Dispatch<Events::PlayerTookDamage>([this](const Events::PlayerTookDamage& e) -> bool {
+		if (e.GetDesiredCameraTrauma() == -1.0f) {
+			m_MainCamera.AddTrauma(e.GetDamageAmount() / 360.0f);
+		} else {
+			m_MainCamera.AddTrauma(e.GetDesiredCameraTrauma());
+		}
+
+		return false;
 	});
 
 }
@@ -282,9 +299,10 @@ void LevelLayer::CreatePlayer(const float startingTime, const glm::vec2 spawnPos
 
 	m_Player.AddComponent<Components::Health>(startingTime, m_Player);
 
-	Mover::Params mp;
+	Components::Mover::Params mp;
 	mp.gravityDefault = 34.5f;
-	m_Mover = std::make_unique<Mover>(Cori::Physics::Capsule::Create({ 0.0f, -0.5f }, { 0.0f, 0.55f }, 0.37f), Cori::Physics::Capsule::Create({ 0.0f, -0.9f }, { 0.0f, 0.6f }, 0.45f), ActiveScene.GetPhysicsWorld(), m_Player, mp);
+
+	m_Player.AddComponent<Components::Mover>(Cori::Physics::Capsule::Create({ 0.0f, -0.5f }, { 0.0f, 0.55f }, 0.37f), Cori::Physics::Capsule::Create({ 0.0f, -0.9f }, { 0.0f, 0.6f }, 0.45f), ActiveScene.GetPhysicsWorld(), m_Player, mp);
 }
 
 void LevelLayer::CreateEscapeDoor(const Cori::Physics::Vec2 pos) {
@@ -317,14 +335,14 @@ void LevelLayer::CreateEscapeDoor(const Cori::Physics::Vec2 pos) {
 }
 
 void LevelLayer::LoadLevel(const std::filesystem::path& path) {
-	int blockSize = CORI_PIXELS_PER_METER;
+	constexpr int blockSize = CORI_PIXELS_PER_METER;
 
 	auto GridPosToPixels = [blockSize](const glm::ivec2 gridPos, const glm::ivec2 layerSize, const bool returnCentered) -> glm::vec2 {
 		if (returnCentered) {
-			return { gridPos.x * blockSize + blockSize / 2.0f, ((layerSize.y - gridPos.y) * blockSize) - blockSize / 2.0f };
+			return { gridPos.x * blockSize + blockSize / 2.0f, (layerSize.y - gridPos.y) * blockSize - blockSize / 2.0f };
 		}
 
-		return { gridPos.x * blockSize, (layerSize.y - gridPos.y) * blockSize };
+		return { gridPos.x * blockSize, (layerSize.y - gridPos.y) * blockSize - blockSize};
 	};
 
 	auto TiledPosToPixels = [](const tmx::Vector2f pos, const glm::ivec2 layerSize) -> glm::vec2 {
@@ -339,12 +357,12 @@ void LevelLayer::LoadLevel(const std::filesystem::path& path) {
 
 	if (map.load(path.string())) {
 		//auto gridSize = map.getTileSize();
-		auto properties = map.getProperties();
+		auto mapProperties = map.getProperties();
 
 		float orbBonus = 5.0f;
 		float initialPlayerTime = 100.0f;
 
-		for (const auto& property : properties) {
+		for (const auto& property : mapProperties) {
 			if (property.getName() == "InitialPlayerTime") {
 				initialPlayerTime = property.getFloatValue();
 			}
@@ -366,9 +384,9 @@ void LevelLayer::LoadLevel(const std::filesystem::path& path) {
 
 		m_MainCamera.SetWorldBound({{ blockSize, blockSize }, glm::vec2{ mapSize.x, mapSize.y } - glm::vec2{ blockSize, blockSize } });
 
-		{
-			const auto tilesets = map.getTilesets();
+		const auto& tilesets = map.getTilesets();
 
+		{
 			GDIs.reserve(tilesets.size());
 			SpriteAtlases.reserve(tilesets.size());
 
@@ -428,9 +446,152 @@ void LevelLayer::LoadLevel(const std::filesystem::path& path) {
 								auto& transform = tile.GetComponents<Cori::World::Components::Entity::Transform>();
 								//transform.SetLocalPosition(glm::vec2{ j * blockSize + blockSize / 2.0f, ((height - i) * blockSize) - blockSize / 2.0f });
 								transform.SetLocalPosition(GridPosToPixels({ j, i }, { width, height }, true));
-								transform.SetLocalDepth(1.0f);
+								transform.SetLocalDepth(1);
 
 								count++;
+							}
+						}
+					}
+				}
+				else if (tileLayer.getName() == "TrapLayer") {
+					const auto& tiles = tileLayer.getTiles();
+
+					int height = layer->getSize().y;
+					int width = layer->getSize().x;
+
+					for (int i = 0; i < height; ++i) {
+						for (int j = 0; j < width; ++j) {
+							if (tiles[width * i + j].ID != 0) {
+								int tilesetID;
+								uint32_t tileID = tiles[width * i + j].ID;
+
+								auto comparator = [](const std::pair<uint32_t, uint32_t>& range, uint32_t value) {
+									return range.second < value;
+								};
+
+								auto it = std::lower_bound(GDIs.begin(), GDIs.end(), tileID, comparator);
+
+								if (it == GDIs.end()) {
+									CORI_WARN("LevelLoader: Tile ID is greater than all GDI ranges.");
+									tilesetID = 0;
+								}
+								else if (tileID >= it->first) {
+									tilesetID = static_cast<int>(std::distance(GDIs.begin(), it));
+								}
+								else {
+									CORI_WARN("LevelLoader: Tile ID is between some GDI range.");
+									tilesetID = 0;
+								}
+
+								static uint32_t count = 1;
+
+								auto tile = tilesets[tilesetID].getTile(tileID);
+
+								const auto& properties = tile->properties;
+								float damage = 0.0f;
+								uint32_t invisibilityTicks = 0;
+								uint32_t hitStunTicksPenalty{ 0 };
+
+								Cori::Physics::Vec2 hitImpulse{ 0.0f, 0.0f };
+								Cori::Physics::Vec2 hitPlayerVelocityModifier{ 1.0f, 1.0f };
+
+
+								for (const auto& property : properties) {
+									if (property.getName() == "Damage") {
+										damage = property.getFloatValue();
+									}
+									else if (property.getName() == "InvisibilityTicksBonus") {
+										invisibilityTicks = property.getIntValue();
+									}
+									else if (property.getName() == "HitImpulseX") {
+										hitImpulse.x = property.getFloatValue();
+									}
+									else if (property.getName() == "HitImpulseY") {
+										hitImpulse.y = property.getFloatValue();
+									}
+									else if (property.getName() == "InvisibilityTicksBonus") {
+										hitStunTicksPenalty = property.getIntValue();
+									}
+									else if (property.getName() == "HitPlayerVelocityModifierX") {
+										hitPlayerVelocityModifier.x = property.getFloatValue();
+									}
+									else if (property.getName() == "HitPlayerVelocityModifierY") {
+										hitPlayerVelocityModifier.y = property.getFloatValue();
+									}
+								}
+
+								if (damage != 0.0f && invisibilityTicks != 0) {
+									auto objects = tile->objectGroup.getObjects();
+									if (!objects.empty()) {
+										const auto& object = objects[0];
+										if (object.getShape() == tmx::Object::Shape::Polygon) {
+											auto localPos = glm::vec2(object.getPosition().x, tile->imageSize.y - object.getPosition().y);
+											auto points = object.getPoints();
+
+											Cori::Physics::WindingOrder windingOrder = Cori::Physics::GetPolygonWindingOrder(points);
+											if (CORI_CHECK(windingOrder != Cori::Physics::WindingOrder::COLLINEAR, "Polygon is collinear. Cannot create chain collider for object with UID: {}", object.getUID())) { continue; }
+
+											std::vector<Cori::Physics::Vec2> b2points;
+											b2points.reserve(points.size());
+
+											if (windingOrder == Cori::Physics::WindingOrder::CLOCKWISE) {
+												b2points.push_back(Cori::Physics::ToMeters(glm::vec2{ points.at(0).x, -points.at(0).y }));
+
+												for (int i = points.size() - 1; i > 0; --i) {
+													b2points.push_back(Cori::Physics::ToMeters(glm::vec2{ points.at(i).x, -points.at(i).y }));
+												}
+											}
+											else if (windingOrder == Cori::Physics::WindingOrder::COUNTER_CLOCKWISE) {
+												for (tmx::Vector2f p : points) {
+													b2points.push_back(Cori::Physics::ToMeters(glm::vec2{ p.x, -p.y }));
+												}
+											}
+
+											auto trap = ActiveScene.CreateEntity("Chain Collider " + std::to_string(count), Tags::ChainCollider);
+
+											Cori::Physics::Body::Params bp;
+											bp.type = b2_staticBody;
+											bp.position = Cori::Physics::ToMeters(GridPosToPixels({ j, i }, { width, height }, false) + localPos);
+											bp.name = "Trap";
+
+											auto& rb = trap.AddComponent<Cori::World::Components::Entity::RigidBody>(ActiveScene.GetPhysicsWorld(), bp, trap);
+
+											Cori::Physics::Chain::Params cp;
+											cp.count = b2points.size();
+											cp.points = b2points.data();
+											cp.isLoop = true;
+											cp.filter.categoryBits = Cori::Physics::CollisionBits::StaticBit;
+
+											rb.CreateChain(Cori::Physics::DestroyWithParent, cp);
+
+											Cori::Physics::Shape::Params spa;
+											spa.filter.categoryBits = Cori::Physics::CollisionBits::SensorBit;
+											spa.isSensor = true;
+											spa.enableSensorEvents = true;
+
+											rb.CreateShape(Cori::Physics::DestroyWithParent, spa, Cori::Physics::Polygon::CreatePolygon(Cori::Physics::ConvexHull::Create(b2points)));
+
+											auto& trig = trap.AddComponent<Cori::World::Components::Entity::Trigger>(trap);
+											auto* behavior = trig.SetBehavior<Triggers::SpikeTrap>();
+											if (behavior) {
+												behavior->m_Damage = damage;
+												behavior->m_InvisibilityTicksBonus = invisibilityTicks;
+												behavior->m_HitImpulse = hitImpulse;
+												behavior->m_HitStunTicksPenalty = hitStunTicksPenalty;
+												behavior->m_HitPlayerVelocityModifier = hitPlayerVelocityModifier;
+											}
+
+											auto& trapTr = trap.GetComponents<Cori::World::Components::Entity::Transform>();
+											auto tilePos = GridPosToPixels({ j, i }, { width, height }, true);
+
+											trapTr.SetLocalPosition(tilePos);
+											trapTr.SetLocalDepth(1);
+
+											trap.AddComponent<Cori::World::Components::Entity::QuadRenderer>(glm::vec2{ blockSize / 2.0f, blockSize / 2.0f }, SpriteAtlases.at(tilesetID)->GetTexture(), SpriteAtlases.at(tilesetID)->GetSpriteUVsAtIndex(tileID - GDIs.at(tilesetID).first));
+											count++;
+										}
+									}
+								}
 							}
 						}
 					}
@@ -473,7 +634,6 @@ void LevelLayer::LoadLevel(const std::filesystem::path& path) {
 							Cori::Physics::Body::Params bp;
 							bp.type = b2_staticBody;
 							bp.position = Cori::Physics::ToMeters(TiledPosToPixels(pos, { mapSize.x, mapSize.y }));
-
 
 							auto& rb = col.AddComponent<Cori::World::Components::Entity::RigidBody>(ActiveScene.GetPhysicsWorld(), bp, col);
 
