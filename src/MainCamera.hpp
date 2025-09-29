@@ -49,7 +49,7 @@ public:
 		actualCamera.RecalculateVP();
 	}
 
-	void OnTickUpdate(const float timeStep, const glm::vec2 playerPos, const glm::vec2 playerHalfSize, const glm::vec2 playerVelocity, const Cori::Graphics::CameraController& actualCamera) {
+	void OnTickUpdate(Cori::Core::GameTimer& gameTimer, const glm::vec2 playerPos, const glm::vec2 playerVelocity, const Cori::Graphics::CameraController& actualCamera) {
 		m_OldCameraPosition = m_CameraPosition;
 
 		glm::vec2 camSize = actualCamera.GetSize();
@@ -64,8 +64,8 @@ public:
 		target.y = std::clamp(targetRaw.y, m_WorldBound.m_Min.y, m_WorldBound.m_Max.y - camSize.y);
 		//target.y = targetRaw.y;
 
-		m_CameraPosition.x += (target.x - m_CameraPosition.x) * m_AsymptoticAverageX;
-		m_CameraPosition.y += (target.y - m_CameraPosition.y) * m_AsymptoticAverageY;
+		m_CameraPosition.x += (target.x - m_CameraPosition.x) * m_AsymptoticAverageX * (60.0 / static_cast<double>(gameTimer.GetTickRate()));
+		m_CameraPosition.y += (target.y - m_CameraPosition.y) * m_AsymptoticAverageY * (60.0 / static_cast<double>(gameTimer.GetTickRate()));
 
 		m_Trauma -= 0.01f;
 

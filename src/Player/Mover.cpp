@@ -179,26 +179,6 @@ namespace Components {
 				m_WallJumpDirection = Cori::Math::Sign(plane.normal.x);
 				if (!m_OnGround) {
 					fsm.SetStateIfNotInState<States::Player::WallSlide>();
-					float bonus = m_AbsoluteVelocity.x * (timeStep * 0.5f);
-					Cori::Physics::Vec2 platformRayStart = target + Cori::Physics::Vec2(bonus, 0.0f);
-					Cori::Physics::Vec2 platformRayEnd = platformRayStart + Cori::Physics::Vec2(m_Capsule.radius + 0.2f, 0.0f) * -m_WallJumpDirection;
-					{
-						Cori::Physics::Vec2 rayTranslation = b2Sub(platformRayEnd, platformRayStart);
-						Cori::Physics::RayResult rayResult{};
-
-						rayResult.hit = false;
-						rayResult = m_World.CastRayClosest(platformRayStart, rayTranslation, colliderFilter);
-
-						if (rayResult.hit) {
-							Cori::Physics::ShapeRef shape = rayResult.shapeId;
-							auto body = shape.GetBody();
-							if (body.GetType() == b2_kinematicBody) {
-								naturalVelocity = body.GetWorldPointVelocity(rayResult.point);
-								test = true;
-							}
-						}
-					}
-
 
 					m_ResetDistanceNextTick = true;
 				}
@@ -215,6 +195,8 @@ namespace Components {
 				fsm.SetState<States::Player::Ascending>();
 			}
 		}
+
+
 
 		float throttle = 0.0f;
 
@@ -249,10 +231,12 @@ namespace Components {
 		}
 
 		// vvv left/right movement and wall slide
+		bool wallCling = false;
 		{
 			if (Cori::Core::Input::IsKeyDown(Cori::Core::CORI_KEY_A) && playerResponsive) {
 				if (m_CanWallJump && m_WallJumpDirection == 1 && m_RelativeVelocity.y < -0.1f - m_Gravity * timeStep) {
 					m_Gravity = 0.0f;
+					wallCling = true;
 					m_RelativeVelocity.y = -m_WallSlideSpeed;
 				}
 				throttle -= 1.0f;
@@ -264,6 +248,7 @@ namespace Components {
 			if (Cori::Core::Input::IsKeyDown(Cori::Core::CORI_KEY_D) && playerResponsive) {
 				if (m_CanWallJump && m_WallJumpDirection == -1 && m_RelativeVelocity.y < -0.1f - m_Gravity * timeStep) {
 					m_Gravity = 0.0f;
+					wallCling = true;
 					m_RelativeVelocity.y = -m_WallSlideSpeed;
 				}
 				throttle += 1.0f;
@@ -274,6 +259,35 @@ namespace Components {
 		}
 		// ^^^
 
+		if (wallCling) {
+			m_WallBonusOneshot = true;
+			float bonus = m_AbsoluteVelocity.x * (timeStep * 0.5f);
+			Cori::Physics::Vec2 platformRayStart = target + Cori::Physics::Vec2(bonus, 0.0f);
+			Cori::Physics::Vec2 platformRayEnd = platformRayStart + Cori::Physics::Vec2(m_Capsule.radius + 0.2f, 0.0f) * -m_WallJumpDirection;
+			{
+				Cori::Physics::Vec2 rayTranslation = b2Sub(platformRayEnd, platformRayStart);
+				Cori::Physics::RayResult rayResult{};
+
+				rayResult.hit = false;
+				rayResult = m_World.CastRayClosest(platformRayStart, rayTranslation, colliderFilter);
+
+				if (rayResult.hit) {
+					Cori::Physics::ShapeRef shape = rayResult.shapeId;
+					auto body = shape.GetBody();
+					if (body.GetType() == b2_kinematicBody) {
+						naturalVelocity = body.GetWorldPointVelocity(rayResult.point);
+						test = true;
+					}
+				}
+			}
+		}
+
+		if (!wallCling && m_WallBonusOneshot) {
+			m_RelativeVelocity += m_LastNaturalVelocity;
+			//CORI_WARN("Add Wall {} {}", m_LastNaturalVelocity.x, m_LastNaturalVelocity.y);
+			m_WallBonusOneshot = false;
+		}
+
 		// vvv this whole part is responsible for: jump. double jump, wall jump, jump buffering, wall jump buffering, variable jump, variable double jump, variable wall jump, coyote time
 		{
 			// vvv coyote time
@@ -281,6 +295,7 @@ namespace Components {
 				m_JumpCoyoteTimeTickTimer = 0;
 
 				m_RelativeVelocity += m_LastNaturalVelocity;
+				//CORI_WARN("Add Jump {} {}", m_LastNaturalVelocity.x, m_LastNaturalVelocity.y);
 			}
 
 			m_OldOnGround = m_OnGround;
@@ -629,7 +644,7 @@ namespace Components {
 		Cori::Graphics::Renderer2D::SubmitText(Cori::Graphics::Renderer2D::SCREEN_SPACE, Cori::Graphics::Renderer2D::LEFT, glm::translate(glm::mat3(1.0f), glm::vec2(20.0f, 280.0f)), 4, "Position: " + Cori::Physics::Vec2ToString(m_Transform.p), glm::vec4(1.0f), Cori::AssetManager::Get(Assets::GlobalFont).get(), 20, 1000.0f, 0.0f, 0.0f);
 		Cori::Graphics::Renderer2D::SubmitText(Cori::Graphics::Renderer2D::SCREEN_SPACE, Cori::Graphics::Renderer2D::LEFT, glm::translate(glm::mat3(1.0f), glm::vec2(20.0f, 275.0f)), 4, "m_Gravity: " + std::to_string(m_Gravity), glm::vec4(1.0f), Cori::AssetManager::Get(Assets::GlobalFont).get(), 20, 1000.0f, 0.0f, 0.0f);
 
-		#if 0
+		#if 1
 		if (test) {
 			Cori::Graphics::Renderer2D::SubmitColoredQuad(Cori::Graphics::Renderer2D::SCREEN_SPACE, glm::vec2(100, 100), glm::vec2(5.0f, 5.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 		} else {
@@ -642,21 +657,21 @@ namespace Components {
 			Cori::Graphics::Renderer2D::SubmitColoredQuad(Cori::Graphics::Renderer2D::SCREEN_SPACE, glm::vec2(100, 120), glm::vec2(5.0f, 5.0f), glm::vec3(1.0f, 0.0f, 0.0f));
 		}
 
+		float bonus = m_AbsoluteVelocity.x * (timeStep * 0.5f);
+		Cori::Physics::Vec2 renderRayStart = target + Cori::Physics::Vec2(bonus, 0.0f);
+		Cori::Physics::Vec2 renderRayEnd = renderRayStart + Cori::Physics::Vec2(0.0f, -m_Capsule.center2.y) + Cori::Physics::Vec2(0.0f, -m_PogoCurrentLength);
+		Cori::Physics::Vec2 renderRayEndExtended = renderRayEnd;
+
+		if (m_OnGround) {
+			renderRayEndExtended -= Cori::Physics::Vec2(0.0f, 0.2f);
+		}
+
 		//float bonus = m_AbsoluteVelocity.x * (timeStep * 0.5f);
 		//Cori::Physics::Vec2 platformRayStart = target + Cori::Physics::Vec2(bonus, 0.0f);
-		//Cori::Physics::Vec2 platformRayEnd;
-		//if (m_OnGround) {
-		//	platformRayEnd = platformRayStart + Cori::Physics::Vec2(0.0f, -m_Capsule.center2.y) + Cori::Physics::Vec2(0.0f, -m_PogoCurrentLength) - Cori::Physics::Vec2(0.0f, 0.2f);
-		//} else {
-		//	platformRayEnd = platformRayStart + Cori::Physics::Vec2(0.0f, -m_Capsule.center2.y) + Cori::Physics::Vec2(0.0f, -m_PogoCurrentLength);
-		//}
+		//Cori::Physics::Vec2 platformRayEnd = platformRayStart + Cori::Physics::Vec2(m_Capsule.radius + 0.2f, 0.0f) * -m_WallJumpDirection;
 
-		float bonus = m_AbsoluteVelocity.x * (timeStep * 0.5f);
-		Cori::Physics::Vec2 platformRayStart = target + Cori::Physics::Vec2(bonus, 0.0f);
-		Cori::Physics::Vec2 platformRayEnd = platformRayStart + Cori::Physics::Vec2(m_Capsule.radius + 0.2f, 0.0f) * -m_WallJumpDirection;
-
-		Cori::Graphics::Renderer2D::SubmitColoredQuad(Cori::Graphics::Renderer2D::WORLD_SPACE, Cori::Physics::ToPixels(platformRayStart), glm::vec2(1.0f, 1.0f), glm::vec3(.0f, 1.0f, 0.0f));
-		Cori::Graphics::Renderer2D::SubmitColoredQuad(Cori::Graphics::Renderer2D::WORLD_SPACE, Cori::Physics::ToPixels(platformRayEnd), glm::vec2(1.0f, 1.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+		Cori::Graphics::Renderer2D::SubmitColoredQuad(Cori::Graphics::Renderer2D::WORLD_SPACE, Cori::Physics::ToPixels(renderRayStart), glm::vec2(1.0f, 1.0f), glm::vec3(.0f, 1.0f, 0.0f));
+		Cori::Graphics::Renderer2D::SubmitColoredQuad(Cori::Graphics::Renderer2D::WORLD_SPACE, Cori::Physics::ToPixels(renderRayEnd), glm::vec2(1.0f, 1.0f), glm::vec3(1.0f, 0.0f, 0.0f));
 		#endif
 
 		//Cori::Core::Layer::m_DebugImGuiRenderer.DrawText(b2Vec2{ 1.1f + Cori::Core::Layer::m_DebugImGuiRenderer.camera_pos.x, -21.9f + Cori::Core::Layer::m_DebugImGuiRenderer.camera_pos.y }, fmt::color::white, "Velocity: " + Cori::Physics::Vec2ToString(m_Velocity));

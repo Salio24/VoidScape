@@ -89,7 +89,7 @@ void LevelLayer::OnTickUpdate(Cori::Core::GameTimer& gameTimer) {
 
 		const glm::vec2 playerPos = m_Player.GetComponents<Cori::World::Components::Entity::Transform>().GetLocalPosition();
 		const glm::vec2 playerHalfSize = m_Player.GetComponents<Cori::World::Components::Entity::QuadRenderer>().GetHalfSize();
-		m_MainCamera.OnTickUpdate(gameTimer.GetTimestep(), playerPos, playerHalfSize, Cori::Physics::ToPixels(mover.m_RelativeVelocity) ,ActiveScene.GetActiveCamera());
+		m_MainCamera.OnTickUpdate(gameTimer, playerPos, Cori::Physics::ToPixels(mover.m_RelativeVelocity) ,ActiveScene.GetActiveCamera());
 	}
 }
 
@@ -726,7 +726,7 @@ void LevelLayer::LoadLevel(const std::filesystem::path& path) {
 										if (SpriteAtlasMap.contains(property.getStringValue())) {
 											pp.atlas = SpriteAtlasMap[property.getStringValue()];
 										} else {
-											CORI_ERROR("Failed to find atlas by name '{}' for assining to the moving platform, platform will not be created.", property.getStringValue());
+											CORI_ERROR("Failed to find atlas by name '{}' for assigning to the moving platform, platform will not be created.", property.getStringValue());
 											success = false;
 										}
 									} else if (property.getName() == "BodyTileID") {
@@ -785,53 +785,6 @@ void LevelLayer::LoadLevel(const std::filesystem::path& path) {
 		CORI_CHECK(escapeFound, "No escape door was found in level: {}", path.string());
 
 		m_LevelLoaded = true;
-	}
-	auto system = ActiveScene.GetSystem<Systems::MovingPlatform>();
-
-	if (system) {
-		auto locked = system->lock();
-		//PlatformParams pp;
-		//pp.expressionX.RegisterValues({ "t" });
-		//pp.expressionX.Parse("0*t");
-		//pp.expressionY.RegisterValues({ "t" });
-		//pp.expressionY.Parse("3*cos(t*2)");
-		//pp.positionOffset = {20, 40};
-		//pp.size = 7;
-		//pp.vertical = true;
-		//pp.atlas = SpriteAtlasMap.at("Construction");
-		//pp.leftOrBottomCornerTileID = 52;
-		//pp.bodyTileID = 35;
-		//pp.rightOrTopCornerTileID = 18;
-		//pp.m_Depth = 10;
-		//locked->CreatePlatform(pp);
-
-		//PlatformParams pp1;
-		//pp1.expressionX.RegisterValues({ "t" });
-		//pp1.expressionX.Parse("3*sin(t/2)");
-		//pp1.expressionY.RegisterValues({ "t" });
-		//pp1.expressionY.Parse("3*cos(t/2)");
-		//pp1.positionOffset = {30, 40};
-		//pp1.size = {9, 1};
-		//locked->CreatePlatform(pp1);
-
-		//PlatformParams pp2;
-		//pp2.expressionX.RegisterValues({ "t" });
-		//pp2.expressionX.Parse("27.1*(sin(pi*(t - floor(t)) - (pi / 2)) * 40 + 40)*1.1^(-(sin(pi*(t - floor(t)) - (pi / 2)) * 40 + 40) - 25)");
-		//pp2.expressionY.RegisterValues({ "t" });
-		//pp2.expressionY.Parse("0*t");
-		//pp2.positionOffset = {46, 21};
-		//pp2.size = {5, 1};
-		//locked->CreatePlatform(pp2);
-
-		//PlatformParams pp3;
-		//pp3.expressionX.RegisterValues({ "t" });
-		//pp3.expressionX.Parse("0*t");
-		//pp3.expressionY.RegisterValues({ "t" });
-		//pp3.expressionY.AddAlias("arg", "sin(pi*frac(t/2) - (pi / 2)) * 40 + 40");
-		//pp3.expressionY.Parse("27.1*(arg(t))*1.1^(-(arg(t)) - 25)");
-		//pp3.positionOffset = {70, 21};
-		//pp3.size = {5, 1};
-		//locked->CreatePlatform(pp3);
 	}
 }
 

@@ -181,7 +181,7 @@ namespace Components {
 		bool m_CanWallJump{ false };
 		bool m_CanDoubleJump{ false };
 		int m_WallJumpDirection{ 0 };
-
+		bool m_WallBonusOneshot{ false };
 
 		int m_JumpVariableTickTimer{ 128 };
 		int m_JumpBufferTickTimer{ 128 };
