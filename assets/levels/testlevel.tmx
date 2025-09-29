@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.11.2" orientation="orthogonal" renderorder="left-up" width="80" height="50" tilewidth="16" tileheight="16" infinite="0" nextlayerid="6" nextobjectid="120">
+<map version="1.10" tiledversion="1.11.2" orientation="orthogonal" renderorder="left-up" width="80" height="50" tilewidth="16" tileheight="16" infinite="0" nextlayerid="7" nextobjectid="130">
  <properties>
   <property name="InitialPlayerTime" type="float" value="72000"/>
   <property name="RegularOrbBonus" type="float" value="5"/>
@@ -162,6 +162,51 @@
    <point/>
   </object>
   <object id="101" name="EscapePortal" x="1072" y="768" visible="0">
+   <point/>
+  </object>
+ </objectgroup>
+ <objectgroup id="6" name="MovingPlatforms">
+  <object id="120" x="277" y="177">
+   <properties>
+    <property name="AtlasName" value="Construction"/>
+    <property name="BodyTileID" type="int" value="35"/>
+    <property name="Depth" type="int" value="10"/>
+    <property name="ExpressionX" value="0"/>
+    <property name="ExpressionY" value="3*cos(t*2)"/>
+    <property name="IsVertical" type="bool" value="true"/>
+    <property name="LeftOrBottomCornerTileID" type="int" value="52"/>
+    <property name="RightOrTopCornerTileID" type="int" value="18"/>
+    <property name="Size" type="int" value="7"/>
+   </properties>
+   <point/>
+  </object>
+  <object id="128" x="766" y="460">
+   <properties>
+    <property name="AtlasName" value="Construction"/>
+    <property name="BodyTileID" type="int" value="89"/>
+    <property name="Depth" type="int" value="10"/>
+    <property name="ExpressionX" value="27.1*(arg(t))*1.1^(-(arg(t)) - 25)"/>
+    <property name="ExpressionY" value="0"/>
+    <property name="IsVertical" type="bool" value="false"/>
+    <property name="LeftOrBottomCornerTileID" type="int" value="88"/>
+    <property name="RightOrTopCornerTileID" type="int" value="90"/>
+    <property name="Size" type="int" value="5"/>
+    <property name="arg" value="sin(pi*frac(t/2) - (pi / 2)) * 40 + 40"/>
+   </properties>
+   <point/>
+  </object>
+  <object id="129" x="517" y="164">
+   <properties>
+    <property name="AtlasName" value="Construction"/>
+    <property name="BodyTileID" type="int" value="89"/>
+    <property name="Depth" type="int" value="10"/>
+    <property name="ExpressionX" value="0"/>
+    <property name="ExpressionY" value="3*cos(t*2)"/>
+    <property name="IsVertical" type="bool" value="false"/>
+    <property name="LeftOrBottomCornerTileID" type="int" value="88"/>
+    <property name="RightOrTopCornerTileID" type="int" value="90"/>
+    <property name="Size" type="int" value="5"/>
+   </properties>
    <point/>
   </object>
  </objectgroup>

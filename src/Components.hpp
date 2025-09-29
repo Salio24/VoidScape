@@ -1,6 +1,6 @@
 #pragma once
 #include <Cori.hpp>
-#include "States.hpp"
+#include "Player/States.hpp"
 #include "Events.hpp"
 
 namespace Components {
@@ -16,12 +16,20 @@ namespace Components {
 
 			if (!fsm.IsInState<States::Player::Dead>()) {
 				if (m_TimeHealth > 0.0f && !levelComplete) {
-					m_TimeHealth -= timeStep;
+					if (m_BonusDuration > 0.0f) {
+						m_BonusDuration -= timeStep;
+					} else {
+						m_BonusTimeModifier = 1.0f;
+					}
+
+					m_TimeHealth -= timeStep * m_BonusTimeModifier;
 				} else if (!levelComplete) {
 					m_LastTime = m_TimeHealth;
 					auto event = Events::PlayerDied(m_Player);
 					Cori::Core::Application::EmitEvent(event);
 					fsm.SetState<States::Player::Dead>();
+					m_BonusTimeModifier = 1.0f;
+					m_BonusDuration = 0.0f;
 					return;
 				}
 
@@ -41,6 +49,11 @@ namespace Components {
 			return false;
 		}
 
+		void ChangeDyingRate(const float modifier, const float bonusDuration /*seconds*/) {
+			m_BonusTimeModifier = modifier;
+			m_BonusDuration += bonusDuration;
+		}
+
 		void AddInvisibilityTicks(const uint32_t ticks) {
 			m_InvisibilityTicksLeft += ticks;
 		}
@@ -53,6 +66,8 @@ namespace Components {
 		double m_TimeHealth{ 0.0 };
 		double m_LastTime{ 0.0 };
 	private:
+		float m_BonusTimeModifier{ 1.0f };
+		float m_BonusDuration{ 0.0f };
 		float m_InitialValue{ 0.0f };
 		uint32_t m_InvisibilityTicksLeft{ 0 };
 		Cori::World::Entity m_Player;
@@ -63,5 +78,16 @@ namespace Components {
 		explicit Spawnpoint(const glm::vec2& point)
 			: m_Spawnpoint(point) {}
 		glm::vec2 m_Spawnpoint{ 0.0f, 0.0f };
+	};
+
+	struct MovingPlatform {
+		MovingPlatform() = default;
+
+		Cori::Math::Function<double, 1> m_ExpressionX;
+		Cori::Math::Function<double, 1> m_ExpressionY;
+		Cori::Physics::Vec2 m_PositionOffset;
+
+		Cori::Physics::Vec2 m_CurrentPosition;
+		Cori::Physics::Vec2 m_OldPosition;
 	};
 }

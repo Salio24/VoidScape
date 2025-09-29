@@ -1,7 +1,7 @@
 #pragma once
 #include <Cori.hpp>
 #include "States.hpp"
-#include "Components.hpp"
+#include "../Components.hpp"
 #include "MainCamera.hpp"
 
 // and need an ability to obtain a camera from player entity
@@ -112,22 +112,25 @@ namespace Components {
 		float m_SegmentOffset;
 		float m_WallSlideSpeed;
 
+		bool test;
+
 
 		float m_MinSpeedForRunState;
 
 		Cori::Physics::Vec2 m_RenderingPosition;
 		Cori::Physics::Vec2 m_OldRenderingPosition;
 
-		Cori::Physics::Vec2 m_Velocity{ 0.0f, 0.0f };
+		Cori::Physics::Vec2 m_RelativeVelocity{ 0.0f, 0.0f };
+		Cori::Physics::Vec2 m_AbsoluteVelocity{ 0.0f, 0.0f };
 
 	private:
 		static bool PlaneResultFcn(b2ShapeId shapeId, const b2PlaneResult* planeResult, void* context);
 
-		void SolveMove(const float timeStep, float throttle);
+		void SolveMove(const float timeStep, float throttle, const Cori::Physics::Vec2 naturalVelocity);
 
 		static constexpr int m_PlaneCapacity = 8;
 
-		void SaveSettings(const std::filesystem::path& filepath);
+		void SaveSettings(const std::filesystem::path& filepath) const;
 		void LoadSettings(const std::filesystem::path& filepath);
 
 		//Cori::Physics::BodyRef m_SensorVisitorBody;
@@ -155,6 +158,8 @@ namespace Components {
 		Cori::Physics::Vec2 m_WallRayEnd;
 
 		Cori::Physics::Vec2 target;
+
+		Cori::Physics::Vec2 m_LastNaturalVelocity{ 0.0f, 0.0f };
 
 		uint32_t m_StunTicksLeft{ 0 };
 

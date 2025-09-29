@@ -1,7 +1,7 @@
 #include "LevelLayer.hpp"
 #include "Triggers/Orb.hpp"
 #include "Triggers/EscapeDoor.hpp"
-#include "Player/Components.hpp"
+#include "Components.hpp"
 #include "Player/States.hpp"
 #include "Tags.hpp"
 #include "Triggers/Trap.hpp"
@@ -12,6 +12,7 @@
 #include <tmxlite/Layer.hpp>
 #include <tmxlite/TileLayer.hpp>
 #include <tmxlite/ObjectGroup.hpp>
+#include "Systems/MovingPlatform.hpp"
 
 static bool manualStep = false;
 
@@ -25,6 +26,8 @@ LevelLayer::LevelLayer() : Layer("Level Layer") {
 	const int screenHeight = Cori::Core::Application::GetWindow().GetHeight();
 
 	ActiveScene.GetActiveCamera().CreateOrthoCamera(0, static_cast<float>(screenWidth) / (static_cast<float>(screenHeight) / 360.0f), 0, 360);
+
+	ActiveScene.RegisterSystem<Systems::MovingPlatform>();
 }
 
 LevelLayer::~LevelLayer() {
@@ -46,25 +49,25 @@ void LevelLayer::OnUpdate(Cori::Core::GameTimer& gameTimer) {
 
 		static std::string timerText;
 		glm::mat3 textPos;
-		Cori::Graphics::Renderer2D::TextAlignment drawSpace = Cori::Graphics::Renderer2D::RIGHT;
+		Cori::Graphics::Renderer2D::TextAlignment alignment = Cori::Graphics::Renderer2D::RIGHT;
 
 		if (!fsm.IsInState<States::Player::Dead>() && !m_LevelCompleted) {
-			drawSpace = Cori::Graphics::Renderer2D::LEFT;
+			alignment = Cori::Graphics::Renderer2D::LEFT;
 			textPos = glm::translate(glm::mat3(1.0f), glm::vec2(15.0f, 330.0f));
 			timerText = Cori::Core::GameTimer::FormatTime_S_to_M_S_MS(hp.m_TimeHealth);
 		}
 		else if (fsm.IsInState<States::Player::Dead>()) {
-			drawSpace = Cori::Graphics::Renderer2D::CENTER;
+			alignment = Cori::Graphics::Renderer2D::CENTER;
 			textPos = glm::translate(glm::mat3(1.0f), ActiveScene.GetActiveCamera().GetSize() / 2.0f);
 			timerText = "Skill Issue. One reddit user says \"Kill yourself\"";
 		}
 		else if (m_LevelCompleted) {
-			drawSpace = Cori::Graphics::Renderer2D::CENTER;
+			alignment = Cori::Graphics::Renderer2D::CENTER;
 			textPos = glm::translate(glm::mat3(1.0f), ActiveScene.GetActiveCamera().GetSize() / 2.0f);
 			timerText = std::format("You escaped, now do it faster. \nTime left in the bank: {}", Cori::Core::GameTimer::FormatTime_S_to_M_S_MS(hp.m_TimeHealth));
 		}
 
-		Cori::Graphics::Renderer2D::SubmitText(Cori::Graphics::Renderer2D::SCREEN_SPACE, drawSpace, textPos, 20, timerText, glm::vec4(1.0f), Cori::AssetManager::Get(Assets::GlobalFont).get(), 20, 1000.0f, 0.0f, 0.0f);
+		Cori::Graphics::Renderer2D::SubmitText(Cori::Graphics::Renderer2D::SCREEN_SPACE, alignment, textPos, 20, timerText, glm::vec4(1.0f), Cori::AssetManager::Get(Assets::GlobalFont).get(), 20, 1000.0f, 0.0f, 0.0f);
 
 		auto& mover = m_Player.GetComponents<Components::Mover>();
 
@@ -86,7 +89,7 @@ void LevelLayer::OnTickUpdate(Cori::Core::GameTimer& gameTimer) {
 
 		const glm::vec2 playerPos = m_Player.GetComponents<Cori::World::Components::Entity::Transform>().GetLocalPosition();
 		const glm::vec2 playerHalfSize = m_Player.GetComponents<Cori::World::Components::Entity::QuadRenderer>().GetHalfSize();
-		m_MainCamera.OnTickUpdate(gameTimer.GetTimestep(), playerPos, playerHalfSize, Cori::Physics::ToPixels(mover.m_Velocity) ,ActiveScene.GetActiveCamera());
+		m_MainCamera.OnTickUpdate(gameTimer.GetTimestep(), playerPos, playerHalfSize, Cori::Physics::ToPixels(mover.m_RelativeVelocity) ,ActiveScene.GetActiveCamera());
 	}
 }
 
@@ -113,6 +116,21 @@ void LevelLayer::OnImGuiRender(Cori::Core::GameTimer& gameTimer) {
 				m_LevelCompleted = false;
 				auto& hp = m_Player.GetComponents<Components::Health>();
 				hp.Reset();
+				auto system = ActiveScene.GetSystem<Systems::MovingPlatform>();
+
+				if (system) {
+					auto locked = system->lock();
+					locked->Reset(gameTimer);
+				}
+			}
+		}
+
+		if (ImGui::Button("Reset Platforms")) {
+			auto system = ActiveScene.GetSystem<Systems::MovingPlatform>();
+
+			if (system) {
+				auto locked = system->lock();
+				locked->Reset(gameTimer);
 			}
 		}
 
@@ -207,7 +225,6 @@ void LevelLayer::OnEvent(Cori::Core::Event& event) {
 
 		return false;
 	});
-
 }
 
 void LevelLayer::CreatePlayer(const float startingTime, const glm::vec2 spawnPos) {
@@ -354,6 +371,7 @@ void LevelLayer::LoadLevel(const std::filesystem::path& path) {
 	std::vector<std::pair<uint32_t, uint32_t>> GDIs;
 
 	std::vector<std::shared_ptr<Cori::Graphics::SpriteAtlas>> SpriteAtlases;
+	std::unordered_map<std::string, std::shared_ptr<Cori::Graphics::SpriteAtlas>> SpriteAtlasMap;
 
 	if (map.load(path.string())) {
 		//auto gridSize = map.getTileSize();
@@ -397,11 +415,11 @@ void LevelLayer::LoadLevel(const std::filesystem::path& path) {
 				auto atlas = Cori::Graphics::SpriteAtlas::Create(tileset.getName(), image, glm::ivec2{tileSize.x, tileSize.y});
 				if (atlas->GetSuccessStatus()) {
 					SpriteAtlases.push_back(atlas);
+					SpriteAtlasMap.insert({ tileset.getName(), atlas });
+					GDIs.emplace_back(tileset.getFirstGID(), tileset.getLastGID());
 				} else {
 					CORI_ERROR_TAGGED({ "Level Loader" }, "Failed to load a tileset from a tmx file. Tmx path: '{}', Tileset path: '{}'", path.string(), tileset.getImagePath());
 				}
-
-				GDIs.emplace_back(tileset.getFirstGID(), tileset.getLastGID());
 			}
 		}
 
@@ -682,6 +700,83 @@ void LevelLayer::LoadLevel(const std::filesystem::path& path) {
 						}
 					}
 				}
+				else if (objectLayer.getName() == "MovingPlatforms") {
+					auto system = ActiveScene.GetSystem<Systems::MovingPlatform>();
+					if (system) {
+						auto locked = system->lock();
+						const auto& objects = objectLayer.getObjects();
+
+						for (const auto& object : objects) {
+							if (object.getShape() == tmx::Object::Shape::Point) {
+								const auto pos = Cori::Physics::ToMeters(TiledPosToPixels(object.getPosition(), { mapSize.x, mapSize.y }));
+
+								PlatformParams pp;
+								pp.expressionX.RegisterValues({ "t" });
+								pp.expressionY.RegisterValues({ "t" });
+
+								std::string exprX;
+								std::string exprY;
+
+								bool success = true;
+								bool textureFound = false;
+
+								const auto properties = object.getProperties();
+								for (const auto& property : properties) {
+									if (property.getName() == "AtlasName") {
+										if (SpriteAtlasMap.contains(property.getStringValue())) {
+											pp.atlas = SpriteAtlasMap[property.getStringValue()];
+										} else {
+											CORI_ERROR("Failed to find atlas by name '{}' for assining to the moving platform, platform will not be created.", property.getStringValue());
+											success = false;
+										}
+									} else if (property.getName() == "BodyTileID") {
+										pp.bodyTileID = property.getIntValue();
+									}
+									else if (property.getName() == "LeftOrBottomCornerTileID") {
+										pp.leftOrBottomCornerTileID = property.getIntValue();
+									}
+									else if (property.getName() == "RightOrTopCornerTileID") {
+										pp.rightOrTopCornerTileID = property.getIntValue();
+									}
+									else if (property.getName() == "Size") {
+										pp.size = property.getIntValue();
+									}
+									else if (property.getName() == "Depth") {
+										pp.m_Depth = property.getIntValue();
+									}
+									else if (property.getName() == "IsVertical") {
+										pp.vertical = property.getBoolValue();
+									}
+									else if (property.getName() == "ExpressionX") {
+										exprX = property.getStringValue();
+									}
+									else if (property.getName() == "ExpressionY") {
+										exprY = property.getStringValue();
+									}
+									else {
+										if (property.getType() == tmx::Property::Type::String) {
+											pp.expressionX.AddAlias(property.getName(), property.getStringValue());
+											pp.expressionY.AddAlias(property.getName(), property.getStringValue());
+										}
+									}
+								}
+
+
+								pp.expressionX.Parse(exprX);
+								pp.expressionY.Parse(exprY);
+
+								if (pp.expressionY.Success() && pp.expressionX.Success() && success) {
+									pp.positionOffset = pos;
+									locked->CreatePlatform(pp);
+								} else {
+									CORI_ERROR("Failed to create moving platform");
+								}
+
+
+							}
+						}
+					}
+				}
 			}
 		}
 
@@ -690,6 +785,53 @@ void LevelLayer::LoadLevel(const std::filesystem::path& path) {
 		CORI_CHECK(escapeFound, "No escape door was found in level: {}", path.string());
 
 		m_LevelLoaded = true;
+	}
+	auto system = ActiveScene.GetSystem<Systems::MovingPlatform>();
+
+	if (system) {
+		auto locked = system->lock();
+		//PlatformParams pp;
+		//pp.expressionX.RegisterValues({ "t" });
+		//pp.expressionX.Parse("0*t");
+		//pp.expressionY.RegisterValues({ "t" });
+		//pp.expressionY.Parse("3*cos(t*2)");
+		//pp.positionOffset = {20, 40};
+		//pp.size = 7;
+		//pp.vertical = true;
+		//pp.atlas = SpriteAtlasMap.at("Construction");
+		//pp.leftOrBottomCornerTileID = 52;
+		//pp.bodyTileID = 35;
+		//pp.rightOrTopCornerTileID = 18;
+		//pp.m_Depth = 10;
+		//locked->CreatePlatform(pp);
+
+		//PlatformParams pp1;
+		//pp1.expressionX.RegisterValues({ "t" });
+		//pp1.expressionX.Parse("3*sin(t/2)");
+		//pp1.expressionY.RegisterValues({ "t" });
+		//pp1.expressionY.Parse("3*cos(t/2)");
+		//pp1.positionOffset = {30, 40};
+		//pp1.size = {9, 1};
+		//locked->CreatePlatform(pp1);
+
+		//PlatformParams pp2;
+		//pp2.expressionX.RegisterValues({ "t" });
+		//pp2.expressionX.Parse("27.1*(sin(pi*(t - floor(t)) - (pi / 2)) * 40 + 40)*1.1^(-(sin(pi*(t - floor(t)) - (pi / 2)) * 40 + 40) - 25)");
+		//pp2.expressionY.RegisterValues({ "t" });
+		//pp2.expressionY.Parse("0*t");
+		//pp2.positionOffset = {46, 21};
+		//pp2.size = {5, 1};
+		//locked->CreatePlatform(pp2);
+
+		//PlatformParams pp3;
+		//pp3.expressionX.RegisterValues({ "t" });
+		//pp3.expressionX.Parse("0*t");
+		//pp3.expressionY.RegisterValues({ "t" });
+		//pp3.expressionY.AddAlias("arg", "sin(pi*frac(t/2) - (pi / 2)) * 40 + 40");
+		//pp3.expressionY.Parse("27.1*(arg(t))*1.1^(-(arg(t)) - 25)");
+		//pp3.positionOffset = {70, 21};
+		//pp3.size = {5, 1};
+		//locked->CreatePlatform(pp3);
 	}
 }
 

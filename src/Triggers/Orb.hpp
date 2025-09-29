@@ -1,7 +1,7 @@
 #pragma once
 #include <Cori.hpp>
 #include "Tags.hpp"
-#include "Player/Components.hpp"
+#include "../Components.hpp"
 
 namespace Triggers {
 	class RegularOrb final : public Cori::World::TriggerBehaviour {

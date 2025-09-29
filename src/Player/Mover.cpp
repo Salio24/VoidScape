@@ -1,4 +1,5 @@
 #include "Mover.hpp"
+#include "AssetDescriptors.hpp"
 
 namespace Components {
 	Mover::Mover(const Cori::Physics::Capsule& moverCapsule, const Cori::Physics::Capsule& sensorCapsule, Cori::Physics::WorldRef world, Cori::World::Entity& player, const Params& def) : // GOD FUCKING LORD THATS A HUGE INIT-LIST
@@ -14,12 +15,13 @@ namespace Components {
 		m_SegmentOffset(def.segmentOffset), m_WallSlideSpeed(def.wallSlideSpeed), m_MinSpeedForRunState(def.minSpeedForRunState), m_World(world),
 		m_Capsule(moverCapsule), m_Player(player) {
 
-		m_Spawn = player.GetComponents<Components::Spawnpoint>().m_Spawnpoint;
+		m_Spawn = player.GetComponents<Spawnpoint>().m_Spawnpoint;
 
 		TeleportToSpawn();
 
 		//a hack to allow sensor use with an entity that is operated via mover
 		Cori::Physics::Body::Params bp;
+		bp.name = "Player Sensor";
 		bp.type = b2_kinematicBody;
 		bp.position = m_Transform.p;
 		bp.fixedRotation = true;
@@ -58,11 +60,11 @@ namespace Components {
 		//
 		//Cori::Graphics::Renderer2D::SubmitColoredQuad(Cori::Graphics::Renderer2D::WORLD_SPACE, Cori::Physics::ToPixels(target + Cori::Physics::Vec2(0.0f, -m_Capsule.center2.y) + Cori::Physics::Vec2(0.0f, -m_PogoCurrentLength)), glm::vec2(1.0f, 1.0f), glm::vec3(1.0f, 0.0f, 0.0f));
 
-		if (m_Velocity.x < 0.0f) {
+		if (m_RelativeVelocity.x < 0.0f) {
 			transform.SetLocalScale({ -1.0f, 1.0f });
 			//renderer.m_FlipX = true;
 		}
-		else if (m_Velocity.x > 0.0f) {
+		else if (m_RelativeVelocity.x > 0.0f) {
 			transform.SetLocalScale({ 1.0f, 1.0f });
 			//renderer.m_FlipX = false;
 		}
@@ -87,12 +89,14 @@ namespace Components {
 
 		auto& fsm = m_Player.GetComponents < Cori::World::Components::Entity::StateMachine>();
 
+		Cori::Physics::Vec2 naturalVelocity = { 0.0f, 0.0f };
+
 		b2QueryFilter colliderFilter = { Cori::Physics::CollisionBits::MoverBit, Cori::Physics::CollisionBits::StaticBit | Cori::Physics::CollisionBits::DynamicBit };
 
 		// vvv double jump raycast checks, to avoid double jumping when player is almoust touching the ground or the wall
 		{
-			m_GroundRayStart = { m_Transform.p.x + m_Velocity.x * timeStep + m_Capsule.radius * static_cast<float>(Cori::Math::Sign(m_Velocity.x)), m_Transform.p.y - (m_PogoLengthScale * m_Capsule.radius + m_Capsule.radius - m_Capsule.center1.y) };
-			m_GroundRayEnd = { m_GroundRayStart.x, m_GroundRayStart.y + (m_Velocity.y * timeStep * static_cast<float>(m_JumpBufferTicks) / m_DoubleJumpRayModifierForRegular) };
+			m_GroundRayStart = { m_Transform.p.x + m_RelativeVelocity.x * timeStep + m_Capsule.radius * static_cast<float>(Cori::Math::Sign(m_RelativeVelocity.x)), m_Transform.p.y - (m_PogoLengthScale * m_Capsule.radius + m_Capsule.radius - m_Capsule.center1.y) };
+			m_GroundRayEnd = { m_GroundRayStart.x, m_GroundRayStart.y + (m_RelativeVelocity.y * timeStep * static_cast<float>(m_JumpBufferTicks) / m_DoubleJumpRayModifierForRegular) };
 			{
 				Cori::Physics::Vec2 rayTranslation = b2Sub(m_GroundRayEnd, m_GroundRayStart);
 				Cori::Physics::RayResult rayResult{};
@@ -105,8 +109,8 @@ namespace Components {
 				m_NearGround = rayResult.hit;
 			}
 
-			m_WallRayStart = { m_Transform.p.x + m_Capsule.radius * static_cast<float>(Cori::Math::Sign(m_Velocity.x)) + m_Velocity.x * timeStep, m_Transform.p.y + (m_Velocity.y * timeStep * static_cast<float>(m_WallJumpBufferTicks)) };
-			m_WallRayEnd = { m_WallRayStart.x + (m_Velocity.x * timeStep * static_cast<float>(m_WallJumpBufferTicks) / m_DoubleJumpRayModifierForWall), m_WallRayStart.y };
+			m_WallRayStart = { m_Transform.p.x + m_Capsule.radius * static_cast<float>(Cori::Math::Sign(m_RelativeVelocity.x)) + m_RelativeVelocity.x * timeStep, m_Transform.p.y + (m_RelativeVelocity.y * timeStep * static_cast<float>(m_WallJumpBufferTicks)) };
+			m_WallRayEnd = { m_WallRayStart.x + (m_RelativeVelocity.x * timeStep * static_cast<float>(m_WallJumpBufferTicks) / m_DoubleJumpRayModifierForWall), m_WallRayStart.y };
 
 			{
 				Cori::Physics::Vec2 rayTranslation = b2Sub(m_WallRayEnd, m_WallRayStart);
@@ -129,11 +133,11 @@ namespace Components {
 
 		// fast fall
 		m_Gravity = m_GravityDefault;
-		bool falling = m_Velocity.y < -0.35f - m_Gravity * m_FastFallGravityModifier * timeStep;
+		bool falling = m_RelativeVelocity.y < -0.35f - m_Gravity * m_FastFallGravityModifier * timeStep;
 		if (falling) {
 			m_Gravity *= m_FastFallGravityModifier;
 			bufferFallState = true;
-			m_LastFallingDistance += -(m_Velocity.y * timeStep);
+			m_LastFallingDistance += -(m_RelativeVelocity.y * timeStep);
 		}
 
 		if (m_OnGround && !m_OldOnGround) {
@@ -152,13 +156,15 @@ namespace Components {
 		}
 
 		//if (std::abs(m_Velocity.y) > 1.0f && (m_Jumping || m_WallJumping || m_DoubleJumping)) {
-		if (std::abs(m_Velocity.y) > 1.0f) {
+		if (std::abs(m_RelativeVelocity.y) > 1.0f) {
 			//CORI_DEBUG("1");
 
 			bufferAscendingState = true;
 		}
 
 		m_CanWallJump = false;
+
+		test = false;
 
 		// wall collision normal response, related to wall slide and wall jump
 		int count = m_PlaneCount;
@@ -170,11 +176,32 @@ namespace Components {
 				m_CanWallJump = true;
 				bufferFallState = false;
 				bufferAscendingState = false;
+				m_WallJumpDirection = Cori::Math::Sign(plane.normal.x);
 				if (!m_OnGround) {
 					fsm.SetStateIfNotInState<States::Player::WallSlide>();
+					float bonus = m_AbsoluteVelocity.x * (timeStep * 0.5f);
+					Cori::Physics::Vec2 platformRayStart = target + Cori::Physics::Vec2(bonus, 0.0f);
+					Cori::Physics::Vec2 platformRayEnd = platformRayStart + Cori::Physics::Vec2(m_Capsule.radius + 0.2f, 0.0f) * -m_WallJumpDirection;
+					{
+						Cori::Physics::Vec2 rayTranslation = b2Sub(platformRayEnd, platformRayStart);
+						Cori::Physics::RayResult rayResult{};
+
+						rayResult.hit = false;
+						rayResult = m_World.CastRayClosest(platformRayStart, rayTranslation, colliderFilter);
+
+						if (rayResult.hit) {
+							Cori::Physics::ShapeRef shape = rayResult.shapeId;
+							auto body = shape.GetBody();
+							if (body.GetType() == b2_kinematicBody) {
+								naturalVelocity = body.GetWorldPointVelocity(rayResult.point);
+								test = true;
+							}
+						}
+					}
+
+
 					m_ResetDistanceNextTick = true;
 				}
-				m_WallJumpDirection = Cori::Math::Sign(plane.normal.x);
 				break;
 			}
 		}
@@ -191,26 +218,56 @@ namespace Components {
 
 		float throttle = 0.0f;
 
+
+
+		{
+			if (m_OnGround) {
+				float bonus = m_AbsoluteVelocity.x * (timeStep * 0.5f);
+				Cori::Physics::Vec2 platformRayStart = target + Cori::Physics::Vec2(bonus, 0.0f);
+				Cori::Physics::Vec2 platformRayEnd = platformRayStart + Cori::Physics::Vec2(0.0f, -m_Capsule.center2.y) + Cori::Physics::Vec2(0.0f, -m_PogoCurrentLength) - Cori::Physics::Vec2(0.0f, 0.2f);
+
+				{
+					Cori::Physics::Vec2 rayTranslation = b2Sub(platformRayEnd, platformRayStart);
+					Cori::Physics::RayResult rayResult{};
+
+					rayResult.hit = false;
+					if (rayTranslation.y < 0.0f) {
+						rayResult = m_World.CastRayClosest(platformRayStart, rayTranslation, colliderFilter);
+					}
+
+					if (rayResult.hit) {
+						Cori::Physics::ShapeRef shape = rayResult.shapeId;
+						auto body = shape.GetBody();
+						if (body.GetType() == b2_kinematicBody) {
+							naturalVelocity = body.GetWorldPointVelocity(rayResult.point);
+							naturalVelocity.y = std::clamp(naturalVelocity.y, 0.0f, std::numeric_limits<float>::max());
+							test = true;
+						}
+					}
+				}
+			}
+		}
+
 		// vvv left/right movement and wall slide
 		{
 			if (Cori::Core::Input::IsKeyDown(Cori::Core::CORI_KEY_A) && playerResponsive) {
-				if (m_CanWallJump && m_WallJumpDirection == 1 && m_Velocity.y < -0.1f - m_Gravity * timeStep) {
+				if (m_CanWallJump && m_WallJumpDirection == 1 && m_RelativeVelocity.y < -0.1f - m_Gravity * timeStep) {
 					m_Gravity = 0.0f;
-					m_Velocity.y = -m_WallSlideSpeed;
+					m_RelativeVelocity.y = -m_WallSlideSpeed;
 				}
 				throttle -= 1.0f;
-				if (m_OnGround && std::abs(m_Velocity.x) > m_MinSpeedForRunState) {
+				if (m_OnGround && std::abs(m_RelativeVelocity.x) > m_MinSpeedForRunState) {
 					fsm.SetStateIfNotInState<States::Player::Run>();
 				}
 			}
 
 			if (Cori::Core::Input::IsKeyDown(Cori::Core::CORI_KEY_D) && playerResponsive) {
-				if (m_CanWallJump && m_WallJumpDirection == -1 && m_Velocity.y < -0.1f - m_Gravity * timeStep) {
+				if (m_CanWallJump && m_WallJumpDirection == -1 && m_RelativeVelocity.y < -0.1f - m_Gravity * timeStep) {
 					m_Gravity = 0.0f;
-					m_Velocity.y = -m_WallSlideSpeed;
+					m_RelativeVelocity.y = -m_WallSlideSpeed;
 				}
 				throttle += 1.0f;
-				if (m_OnGround && std::abs(m_Velocity.x) > m_MinSpeedForRunState) {
+				if (m_OnGround && std::abs(m_RelativeVelocity.x) > m_MinSpeedForRunState) {
 					fsm.SetStateIfNotInState<States::Player::Run>();
 				}
 			}
@@ -222,6 +279,8 @@ namespace Components {
 			// vvv coyote time
 			if (!m_OnGround && m_OldOnGround) {
 				m_JumpCoyoteTimeTickTimer = 0;
+
+				m_RelativeVelocity += m_LastNaturalVelocity;
 			}
 
 			m_OldOnGround = m_OnGround;
@@ -237,13 +296,13 @@ namespace Components {
 
 			if (Cori::Core::Input::IsKeyDown(Cori::Core::CORI_KEY_SPACE) && playerResponsive) {
 				if (m_CanDoubleJump && !m_OnGround && !m_CanWallJump && m_JumpButtonReleased && !m_Jumping && !m_NearGround && !m_NearWall && m_JumpCoyoteTimeTickTimer > m_JumpCoyoteTimeTicks) { // double jump initial action
-					if (m_Velocity.y > 0.0f) {
-						float uncappedVel = m_Velocity.y + m_DoubleJumpStartSpeed;
+					if (m_RelativeVelocity.y > 0.0f) {
+						float uncappedVel = m_RelativeVelocity.y + m_DoubleJumpStartSpeed;
 						float cappedVel = std::clamp(uncappedVel, std::numeric_limits<float>::min(), m_DoubleJumpMaxStartSpeed);
 
-						m_Velocity.y = cappedVel;
+						m_RelativeVelocity.y = cappedVel;
 					} else {
-						m_Velocity.y = m_DoubleJumpStartSpeed;
+						m_RelativeVelocity.y = m_DoubleJumpStartSpeed;
 					}
 
 
@@ -258,7 +317,7 @@ namespace Components {
 					m_DoubleJumpVariableTickTimer = 0;
 				}
 				else if (!m_OnGround && m_DoubleJumpVariableTickTimer <= m_DoubleJumpVariableTicks) { // variable double jump action
-					m_Velocity.y += m_DoubleJumpVariableSpeed;
+					m_RelativeVelocity.y += m_DoubleJumpVariableSpeed;
 					m_DoubleJumpVariableTickTimer++;
 				}
 
@@ -271,12 +330,12 @@ namespace Components {
 					m_JumpBufferTickTimer = 0;
 				}
 				else if (!m_OnGround && m_Jumping && m_JumpVariableTickTimer <= m_JumpVariableTicks) { // variable jump action
-					m_Velocity.y += m_JumpVariableSpeed;
+					m_RelativeVelocity.y += m_JumpVariableSpeed;
 					m_JumpVariableTickTimer++;
 				}
 				else if (!m_OnGround && m_WallJumping && m_WallJumpVariableTickTimer <= m_WallJumpVariableTicks) { // variable wall jump action
-					m_Velocity.y += m_WallJumpVariableSpeed;
-					m_Velocity.x += m_WallJumpVariableSideSpeed * m_WallJumpDirection;
+					m_RelativeVelocity.y += m_WallJumpVariableSpeed;
+					m_RelativeVelocity.x += m_WallJumpVariableSideSpeed * m_WallJumpDirection;
 					m_WallJumpVariableTickTimer++;
 				}
 			}
@@ -294,8 +353,8 @@ namespace Components {
 			}
 
 			if ((m_CanWallJump && !m_OnGround && m_WallJumpBufferTickTimer <= m_WallJumpBufferTicks && !m_Jumping) && playerResponsive) { // wall jump initial action
-				m_Velocity.y = m_WallJumpStartSpeed;
-				m_Velocity.x = m_WallJumpStartSideSpeed * m_WallJumpDirection;
+				m_RelativeVelocity.y = m_WallJumpStartSpeed;
+				m_RelativeVelocity.x = m_WallJumpStartSideSpeed * m_WallJumpDirection;
 				m_CanWallJump = false;
 
 				//CORI_DEBUG("WALL");
@@ -315,7 +374,7 @@ namespace Components {
 
 
 			if (((m_OnGround || m_JumpCoyoteTimeTickTimer <= m_JumpCoyoteTimeTicks) && m_JumpBufferTickTimer <= m_JumpBufferTicks && !m_WallJumping) && playerResponsive) { // jump initial action
-				m_Velocity.y = m_JumpStartSpeed;
+				m_RelativeVelocity.y = m_JumpStartSpeed;
 
 				if (m_JumpCoyoteTimeTickTimer <= m_JumpCoyoteTimeTicks) {
 					//CORI_INFO("COYOTE");
@@ -345,20 +404,22 @@ namespace Components {
 		// ^^^
 
 		// set idle if still
-		if (((m_OnGround && std::abs(m_Velocity.x) < m_MinSpeedForRunState && typeid(*fsm.GetLastState()) != typeid(States::Player::Fall)) || (m_OnGround && std::abs(m_Velocity.x) < 0.05f && typeid(*fsm.GetLastState()) == typeid(States::Player::Fall))) && playerResponsive) {
+		if (((m_OnGround && std::abs(m_RelativeVelocity.x) < m_MinSpeedForRunState && typeid(*fsm.GetLastState()) != typeid(States::Player::Fall)) || (m_OnGround && std::abs(m_RelativeVelocity.x) < 0.05f && typeid(*fsm.GetLastState()) == typeid(States::Player::Fall))) && playerResponsive) {
 			fsm.SetStateIfNotInState<States::Player::Idle>();
 		}
 
 		m_OldTransform = m_Transform;
 
-		SolveMove(timeStep, throttle);
+		SolveMove(timeStep, throttle, naturalVelocity);
+
+		m_LastNaturalVelocity = naturalVelocity;
 
 		// update kinematic body position meant for sensor use
 		auto& rb = m_Player.GetComponents<Cori::World::Components::Entity::RigidBody>();
 		constexpr float tolerance = 0.01f;
 		b2Vec2 delta = m_OldTransform.p - m_Transform.p;
 		if (std::abs(delta.x) > tolerance * tolerance || std::abs(delta.y) > tolerance * tolerance) {
-			rb.SetTargetTransform({ {m_Transform.p.x + m_Velocity.x * timeStep, m_Transform.p.y + m_Velocity.y * timeStep}, b2Rot_identity }, timeStep);
+			rb.SetTargetTransform({ {m_Transform.p.x + m_RelativeVelocity.x * timeStep, m_Transform.p.y + m_RelativeVelocity.y * timeStep}, b2Rot_identity }, timeStep);
 		}
 		else {
 			rb.SetLinearVelocity({ 0.0f, 0.0f });
@@ -389,25 +450,32 @@ namespace Components {
 		}
 
 	#else
-		Cori::Physics::Vec2 bonus = m_Velocity * (timeStep * 0.5f);
-		Cori::Physics::Vec2 renderRayStart = target + bonus;
-		Cori::Physics::Vec2 renderRayEnd = renderRayStart + Cori::Physics::Vec2(0.0f, -m_Capsule.center2.y) + Cori::Physics::Vec2(0.0f, -m_PogoCurrentLength);
-
-		m_OldRenderingPosition = m_RenderingPosition;
-
 		{
-			Cori::Physics::Vec2 rayTranslation = b2Sub(renderRayEnd, renderRayStart);
-			Cori::Physics::RayResult rayResult{};
+			float bonus = m_AbsoluteVelocity.x * (timeStep * 0.5f);
+			Cori::Physics::Vec2 renderRayStart = target + Cori::Physics::Vec2(bonus, 0.0f);
+			Cori::Physics::Vec2 renderRayEnd = renderRayStart + Cori::Physics::Vec2(0.0f, -m_Capsule.center2.y) + Cori::Physics::Vec2(0.0f, -m_PogoCurrentLength);
+			Cori::Physics::Vec2 renderRayEndExtended = renderRayEnd;
 
-			rayResult.hit = false;
-			if (rayTranslation.y < 0.0f) {
-				rayResult = m_World.CastRayClosest(renderRayStart, rayTranslation, colliderFilter);
+			if (m_OnGround) {
+				renderRayEndExtended -= Cori::Physics::Vec2(0.0f, 0.2f);
 			}
 
-			if (rayResult.hit) {
-				m_RenderingPosition = rayResult.point;
-			} else {
-				m_RenderingPosition = renderRayEnd;
+			m_OldRenderingPosition = m_RenderingPosition;
+
+			{
+				Cori::Physics::Vec2 rayTranslation = b2Sub(renderRayEndExtended, renderRayStart);
+				Cori::Physics::RayResult rayResult{};
+
+				rayResult.hit = false;
+				if (rayTranslation.y < 0.0f) {
+					rayResult = m_World.CastRayClosest(renderRayStart, rayTranslation, colliderFilter);
+				}
+
+				if (rayResult.hit) {
+					m_RenderingPosition = rayResult.point;
+				} else {
+					m_RenderingPosition = renderRayEnd;
+				}
 			}
 		}
 
@@ -415,16 +483,16 @@ namespace Components {
 	}
 
 	void Mover::AddImpulse(const Cori::Physics::Vec2 impulse, const Cori::Physics::Vec2 currentVelocityModifier) {
-		m_Velocity *= currentVelocityModifier;
-		m_Velocity += impulse;
-		if (m_Velocity.y > 0.0f) {
+		m_RelativeVelocity *= currentVelocityModifier;
+		m_RelativeVelocity += impulse;
+		if (m_RelativeVelocity.y > 0.0f) {
 			m_OnGround = false;
 		}
 	}
 
 	void Mover::AddImpulse(const Cori::Physics::Vec2 impulse) {
-		m_Velocity += impulse;
-		if (m_Velocity.y > 0.0f) {
+		m_RelativeVelocity += impulse;
+		if (m_RelativeVelocity.y > 0.0f) {
 			m_OnGround = false;
 		}
 	}
@@ -524,13 +592,13 @@ namespace Components {
 
 	void Mover::DebugDraw(const float timeStep) {
 		if (m_CastResult.hit == false) {
-			b2Vec2 delta = m_Translation + m_Velocity * timeStep;
-			Cori::Core::Layer::m_DebugImGuiRenderer.DrawLine(m_Origin + m_Velocity * timeStep, m_Origin + delta, b2_colorPurple);
+			b2Vec2 delta = m_Translation + m_RelativeVelocity * timeStep;
+			Cori::Core::Layer::m_DebugImGuiRenderer.DrawLine(m_Origin + m_RelativeVelocity * timeStep, m_Origin + delta, b2_colorPurple);
 			Cori::Core::Layer::m_DebugImGuiRenderer.DrawLine(m_Segment.point1 + delta, m_Segment.point2 + delta, b2_colorPurple);
 		}
 		else {
-			b2Vec2 delta = m_CastResult.fraction * m_Translation + m_Velocity * timeStep;
-			Cori::Core::Layer::m_DebugImGuiRenderer.DrawLine(m_Origin + m_Velocity * timeStep, m_Origin + delta, b2_colorPurple);
+			b2Vec2 delta = m_CastResult.fraction * m_Translation + m_RelativeVelocity * timeStep;
+			Cori::Core::Layer::m_DebugImGuiRenderer.DrawLine(m_Origin + m_RelativeVelocity * timeStep, m_Origin + delta, b2_colorPurple);
 			Cori::Core::Layer::m_DebugImGuiRenderer.DrawLine(m_Segment.point1 + delta, m_Segment.point2 + delta, b2_colorPlum);
 		}
 
@@ -546,7 +614,7 @@ namespace Components {
 
 		b2HexColor color = m_OnGround ? b2_colorOrange : b2_colorAquamarine;
 		Cori::Core::Layer::m_DebugImGuiRenderer.DrawCapsuleFilled(m_P1, m_P2, m_Capsule.radius, color);
-		Cori::Core::Layer::m_DebugImGuiRenderer.DrawLine(m_Transform.p, m_Transform.p + m_Velocity, b2_colorPurple);
+		Cori::Core::Layer::m_DebugImGuiRenderer.DrawLine(m_Transform.p, m_Transform.p + m_RelativeVelocity, b2_colorPurple);
 
 		Cori::Core::Layer::m_DebugImGuiRenderer.DrawPoint(m_P1, 8.0f, b2_colorPink);
 
@@ -554,33 +622,70 @@ namespace Components {
 
 		Cori::Core::Layer::m_DebugImGuiRenderer.DrawLine(m_WallRayStart, m_WallRayEnd, b2_colorWhite);
 
-		Cori::Core::Layer::m_DebugImGuiRenderer.DrawText({ 1.1f, 21.9f }, fmt::color::white, "Velocity: " + Cori::Physics::Vec2ToString(m_Velocity));
-		Cori::Core::Layer::m_DebugImGuiRenderer.DrawText({ 1.1f, 21.6f }, fmt::color::white, "Velocity * ts: " + Cori::Physics::Vec2ToString({ m_Velocity.x * (1.0f / 60.0f), m_Velocity.y * (1.0f / 60.0f) }));
-		Cori::Core::Layer::m_DebugImGuiRenderer.DrawText({ 1.1f, 21.3f }, fmt::color::white, "Position: " + Cori::Physics::Vec2ToString(m_Transform.p));
+		Cori::Graphics::Renderer2D::SubmitText(Cori::Graphics::Renderer2D::SCREEN_SPACE, Cori::Graphics::Renderer2D::LEFT, glm::translate(glm::mat3(1.0f), glm::vec2(20.0f, 300.0f)), 4, "Relative Velocity: " + Cori::Physics::Vec2ToString(m_RelativeVelocity), glm::vec4(1.0f), Cori::AssetManager::Get(Assets::GlobalFont).get(), 20, 1000.0f, 0.0f, 0.0f);
+		Cori::Graphics::Renderer2D::SubmitText(Cori::Graphics::Renderer2D::SCREEN_SPACE, Cori::Graphics::Renderer2D::LEFT, glm::translate(glm::mat3(1.0f), glm::vec2(20.0f, 295.0f)), 4, "Absolute Velocity: " + Cori::Physics::Vec2ToString(m_AbsoluteVelocity), glm::vec4(1.0f), Cori::AssetManager::Get(Assets::GlobalFont).get(), 20, 1000.0f, 0.0f, 0.0f);
+		Cori::Graphics::Renderer2D::SubmitText(Cori::Graphics::Renderer2D::SCREEN_SPACE, Cori::Graphics::Renderer2D::LEFT, glm::translate(glm::mat3(1.0f), glm::vec2(20.0f, 290.0f)), 4, "Last Natural Velocity: " + Cori::Physics::Vec2ToString(m_LastNaturalVelocity), glm::vec4(1.0f), Cori::AssetManager::Get(Assets::GlobalFont).get(), 20, 1000.0f, 0.0f, 0.0f);
+		Cori::Graphics::Renderer2D::SubmitText(Cori::Graphics::Renderer2D::SCREEN_SPACE, Cori::Graphics::Renderer2D::LEFT, glm::translate(glm::mat3(1.0f), glm::vec2(20.0f, 285.0f)), 4, "Absolute Velocity * ts: " + Cori::Physics::Vec2ToString({ m_RelativeVelocity.x * timeStep, m_RelativeVelocity.y * timeStep }), glm::vec4(1.0f), Cori::AssetManager::Get(Assets::GlobalFont).get(), 20, 1000.0f, 0.0f, 0.0f);
+		Cori::Graphics::Renderer2D::SubmitText(Cori::Graphics::Renderer2D::SCREEN_SPACE, Cori::Graphics::Renderer2D::LEFT, glm::translate(glm::mat3(1.0f), glm::vec2(20.0f, 280.0f)), 4, "Position: " + Cori::Physics::Vec2ToString(m_Transform.p), glm::vec4(1.0f), Cori::AssetManager::Get(Assets::GlobalFont).get(), 20, 1000.0f, 0.0f, 0.0f);
+		Cori::Graphics::Renderer2D::SubmitText(Cori::Graphics::Renderer2D::SCREEN_SPACE, Cori::Graphics::Renderer2D::LEFT, glm::translate(glm::mat3(1.0f), glm::vec2(20.0f, 275.0f)), 4, "m_Gravity: " + std::to_string(m_Gravity), glm::vec4(1.0f), Cori::AssetManager::Get(Assets::GlobalFont).get(), 20, 1000.0f, 0.0f, 0.0f);
 
-		Cori::Core::Layer::m_DebugImGuiRenderer.DrawText({ 1.1f, 20.7f }, fmt::color::white, "m_JumpVariableTickTimer: " + std::to_string(m_JumpVariableTickTimer));
-		Cori::Core::Layer::m_DebugImGuiRenderer.DrawText({ 1.1f, 20.4f }, fmt::color::white, "m_JumpBufferTickTimer: " + std::to_string(m_JumpBufferTickTimer));
-		Cori::Core::Layer::m_DebugImGuiRenderer.DrawText({ 1.1f, 20.1f }, fmt::color::white, "m_JumpCoyoteTimeTickTimer: " + std::to_string(m_JumpCoyoteTimeTickTimer));
+		#if 0
+		if (test) {
+			Cori::Graphics::Renderer2D::SubmitColoredQuad(Cori::Graphics::Renderer2D::SCREEN_SPACE, glm::vec2(100, 100), glm::vec2(5.0f, 5.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+		} else {
+			Cori::Graphics::Renderer2D::SubmitColoredQuad(Cori::Graphics::Renderer2D::SCREEN_SPACE, glm::vec2(100, 100), glm::vec2(5.0f, 5.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+		}
 
-		Cori::Core::Layer::m_DebugImGuiRenderer.DrawText({ 1.1f, 19.5f }, fmt::color::white, "m_WallJumpBufferTickTimer: " + std::to_string(m_WallJumpBufferTickTimer));
-		Cori::Core::Layer::m_DebugImGuiRenderer.DrawText({ 1.1f, 19.2f }, fmt::color::white, "m_WallJumpVariableTickTimer: " + std::to_string(m_WallJumpVariableTickTimer));
+		if (m_OnGround) {
+			Cori::Graphics::Renderer2D::SubmitColoredQuad(Cori::Graphics::Renderer2D::SCREEN_SPACE, glm::vec2(100, 120), glm::vec2(5.0f, 5.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+		} else {
+			Cori::Graphics::Renderer2D::SubmitColoredQuad(Cori::Graphics::Renderer2D::SCREEN_SPACE, glm::vec2(100, 120), glm::vec2(5.0f, 5.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+		}
 
-		Cori::Core::Layer::m_DebugImGuiRenderer.DrawText({ 1.1f, 18.6f }, fmt::color::white, "m_DoubleJumpVariableTickTimer: " + std::to_string(m_DoubleJumpVariableTickTimer));
+		//float bonus = m_AbsoluteVelocity.x * (timeStep * 0.5f);
+		//Cori::Physics::Vec2 platformRayStart = target + Cori::Physics::Vec2(bonus, 0.0f);
+		//Cori::Physics::Vec2 platformRayEnd;
+		//if (m_OnGround) {
+		//	platformRayEnd = platformRayStart + Cori::Physics::Vec2(0.0f, -m_Capsule.center2.y) + Cori::Physics::Vec2(0.0f, -m_PogoCurrentLength) - Cori::Physics::Vec2(0.0f, 0.2f);
+		//} else {
+		//	platformRayEnd = platformRayStart + Cori::Physics::Vec2(0.0f, -m_Capsule.center2.y) + Cori::Physics::Vec2(0.0f, -m_PogoCurrentLength);
+		//}
 
-		Cori::Core::Layer::m_DebugImGuiRenderer.DrawText({ 1.1f, 18.0f }, fmt::color::white, "m_NearGround: " + Cori::Logger::BoolAlpha(m_NearGround));
-		Cori::Core::Layer::m_DebugImGuiRenderer.DrawText({ 1.1f, 17.7f }, fmt::color::white, "m_NearWall: " + Cori::Logger::BoolAlpha(m_NearWall));
+		float bonus = m_AbsoluteVelocity.x * (timeStep * 0.5f);
+		Cori::Physics::Vec2 platformRayStart = target + Cori::Physics::Vec2(bonus, 0.0f);
+		Cori::Physics::Vec2 platformRayEnd = platformRayStart + Cori::Physics::Vec2(m_Capsule.radius + 0.2f, 0.0f) * -m_WallJumpDirection;
 
-		Cori::Core::Layer::m_DebugImGuiRenderer.DrawText({ 1.1f, 17.1f }, fmt::color::white, "m_Gravity: " + std::to_string(m_Gravity));
+		Cori::Graphics::Renderer2D::SubmitColoredQuad(Cori::Graphics::Renderer2D::WORLD_SPACE, Cori::Physics::ToPixels(platformRayStart), glm::vec2(1.0f, 1.0f), glm::vec3(.0f, 1.0f, 0.0f));
+		Cori::Graphics::Renderer2D::SubmitColoredQuad(Cori::Graphics::Renderer2D::WORLD_SPACE, Cori::Physics::ToPixels(platformRayEnd), glm::vec2(1.0f, 1.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+		#endif
 
-		Cori::Core::Layer::m_DebugImGuiRenderer.DrawText({ 1.1f, 16.5f }, fmt::color::white, "m_Jumping: " + Cori::Logger::BoolAlpha(m_Jumping));
-		Cori::Core::Layer::m_DebugImGuiRenderer.DrawText({ 1.1f, 16.2f }, fmt::color::white, "m_WallJumping: " + Cori::Logger::BoolAlpha(m_WallJumping));
-		Cori::Core::Layer::m_DebugImGuiRenderer.DrawText({ 1.1f, 15.9f }, fmt::color::white, "m_DoubleJumping: " + Cori::Logger::BoolAlpha(m_DoubleJumping));
-		Cori::Core::Layer::m_DebugImGuiRenderer.DrawText({ 1.1f, 15.6f }, fmt::color::white, "m_CanWallJump: " + Cori::Logger::BoolAlpha(m_CanWallJump));
-		Cori::Core::Layer::m_DebugImGuiRenderer.DrawText({ 1.1f, 15.3f }, fmt::color::white, "m_CanDoubleJump: " + Cori::Logger::BoolAlpha(m_CanDoubleJump));
-		Cori::Core::Layer::m_DebugImGuiRenderer.DrawText({ 1.1f, 15.0f }, fmt::color::white, "m_OnGround: " + Cori::Logger::BoolAlpha(m_OnGround));
-		Cori::Core::Layer::m_DebugImGuiRenderer.DrawText({ 1.1f, 14.7f }, fmt::color::white, "m_WallJumpDirection: " + std::to_string(m_WallJumpDirection));
+		//Cori::Core::Layer::m_DebugImGuiRenderer.DrawText(b2Vec2{ 1.1f + Cori::Core::Layer::m_DebugImGuiRenderer.camera_pos.x, -21.9f + Cori::Core::Layer::m_DebugImGuiRenderer.camera_pos.y }, fmt::color::white, "Velocity: " + Cori::Physics::Vec2ToString(m_Velocity));
+		//Cori::Core::Layer::m_DebugImGuiRenderer.DrawText({ 1.1f, 21.6f }, fmt::color::white, "Velocity * ts: " + Cori::Physics::Vec2ToString({ m_Velocity.x * (1.0f / 60.0f), m_Velocity.y * (1.0f / 60.0f) }));
+		//Cori::Core::Layer::m_DebugImGuiRenderer.DrawText({ 1.1f, 21.3f }, fmt::color::white, "Position: " + Cori::Physics::Vec2ToString(m_Transform.p));
+		//Cori::Core::Layer::m_DebugImGuiRenderer.DrawText({ 1.1f, 17.1f }, fmt::color::white, "m_Gravity: " + std::to_string(m_Gravity));
 
-		Cori::Core::Layer::m_DebugImGuiRenderer.DrawText({ 1.1f, 14.1f }, fmt::color::white, "Current Player State: " + std::string(m_Player.GetComponents<Cori::World::Components::Entity::StateMachine>().GetCurrentState()->GetDebugName()));
+		//Cori::Core::Layer::m_DebugImGuiRenderer.DrawText({ 1.1f, 20.7f }, fmt::color::white, "m_JumpVariableTickTimer: " + std::to_string(m_JumpVariableTickTimer));
+		//Cori::Core::Layer::m_DebugImGuiRenderer.DrawText({ 1.1f, 20.4f }, fmt::color::white, "m_JumpBufferTickTimer: " + std::to_string(m_JumpBufferTickTimer));
+		//Cori::Core::Layer::m_DebugImGuiRenderer.DrawText({ 1.1f, 20.1f }, fmt::color::white, "m_JumpCoyoteTimeTickTimer: " + std::to_string(m_JumpCoyoteTimeTickTimer));
+//
+		//Cori::Core::Layer::m_DebugImGuiRenderer.DrawText({ 1.1f, 19.5f }, fmt::color::white, "m_WallJumpBufferTickTimer: " + std::to_string(m_WallJumpBufferTickTimer));
+		//Cori::Core::Layer::m_DebugImGuiRenderer.DrawText({ 1.1f, 19.2f }, fmt::color::white, "m_WallJumpVariableTickTimer: " + std::to_string(m_WallJumpVariableTickTimer));
+//
+		//Cori::Core::Layer::m_DebugImGuiRenderer.DrawText({ 1.1f, 18.6f }, fmt::color::white, "m_DoubleJumpVariableTickTimer: " + std::to_string(m_DoubleJumpVariableTickTimer));
+//
+		//Cori::Core::Layer::m_DebugImGuiRenderer.DrawText({ 1.1f, 18.0f }, fmt::color::white, "m_NearGround: " + Cori::Logger::BoolAlpha(m_NearGround));
+		//Cori::Core::Layer::m_DebugImGuiRenderer.DrawText({ 1.1f, 17.7f }, fmt::color::white, "m_NearWall: " + Cori::Logger::BoolAlpha(m_NearWall));
+//
+//
+		//Cori::Core::Layer::m_DebugImGuiRenderer.DrawText({ 1.1f, 16.5f }, fmt::color::white, "m_Jumping: " + Cori::Logger::BoolAlpha(m_Jumping));
+		//Cori::Core::Layer::m_DebugImGuiRenderer.DrawText({ 1.1f, 16.2f }, fmt::color::white, "m_WallJumping: " + Cori::Logger::BoolAlpha(m_WallJumping));
+		//Cori::Core::Layer::m_DebugImGuiRenderer.DrawText({ 1.1f, 15.9f }, fmt::color::white, "m_DoubleJumping: " + Cori::Logger::BoolAlpha(m_DoubleJumping));
+		//Cori::Core::Layer::m_DebugImGuiRenderer.DrawText({ 1.1f, 15.6f }, fmt::color::white, "m_CanWallJump: " + Cori::Logger::BoolAlpha(m_CanWallJump));
+		//Cori::Core::Layer::m_DebugImGuiRenderer.DrawText({ 1.1f, 15.3f }, fmt::color::white, "m_CanDoubleJump: " + Cori::Logger::BoolAlpha(m_CanDoubleJump));
+		//Cori::Core::Layer::m_DebugImGuiRenderer.DrawText({ 1.1f, 15.0f }, fmt::color::white, "m_OnGround: " + Cori::Logger::BoolAlpha(m_OnGround));
+		//Cori::Core::Layer::m_DebugImGuiRenderer.DrawText({ 1.1f, 14.7f }, fmt::color::white, "m_WallJumpDirection: " + std::to_string(m_WallJumpDirection));
+//
+		//Cori::Core::Layer::m_DebugImGuiRenderer.DrawText({ 1.1f, 14.1f }, fmt::color::white, "Current Player State: " + std::string(m_Player.GetComponents<Cori::World::Components::Entity::StateMachine>().GetCurrentState()->GetDebugName()));
 	}
 
 	void Mover::TeleportToSpawn() {
@@ -590,7 +695,10 @@ namespace Components {
 	}
 
 	void Mover::ResetState() {
-		m_Velocity = { 0.0f, 0.0f };
+		m_RelativeVelocity = { 0.0f, 0.0f };
+		m_AbsoluteVelocity = { 0.0f, 0.0f };
+		m_LastNaturalVelocity = { 0.0f, 0.0f };
+
 
 		m_CastResult = {};
 
@@ -643,41 +751,38 @@ namespace Components {
 
 	}
 
-	void Mover::SolveMove(const float timeStep, float throttle) {
+	void Mover::SolveMove(const float timeStep, float throttle, const Cori::Physics::Vec2 naturalVelocity) {
 		// Friction
-		float speed = b2Length(m_Velocity);
-		if (speed < m_MinSpeed)
-		{
-			m_Velocity.x = 0.0f;
-			m_Velocity.y = 0.0f;
+		float speed = b2Length(m_RelativeVelocity);
+		if (speed < m_MinSpeed) {
+			m_RelativeVelocity.x = 0.0f;
+			m_RelativeVelocity.y = 0.0f;
 		}
-		else if (m_OnGround)
-		{
+		else if (m_OnGround) {
 			// Linear damping above stopSpeed and fixed reduction below stopSpeed
 			float control = speed < m_StopSpeed ? m_StopSpeed : speed;
 
 			// friction has units of 1/time
 			float drop = control * m_Friction * timeStep;
 			float newSpeed = b2MaxFloat(0.0f, speed - drop);
-			m_Velocity *= newSpeed / speed;
+
+			m_RelativeVelocity *= newSpeed / speed;
 		}
 
 		b2Vec2 desiredVelocity = { m_MaxSpeed * throttle, 0.0f };
 		float desiredSpeed;
 		b2Vec2 desiredDirection = b2GetLengthAndNormalize(&desiredSpeed, desiredVelocity);
 
-		if (desiredSpeed > m_MaxSpeed)
-		{
+		if (desiredSpeed > m_MaxSpeed) {
 			desiredSpeed = m_MaxSpeed;
 		}
 
-		if (m_OnGround)
-		{
-			m_Velocity.y = 0.0f;
+		if (m_OnGround) {
+			m_RelativeVelocity.y = 0.0f;
 		}
 
 		// Accelerate
-		float currentSpeed = b2Dot(m_Velocity, desiredDirection);
+		float currentSpeed = b2Dot(m_RelativeVelocity, desiredDirection);
 		float addSpeed = desiredSpeed - currentSpeed;
 		if (addSpeed > 0.0f) {
 			float steer = m_OnGround ? 1.0f : m_AirSteer;
@@ -687,10 +792,10 @@ namespace Components {
 				accelSpeed = addSpeed;
 			}
 
-			m_Velocity += accelSpeed * desiredDirection;
+			m_RelativeVelocity += accelSpeed * desiredDirection;
 		}
 
-		m_Velocity.y -= m_Gravity * timeStep;
+		m_RelativeVelocity.y -= m_Gravity * timeStep;
 
 		float pogoRestLength = m_PogoLengthScale * m_Capsule.radius;
 		float rayLength = pogoRestLength + m_Capsule.radius;
@@ -717,7 +822,7 @@ namespace Components {
 		// Avoid snapping to ground if still going up
 		if (m_OnGround == false)
 		{
-			m_OnGround = m_CastResult.hit && m_Velocity.y <= 0.01f;
+			m_OnGround = m_CastResult.hit && m_RelativeVelocity.y <= 0.01f;
 		}
 		else
 		{
@@ -739,7 +844,8 @@ namespace Components {
 			m_CastResult.shape.GetBody().ApplyForce({ 0.0f, -50.0f }, m_CastResult.point, true);
 		}
 
-		target = m_Transform.p + timeStep * m_Velocity + timeStep * m_PogoVelocity * b2Vec2{ 0.0f, 1.0f };
+		m_AbsoluteVelocity = m_RelativeVelocity + naturalVelocity;
+		target = m_Transform.p + timeStep * m_AbsoluteVelocity + timeStep * m_PogoVelocity * b2Vec2{ 0.0f, 1.0f };
 
 		// Mover overlap filter
 		b2QueryFilter collideFilter = { Cori::Physics::MoverBit, Cori::Physics::CollisionBits::StaticBit | Cori::Physics::CollisionBits::DynamicBit | Cori::Physics::CollisionBits::MoverBit };
@@ -778,10 +884,10 @@ namespace Components {
 			}
 		}
 
-		m_Velocity = b2ClipVector(m_Velocity, m_Planes, m_PlaneCount);
+		m_RelativeVelocity = b2ClipVector(m_RelativeVelocity, m_Planes, m_PlaneCount);
 	}
 
-	void Mover::SaveSettings(const std::filesystem::path& filepath) {
+	void Mover::SaveSettings(const std::filesystem::path& filepath) const {
 		Params currentParams;
 
 		currentParams.jumpStartSpeed = m_JumpStartSpeed;

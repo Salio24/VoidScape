@@ -6,6 +6,8 @@ namespace Tags {
 
 	CORI_DECLARE_TAG(Triggers);
 
+	CORI_DECLARE_TAG(MovingPlatform);
+
 	CORI_DECLARE_TAG(ForTest);
 
 	CORI_DECLARE_TAG(StaticTile);
