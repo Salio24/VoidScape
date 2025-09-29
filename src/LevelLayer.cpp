@@ -25,6 +25,8 @@ LevelLayer::LevelLayer() : Layer("Level Layer") {
 	const int screenWidth = Cori::Core::Application::GetWindow().GetWidth();
 	const int screenHeight = Cori::Core::Application::GetWindow().GetHeight();
 
+	ActiveScene.AddContextComponent<Cori::World::Components::Scene::PhysicsWorld>();
+
 	ActiveScene.GetActiveCamera().CreateOrthoCamera(0, static_cast<float>(screenWidth) / (static_cast<float>(screenHeight) / 360.0f), 0, 360);
 
 	ActiveScene.RegisterSystem<Systems::MovingPlatform>();
@@ -153,7 +155,7 @@ void LevelLayer::OnImGuiRender(Cori::Core::GameTimer& gameTimer) {
 			bp.type = b2_dynamicBody;
 			bp.position = { 4.0f, 4.0f };
 
-			auto& rb = ent.AddComponent<Cori::World::Components::Entity::RigidBody>(ActiveScene.GetPhysicsWorld(), bp, ent);
+			auto& rb = ent.AddComponent<Cori::World::Components::Entity::RigidBody>(ActiveScene.GetContextComponent<Cori::World::Components::Scene::PhysicsWorld>(), bp, ent);
 
 			Cori::Physics::Shape::Params sp;
 
@@ -319,7 +321,7 @@ void LevelLayer::CreatePlayer(const float startingTime, const glm::vec2 spawnPos
 	Components::Mover::Params mp;
 	mp.gravityDefault = 34.5f;
 
-	m_Player.AddComponent<Components::Mover>(Cori::Physics::Capsule::Create({ 0.0f, -0.5f }, { 0.0f, 0.55f }, 0.37f), Cori::Physics::Capsule::Create({ 0.0f, -0.9f }, { 0.0f, 0.6f }, 0.45f), ActiveScene.GetPhysicsWorld(), m_Player, mp);
+	m_Player.AddComponent<Components::Mover>(Cori::Physics::Capsule::Create({ 0.0f, -0.5f }, { 0.0f, 0.55f }, 0.37f), Cori::Physics::Capsule::Create({ 0.0f, -0.9f }, { 0.0f, 0.6f }, 0.45f), ActiveScene.GetContextComponent<Cori::World::Components::Scene::PhysicsWorld>(), m_Player, mp);
 }
 
 void LevelLayer::CreateEscapeDoor(const Cori::Physics::Vec2 pos) {
@@ -331,7 +333,7 @@ void LevelLayer::CreateEscapeDoor(const Cori::Physics::Vec2 pos) {
 	bp.position = pos + Cori::Physics::Vec2(0.0f, sizem.y / 2.0f - 1);
 	bp.name = "Escape Door";
 
-	auto& rb = tr.AddComponent<Cori::World::Components::Entity::RigidBody>(ActiveScene.GetPhysicsWorld(), bp, tr);
+	auto& rb = tr.AddComponent<Cori::World::Components::Entity::RigidBody>(ActiveScene.GetContextComponent<Cori::World::Components::Scene::PhysicsWorld>(), bp, tr);
 
 	Cori::Physics::Shape::Params spa;
 	spa.filter.categoryBits = Cori::Physics::CollisionBits::SensorBit;
@@ -572,7 +574,7 @@ void LevelLayer::LoadLevel(const std::filesystem::path& path) {
 											bp.position = Cori::Physics::ToMeters(GridPosToPixels({ j, i }, { width, height }, false) + localPos);
 											bp.name = "Trap";
 
-											auto& rb = trap.AddComponent<Cori::World::Components::Entity::RigidBody>(ActiveScene.GetPhysicsWorld(), bp, trap);
+											auto& rb = trap.AddComponent<Cori::World::Components::Entity::RigidBody>(ActiveScene.GetContextComponent<Cori::World::Components::Scene::PhysicsWorld>(), bp, trap);
 
 											Cori::Physics::Chain::Params cp;
 											cp.count = b2points.size();
@@ -653,7 +655,7 @@ void LevelLayer::LoadLevel(const std::filesystem::path& path) {
 							bp.type = b2_staticBody;
 							bp.position = Cori::Physics::ToMeters(TiledPosToPixels(pos, { mapSize.x, mapSize.y }));
 
-							auto& rb = col.AddComponent<Cori::World::Components::Entity::RigidBody>(ActiveScene.GetPhysicsWorld(), bp, col);
+							auto& rb = col.AddComponent<Cori::World::Components::Entity::RigidBody>(ActiveScene.GetContextComponent<Cori::World::Components::Scene::PhysicsWorld>(), bp, col);
 
 							Cori::Physics::Chain::Params cp;
 							cp.count = b2points.size();
@@ -796,7 +798,7 @@ void LevelLayer::AddRegularOrb(const float orbBonus, const Cori::Physics::Vec2 p
 	bp.position = pos;
 	bp.name = "Regular Orb";
 
-	auto& rb = tr.AddComponent<Cori::World::Components::Entity::RigidBody>(ActiveScene.GetPhysicsWorld(), bp, tr);
+	auto& rb = tr.AddComponent<Cori::World::Components::Entity::RigidBody>(ActiveScene.GetContextComponent<Cori::World::Components::Scene::PhysicsWorld>(), bp, tr);
 
 	Cori::Physics::Shape::Params spa;
 	spa.filter.categoryBits = Cori::Physics::CollisionBits::SensorBit;

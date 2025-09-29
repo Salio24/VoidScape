@@ -17,14 +17,6 @@ namespace Systems {
 
 	class MovingPlatform final : public Cori::World::System {
 	public:
-		MovingPlatform();
-		~MovingPlatform() override;
-
-		MovingPlatform(const MovingPlatform&) = delete;
-		MovingPlatform& operator=(const MovingPlatform&) = delete;
-		MovingPlatform(MovingPlatform&&) = delete;
-		MovingPlatform& operator=(MovingPlatform&&) = delete;
-
 		void OnUpdate(Cori::Core::GameTimer& gameTimer) override;
 
 		void OnTickUpdate(Cori::Core::GameTimer& gameTimer) override;
@@ -35,8 +27,8 @@ namespace Systems {
 
 		void Reset(const Cori::Core::GameTimer& gameTimer);
 
-		static std::shared_ptr<MovingPlatform> Create();
-		static constexpr Cori::World::SystemPriority Priority = 5;
+		bool Create();
+		static constexpr Cori::World::SystemPriority Priority = 1000;
 	private:
 		double m_LevelStartStamp{ 0.0f };
 	};

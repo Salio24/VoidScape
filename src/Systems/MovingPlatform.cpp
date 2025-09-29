@@ -3,14 +3,6 @@
 #include "Components.hpp"
 
 namespace Systems {
-	MovingPlatform::MovingPlatform() {
-
-	}
-
-	MovingPlatform::~MovingPlatform() {
-
-	}
-
 	void MovingPlatform::OnUpdate(Cori::Core::GameTimer& gameTimer) {
 		auto view = m_Owner.View<Components::MovingPlatform, Cori::World::Components::Entity::Transform>(Cori::World::Exclude<Cori::World::Components::Entity::InactiveLocallyFlag>());
 		for (const auto entity : view) {
@@ -68,7 +60,7 @@ namespace Systems {
 		bp.fixedRotation = true;
 		bp.rotation = b2Rot_identity;
 
-		auto& rb = platform.AddComponent<Cori::World::Components::Entity::RigidBody>(m_Owner.GetPhysicsWorld(), bp, platform);
+		auto& rb = platform.AddComponent<Cori::World::Components::Entity::RigidBody>(m_Owner.GetContextComponent<Cori::World::Components::Scene::PhysicsWorld>(), bp, platform);
 
 		// false when even
 		bool oddPlacement = false;
@@ -210,7 +202,7 @@ namespace Systems {
 		m_LevelStartStamp = gameTimer.GetElapsedSeconds();
 	}
 
-	std::shared_ptr<MovingPlatform> MovingPlatform::Create() {
-		return std::make_shared<MovingPlatform>();
+	bool MovingPlatform::Create() {
+		return true;
 	}
 }
