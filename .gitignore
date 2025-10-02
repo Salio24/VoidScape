@@ -11,7 +11,9 @@
 /.cmake-build-relwithdebinfo-mingw_llvm
 
 # build directories 
-bin/*
+bin/Debug/*
+bin/Release/*
+bin/RelWithDebInfo/*
 
 # build directory for libs and tmp files
 /out

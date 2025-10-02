@@ -4,13 +4,19 @@
 namespace AnimationPacks {
 	inline const Cori::Graphics::AnimationPack::Descriptor PlayerMovement {
 		"Player Movement",
-		"../../assets/textures/player/PlayerSheet.json",
+		Cori::FileSystem::PathManager::GetAliasedPath("TEXTURES") / "player/PlayerSheet.json",
 		Cori::Graphics::AnimationPack::ASEPRITE
 	};
 
 	inline const Cori::Graphics::AnimationPack::Descriptor PlayerMovementFX {
 		"Player Movement FX",
-		"../../assets/textures/player/FXSheet.json",
+		Cori::FileSystem::PathManager::GetAliasedPath("TEXTURES") / "player/FXSheet.json",
 		Cori::Graphics::AnimationPack::ASEPRITE
+	};
+
+	inline const Cori::Graphics::AnimationPack::Descriptor CoinSpin {
+		"Coin Spin",
+		Cori::FileSystem::PathManager::GetAliasedPath("TEXTURES") / "level/CoinSpin.json",
+		Cori::Graphics::AnimationPack::CORI_VARYING
 	};
 }

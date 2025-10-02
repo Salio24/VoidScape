@@ -1,6 +1,5 @@
 #include "GameLayer.hpp"
 #include "LevelLayer.hpp"
-#include <PathDefinesGenerated.hpp>
 
 GameLayer::GameLayer() : Layer("Game Layer") {
 
@@ -13,7 +12,7 @@ GameLayer::~GameLayer() {
 void GameLayer::OnAttach() {
 	auto level = new LevelLayer();
 
-	level->LoadLevel(GetVoidScapeRootDir() / "assets/levels/testlevel.tmx");
+	level->LoadLevel(Cori::FileSystem::PathManager::GetAliasedPath("LEVELS") / "testlevel.tmx");
 
 	auto result = Cori::Core::Application::PushLayer(level);
 	if (!result) {

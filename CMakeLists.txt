@@ -39,24 +39,6 @@ project(VoidScape)
 
     add_compile_options(-march=native)
 
-    get_filename_component(VOIDSCAPE_SOURCE_DIR ${PROJECT_SOURCE_DIR} ABSOLUTE)
-
-    set(EXAMPLE_RUNTIME_OUTPUT_DIR ${PROJECT_SOURCE_DIR}/bin/Debug) # Or any default config
-
-    # Calculate the relative path from the runtime output directory to the source directory.
-    file(RELATIVE_PATH VOIDSCAPE_RELATIVE_PATH
-        "${EXAMPLE_RUNTIME_OUTPUT_DIR}"
-        "${VOIDSCAPE_SOURCE_DIR}")
-
-    #cmake_path(CONVERT "${VOIDSCAPE_SOURCE_DIR}" TO_CMAKE_PATH_LIST VOIDSCAPE_ROOT_DIR)
-
-    cmake_path(CONVERT "${VOIDSCAPE_RELATIVE_PATH}" TO_CMAKE_PATH_LIST VOIDSCAPE_ROOT_DIR)
-
-    set(PATH_DEFINES_HEADER_IN "${VOIDSCAPE_SOURCE_DIR}/cmake/PathDefines.hpp.in")
-    set(PATH_DEFINES_HEADER_OUT "${CMAKE_CURRENT_BINARY_DIR}/generated/PathDefinesGenerated.hpp")
-
-    configure_file(${PATH_DEFINES_HEADER_IN} ${PATH_DEFINES_HEADER_OUT})
-
     add_subdirectory(${PROJECT_SOURCE_DIR}/CoriEngine)
 
     set(EXECUTABLE_NAME ${PROJECT_NAME})
@@ -69,7 +51,6 @@ project(VoidScape)
     target_include_directories(${EXECUTABLE_NAME} PRIVATE
             ${PROJECT_SOURCE_DIR}/thirdparty/PerlinNoise
             ${PROJECT_SOURCE_DIR}/src
-            ${CMAKE_CURRENT_BINARY_DIR}/generated
         )
 
 

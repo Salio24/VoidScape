@@ -14,38 +14,34 @@ namespace States {
 				const auto anim = std::make_pair(pack->GetAnimation(Animations::Player::Run), Cori::Graphics::Animation::PlayParams{ .LoopedInSequence = true });
 				ar.Play(anim);
 
-				auto particles1 = player.FindChildByName("Movement Particles Part 1");
-				if (particles1) {
-					particles1->SetActive(true);
-
-					const auto FXpack = Cori::AssetManager::Get(AnimationPacks::PlayerMovementFX);
-					auto& qa = particles1->GetComponents<Cori::World::Components::Entity::QuadAnimator>();
-					const auto FXanim = std::make_pair(FXpack->GetAnimation(Animations::Player::Particles::RunFront), Cori::Graphics::Animation::PlayParams{ .LoopedInSequence = true });
-					qa.Play(FXanim);
-				} else {
-					CORI_ERROR("Failed to retrieve sub entity: Movement Particles Part 1. Error: {}", particles1.error().what());
+				auto result = Cori::World::SceneManager::GetHandle(player.GetOwnerSceneID());
+				if (result) {
+					auto system = result->GetSystem<Cori::World::Systems::Animation>();
+					if (system) {
+						auto locked = system->lock();
+						const auto FXpack = Cori::AssetManager::Get(AnimationPacks::PlayerMovementFX);
+						const auto FXanim = std::make_pair(FXpack->GetAnimation(Animations::Player::Particles::RunFront), Cori::Graphics::Animation::PlayParams{ .LoopedInSequence = true });
+						auto tmp = locked->PlayAnimation({ 0.0f, 0.0f }, -1, { 1.0f, 1.0f }, 0.0f, FXanim);
+						if (tmp) {
+							temp1 = *tmp;
+							temp1.SetParent(player);
+						}
+					}
 				}
 
-				auto particles2 = player.FindChildByName("Movement Particles Part 2");
-				if (particles2) {
-					auto& t = particles2->GetComponents<Cori::World::Components::Entity::Transform>();
-					t.SetDetachedState(false);
-
-					particles2->SetActive(true);
-
-					//const auto FXpack = Cori::AssetManager::GetAnimationPack(AnimationPacks::PlayerMovementFX);
-					const auto FXpack = Cori::AssetManager::Get(AnimationPacks::PlayerMovementFX);
-					auto& qa = particles2->GetComponents<Cori::World::Components::Entity::QuadAnimator>();
-					const auto FXanim = std::make_pair(FXpack->GetAnimation(Animations::Player::Particles::RunBack), Cori::Graphics::Animation::PlayParams{ .LoopedInSequence = true });
-					qa.Play(FXanim);
-
-					qa.SetStopCallback([particles2] mutable {
-						if (particles2->IsValid()) {
-							particles2->SetActive(false);
+				auto result2 = Cori::World::SceneManager::GetHandle(player.GetOwnerSceneID());
+				if (result2) {
+					auto system = result2->GetSystem<Cori::World::Systems::Animation>();
+					if (system) {
+						auto locked = system->lock();
+						const auto FXpack = Cori::AssetManager::Get(AnimationPacks::PlayerMovementFX);
+						const auto FXanim = std::make_pair(FXpack->GetAnimation(Animations::Player::Particles::RunBack), Cori::Graphics::Animation::PlayParams{ .LoopedInSequence = true });
+						auto tmp = locked->PlayAnimation({ 0.0f, 0.0f }, -1, { 1.0f, 1.0f }, 0.0f, FXanim);
+						if (tmp) {
+							temp2 = *tmp;
+							temp2.SetParent(player);
 						}
-					});
-				} else {
-					CORI_ERROR("Failed to retrieve sub entity: Movement Particles Part 2. Error: {}", particles2.error().what());
+					}
 				}
 			}
 
@@ -56,35 +52,18 @@ namespace States {
 				auto& ar = player.GetComponents<Cori::World::Components::Entity::QuadAnimator>();
 				ar.Stop(true);
 
-				auto particles1 = player.FindChildByName("Movement Particles Part 1");
-				if (particles1) {
-					particles1->SetActive(false);
-					auto& qa = particles1->GetComponents<Cori::World::Components::Entity::QuadAnimator>();
-					qa.Stop(true);
-				} else {
-					CORI_ERROR("Failed to retrieve sub entity: Movement Particles Part 1. Error: {}", particles1.error().what());
-				}
-
-				auto particles2 = player.FindChildByName("Movement Particles Part 2");
-				if (particles2) {
-
-					auto& t = particles2->GetComponents<Cori::World::Components::Entity::Transform>();
-					auto& qa = particles2->GetComponents<Cori::World::Components::Entity::QuadAnimator>();
-					if (qa.GetTicksElapsed() > 1) {
-						t.SetDetachedState(true);
-						qa.Stop(false);
-					} else {
-						qa.Stop(true);
-						particles2->SetActive(false);
-					}
-				} else {
-					CORI_ERROR("Failed to retrieve sub entity: Movement Particles Part 2. Error: {}", particles2.error().what());
-				}
+				temp1.GetComponents<Cori::World::Components::Entity::QuadAnimator>().Stop(false);
+				temp2.GetComponents<Cori::World::Components::Entity::QuadAnimator>().Stop(false);
+				temp1.UnlinkFromParent();
+				temp2.UnlinkFromParent();
 			}
 
 			[[nodiscard]] const char* GetDebugName() const override {
 				return "RunState";
 			}
+
+			Cori::World::Entity temp1;
+			Cori::World::Entity temp2;
 		};
 
 		class Idle final : public Cori::World::EntityState {
@@ -120,38 +99,16 @@ namespace States {
 				const auto jumpMid = std::make_pair(pack->GetAnimation(Animations::Player::JumpMid), Cori::Graphics::Animation::PlayParams{ .LoopedInSequence = true });
 				ar.Play(jumpStart, jumpMid);
 
-				auto independentParticlesRoot = player.FindChildByName("Movement Particles Independent Root");
-
-				auto particles = player.FindChildByName("Movement Particles Independent Root");
-				if (particles) {
-					auto jumpingParticles = particles->FindChildByName("Jumping Particles");
-					if (jumpingParticles) {
-						jumpingParticles->SetActive(true);
-
+				auto result = Cori::World::SceneManager::GetHandle(player.GetOwnerSceneID());
+				if (result) {
+					auto system = result->GetSystem<Cori::World::Systems::Animation>();
+					if (system) {
+						auto locked = system->lock();
 						const auto FXpack = Cori::AssetManager::Get(AnimationPacks::PlayerMovementFX);
-						auto& qa = jumpingParticles->GetComponents<Cori::World::Components::Entity::QuadAnimator>();
-						const auto anim = std::make_pair(FXpack->GetAnimation(Animations::Player::Particles::Jump), Cori::Graphics::Animation::PlayParams{.LoopedInSequence = false});
-						qa.Play(anim);
-
-						qa.SetStopCallback([jumpingParticles] mutable {
-							if (jumpingParticles->IsValid()) {
-								jumpingParticles->SetActive(false);
-								auto& t_ = jumpingParticles->GetComponents<Cori::World::Components::Entity::Transform>();
-								t_.SetDetachedState(false);
-							}
-						});
-						qa.SetNextTickCallback([jumpingParticles] mutable {
-							if (jumpingParticles->IsValid()) {
-								auto& t = jumpingParticles->GetComponents<Cori::World::Components::Entity::Transform>();
-								t.SetDetachedState(true);
-							}
-						});
+						const auto FXanim = std::make_pair(FXpack->GetAnimation(Animations::Player::Particles::Jump), Cori::Graphics::Animation::PlayParams{.LoopedInSequence = false});
+						auto& tr = player.GetComponents<Cori::World::Components::Entity::Transform>();
+						locked->PlayAnimation(tr.GetLocalPosition(), tr.GetLocalDepthOffset(), tr.GetLocalScale(), tr.GetLocalRotation(), FXanim);
 					}
-					else {
-						CORI_ERROR("Failed to retrieve child entity: Jumping Particles. Error: {}", particles.error().what());
-					}
-				} else {
-					CORI_ERROR("Failed to retrieve child entity: Movement Particles Independent Root. Error: {}", particles.error().what());
 				}
 			}
 
@@ -184,43 +141,20 @@ namespace States {
 
 			void OnExit(Cori::World::Entity& player, const std::type_index& nextStateType) override {
 				if (nextStateType == typeid(Idle) || nextStateType == typeid(Jump) || nextStateType == typeid(Run)) {
-					auto& ar = player.GetComponents<Cori::World::Components::Entity::QuadAnimator>();
-					ar.Stop(true);
-
-					auto independentParticlesRoot = player.FindChildByName("Movement Particles Independent Root");
-					auto particles = player.FindChildByName("Movement Particles Independent Root");
-					if (particles) {
-						auto landingParticles = particles->FindChildByName("Landing Particles");
-						if (landingParticles) {
-							landingParticles->SetActive(true);
-
+					auto result = Cori::World::SceneManager::GetHandle(player.GetOwnerSceneID());
+					if (result) {
+						auto system = result->GetSystem<Cori::World::Systems::Animation>();
+						if (system) {
+							auto locked = system->lock();
 							const auto FXpack = Cori::AssetManager::Get(AnimationPacks::PlayerMovementFX);
-							auto& qa = landingParticles->GetComponents<Cori::World::Components::Entity::QuadAnimator>();
 							const auto FXanim = std::make_pair(FXpack->GetAnimation(Animations::Player::Particles::Landing), Cori::Graphics::Animation::PlayParams{.LoopedInSequence = false});
-							qa.Play(FXanim);
-
-							qa.SetStopCallback([landingParticles] mutable {
-								if (landingParticles->IsValid()) {
-									landingParticles->SetActive(false);
-									auto& t = landingParticles->GetComponents<Cori::World::Components::Entity::Transform>();
-									t.SetDetachedState(false);
-								}
-							});
-							qa.SetNextTickCallback([landingParticles] mutable {
-								if (landingParticles->IsValid()) {
-									auto& t = landingParticles->GetComponents<Cori::World::Components::Entity::Transform>();
-									t.SetDetachedState(true);
-								}
-							});
+							auto& tr = player.GetComponents<Cori::World::Components::Entity::Transform>();
+							locked->PlayAnimation(tr.GetLocalPosition(), tr.GetLocalDepthOffset(), tr.GetLocalScale(), tr.GetLocalRotation(), FXanim);
 						}
-						else {
-							CORI_ERROR("Failed to retrieve child entity: Landing Particles. Error: {}", particles.error().what());
-						}
-					}
-					else {
-						CORI_ERROR("Failed to retrieve child entity: Movement Particles Independent Root. Error: {}", particles.error().what());
 					}
 				}
+
+
 			}
 
 			[[nodiscard]] const char* GetDebugName() const override {
@@ -237,32 +171,16 @@ namespace States {
 				const auto anim = std::make_pair(pack->GetAnimation(Animations::Player::DoubleJump), Cori::Graphics::Animation::PlayParams{ .LoopedInSequence = false });
 				ar.Play(anim);
 
-				auto independentParticlesRoot = player.FindChildByName("Movement Particles Independent Root");
-				auto particles = player.FindChildByName("Movement Particles Independent Root");
-				if (particles) {
-					auto doubleJumpParticles = particles->FindChildByName("DoubleJump Particles");
-					if (doubleJumpParticles) {
-						auto& t = doubleJumpParticles->GetComponents<Cori::World::Components::Entity::Transform>();
-						t.SetDetachedState(true);
-						doubleJumpParticles->SetActive(true);
-
+				auto result = Cori::World::SceneManager::GetHandle(player.GetOwnerSceneID());
+				if (result) {
+					auto system = result->GetSystem<Cori::World::Systems::Animation>();
+					if (system) {
+						auto locked = system->lock();
 						const auto FXpack = Cori::AssetManager::Get(AnimationPacks::PlayerMovementFX);
-						auto& qa = doubleJumpParticles->GetComponents<Cori::World::Components::Entity::QuadAnimator>();
 						const auto FXanim = std::make_pair(FXpack->GetAnimation(Animations::Player::Particles::DoubleJump), Cori::Graphics::Animation::PlayParams{.LoopedInSequence = false});
-						qa.Play(FXanim);
-
-						qa.SetStopCallback([doubleJumpParticles] mutable {
-							if (doubleJumpParticles->IsValid()) {
-								doubleJumpParticles->SetActive(false);
-								auto& t_ = doubleJumpParticles->GetComponents<Cori::World::Components::Entity::Transform>();
-								t_.SetDetachedState(false);
-							}
-						});
-					} else {
-						CORI_ERROR("Failed to retrieve child entity: DoubleJump Particles. Error: {}", particles.error().what());
+						auto& tr = player.GetComponents<Cori::World::Components::Entity::Transform>();
+						locked->PlayAnimation(tr.GetLocalPosition(), tr.GetLocalDepthOffset(), tr.GetLocalScale(), tr.GetLocalRotation(), FXanim);
 					}
-				} else {
-					CORI_ERROR("Failed to retrieve child entity: Movement Particles Independent Root. Error: {}", particles.error().what());
 				}
 			}
 
@@ -289,36 +207,18 @@ namespace States {
 				const auto anim = std::make_pair(pack->GetAnimation(Animations::Player::WallJump), Cori::Graphics::Animation::PlayParams{ .LoopedInSequence = false });
 				ar.Play(anim);
 
-				auto particles = player.FindChildByName("Movement Particles Independent Root");
-				if (particles) {
-					auto wallJumpParticles = particles->FindChildByName("WallJump Particles");
-					if (wallJumpParticles) {
-						wallJumpParticles->SetActive(true);
-
+				auto result = Cori::World::SceneManager::GetHandle(player.GetOwnerSceneID());
+				if (result) {
+					auto system = result->GetSystem<Cori::World::Systems::Animation>();
+					if (system) {
+						auto locked = system->lock();
 						const auto FXpack = Cori::AssetManager::Get(AnimationPacks::PlayerMovementFX);
-						auto& qa = wallJumpParticles->GetComponents<Cori::World::Components::Entity::QuadAnimator>();
 						const auto FXanim = std::make_pair(FXpack->GetAnimation(Animations::Player::Particles::WallJump), Cori::Graphics::Animation::PlayParams{.LoopedInSequence = false});
-						qa.Play(FXanim);
-						auto& qr = wallJumpParticles->GetComponents<Cori::World::Components::Entity::QuadRenderer>();
-						auto& t = wallJumpParticles->GetComponents<Cori::World::Components::Entity::Transform>();
-						t.SetLocalPosition({-qr.GetHalfSize().x / 8.0f, 0.0f});
-						t.SetLocalScale({-1.0f, 1.0f});
-						t.SetDetachedState(true);
-
-						qa.SetStopCallback([wallJumpParticles] mutable {
-							if (wallJumpParticles->IsValid()) {
-								wallJumpParticles->SetActive(false);
-								auto& t_ = wallJumpParticles->GetComponents<Cori::World::Components::Entity::Transform>();
-								t_.SetLocalPosition({0.0f, 0.0f});
-								t_.SetLocalScale({1.0f, 1.0f});
-								t_.SetDetachedState(false);
-							}
-						});
-					} else {
-						CORI_ERROR("Failed to retrieve child entity: WallJump Particles. Error: {}", particles.error().what());
+						auto& tr = player.GetComponents<Cori::World::Components::Entity::Transform>();
+						glm::vec2 scale = tr.GetLocalScale();
+						glm::vec2 pos = tr.GetLocalPosition();
+						locked->PlayAnimation({ pos.x - FXanim.first.GetFrameSize().x / 16.0f * Cori::Math::Sign(scale.x), pos.y }, tr.GetLocalDepthOffset(), { -scale.x, scale.y }, tr.GetLocalRotation(), FXanim);
 					}
-				} else {
-					CORI_ERROR("Failed to retrieve child entity: Movement Particles Independent Root. Error: {}", particles.error().what());
 				}
 			}
 
@@ -345,16 +245,19 @@ namespace States {
 				const auto anim = std::make_pair(pack->GetAnimation(Animations::Player::WallSlide), Cori::Graphics::Animation::PlayParams{ .LoopedInSequence = true });
 				ar.Play(anim);
 
-				auto particles = player.FindChildByName("Movement Particles Part 1");
-				if (particles) {
-					particles->SetActive(true);
-
-					const auto FXpack = Cori::AssetManager::Get(AnimationPacks::PlayerMovementFX);
-					auto& qa = particles->GetComponents<Cori::World::Components::Entity::QuadAnimator>();
-					const auto FXanim = std::make_pair(FXpack->GetAnimation(Animations::Player::Particles::WallSlide), Cori::Graphics::Animation::PlayParams{ .LoopedInSequence = true });
-					qa.Play(FXanim);
-				} else {
-					CORI_ERROR("Failed to retrieve sub entity: Movement Particles Part 1. Error: {}", particles.error().what());
+				auto result = Cori::World::SceneManager::GetHandle(player.GetOwnerSceneID());
+				if (result) {
+					auto system = result->GetSystem<Cori::World::Systems::Animation>();
+					if (system) {
+						auto locked = system->lock();
+						const auto FXpack = Cori::AssetManager::Get(AnimationPacks::PlayerMovementFX);
+						const auto FXanim = std::make_pair(FXpack->GetAnimation(Animations::Player::Particles::WallSlide), Cori::Graphics::Animation::PlayParams{ .LoopedInSequence = true });
+						auto tmp = locked->PlayAnimation({ 0.0f, 0.0f }, -1, { 1.0f, 1.0f }, 0.0f, FXanim);
+						if (tmp) {
+							temp = *tmp;
+							temp.SetParent(player);
+						}
+					}
 				}
 			}
 
@@ -366,19 +269,15 @@ namespace States {
 				auto& ar = player.GetComponents<Cori::World::Components::Entity::QuadAnimator>();
 				ar.Stop(true);
 
-				auto particles = player.FindChildByName("Movement Particles Part 1");
-				if (particles) {
-					auto& qa = particles->GetComponents<Cori::World::Components::Entity::QuadAnimator>();
-					qa.Stop(true);
-					particles->SetActive(false);
-				} else {
-					CORI_ERROR("Failed to retrieve sub entity: Movement Particles Part 1. Error: {}", particles.error().what());
-				}
+				temp.GetComponents<Cori::World::Components::Entity::QuadAnimator>().Stop(true);
+				temp.UnlinkFromParent();
 			}
 
 			[[nodiscard]] const char* GetDebugName() const override {
 				return "WallSlideState";
 			}
+
+			Cori::World::Entity temp;
 		};
 		// ascending state doesn't always gets triggered when player goes "up", most of the time it is some of the jump states
 		// this one exists only to change animation when player was touching the wall but now he is above it and didn't move to one of the sides

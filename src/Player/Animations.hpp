@@ -1,6 +1,10 @@
 #pragma once
 
 namespace Animations {
+	namespace Level {
+		inline constexpr uint32_t CoinSpin = 0;
+	}
+
 	namespace Player {
 		inline constexpr uint32_t Idle = 0;
 		inline constexpr uint32_t IdleTransition = 17;
@@ -12,7 +16,6 @@ namespace Animations {
 		inline constexpr uint32_t JumpStart = 5;
 		inline constexpr uint32_t JumpMid = 6;
 		inline constexpr uint32_t Dead = 41;
-
 
 		namespace Particles {
 

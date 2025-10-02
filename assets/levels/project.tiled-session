@@ -3,7 +3,7 @@
         "height": 4300,
         "width": 2
     },
-    "activeFile": "SpikeSingleActivated.tsx",
+    "activeFile": "testlevel.tmx",
     "expandedProjectPaths": [
         "."
     ],
@@ -16,7 +16,7 @@
         },
         "Construction.tsx": {
             "scaleInDock": 2,
-            "scaleInEditor": 5.5
+            "scaleInEditor": 3
         },
         "ConstructionOverlay.tsx": {
             "scaleInDock": 4
@@ -45,8 +45,8 @@
             "scale": 1.5,
             "selectedLayer": 4,
             "viewCenter": {
-                "x": 640,
-                "y": 400.3333333333333
+                "x": 708.3333333333333,
+                "y": 518.6666666666666
             }
         }
     },
@@ -60,16 +60,16 @@
     "openFiles": [
         "Walls.tsx",
         "testlevel.tmx",
-        "Construction.tsx",
-        "SpikeSingleActivated.tsx"
+        "SpikeSingleActivated.tsx",
+        "Construction.tsx"
     ],
     "project": "project.tiled-project",
     "property.type": "string",
     "recentFiles": [
         "Walls.tsx",
-        "testlevel.tmx",
         "Construction.tsx",
-        "SpikeSingleActivated.tsx"
+        "SpikeSingleActivated.tsx",
+        "testlevel.tmx"
     ],
     "tileset.lastUsedFormat": "tsx",
     "tileset.tileSize": {

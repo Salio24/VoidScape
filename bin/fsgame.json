@@ -1,0 +1,45 @@
+{
+  "paths": [
+    {
+      "alias": "APP_ROOT",
+      "path": "../../",
+      "root": "BIN"
+    },
+    {
+      "alias": "ENGINE_ROOT",
+      "path": "CoriEngine/Engine",
+      "root": "APP_ROOT"
+    },
+    {
+      "alias": "ENGINE_DATA",
+      "path": "enginedata",
+      "root": "ENGINE_ROOT"
+    },
+    {
+      "alias": "ASSETS",
+      "path": "assets",
+      "root": "APP_ROOT"
+    },
+    {
+      "alias": "FONTS",
+      "path": "fonts",
+      "root": "ASSETS"
+    },
+    {
+      "alias": "LEVELS",
+      "path": "levels",
+      "root": "ASSETS"
+    },
+    {
+      "alias": "SOUNDS",
+      "path": "sounds",
+      "root": "ASSETS"
+    },
+    {
+      "alias": "TEXTURES",
+      "path": "textures",
+      "root": "ASSETS"
+    }
+  ]
+}
+

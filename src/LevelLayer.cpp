@@ -91,7 +91,7 @@ void LevelLayer::OnTickUpdate(Cori::Core::GameTimer& gameTimer) {
 
 		const glm::vec2 playerPos = m_Player.GetComponents<Cori::World::Components::Entity::Transform>().GetLocalPosition();
 		const glm::vec2 playerHalfSize = m_Player.GetComponents<Cori::World::Components::Entity::QuadRenderer>().GetHalfSize();
-		m_MainCamera.OnTickUpdate(gameTimer, playerPos, Cori::Physics::ToPixels(mover.m_RelativeVelocity) ,ActiveScene.GetActiveCamera());
+		m_MainCamera.OnTickUpdate(gameTimer, playerPos, Cori::Physics::ToPixels(mover.m_RelativeVelocity), ActiveScene.GetActiveCamera());
 	}
 }
 
@@ -113,6 +113,14 @@ void LevelLayer::OnImGuiRender(Cori::Core::GameTimer& gameTimer) {
 				mover.TeleportToSpawn();
 				auto view = ActiveScene.View<Cori::World::Components::Entity::Trigger>();
 				for (auto entity : view) {
+					auto& t = view.Get<Cori::World::Components::Entity::Trigger>(entity);
+					if (t.HasBehaviour<Triggers::RegularOrb>()) {
+						auto& qa = entity.GetComponents<Cori::World::Components::Entity::QuadAnimator>();
+						qa.Stop(true);
+						const auto pack = Cori::AssetManager::Get(AnimationPacks::CoinSpin);
+						const auto anim = std::make_pair(pack->GetAnimation(Animations::Level::CoinSpin), Cori::Graphics::Animation::PlayParams{ .LoopedInSequence = true });
+						qa.Play(anim);
+					}
 					entity.SetActive(true);
 				}
 				m_LevelCompleted = false;
@@ -241,66 +249,6 @@ void LevelLayer::CreatePlayer(const float startingTime, const glm::vec2 spawnPos
 		auto& transform = m_Player.GetComponents<Cori::World::Components::Entity::Transform>();
 		transform.SetLocalDepth(4);
 	}
-
-	Cori::World::Entity playerParticles1 = ActiveScene.CreateEntity("Movement Particles Part 1", Tags::Character);
-	playerParticles1.AddComponent<Cori::World::Components::Entity::QuadRenderer>();
-	playerParticles1.AddComponent<Cori::World::Components::Entity::QuadAnimator>(playerParticles1);
-	CORI_CHECK_EXPECTED(playerParticles1.SetParent(m_Player));
-	playerParticles1.SetActive(false);
-	{
-		auto& transform = playerParticles1.GetComponents<Cori::World::Components::Entity::Transform>();
-		transform.SetLocalDepth(-1);
-	}
-
-	Cori::World::Entity playerParticles2 = ActiveScene.CreateEntity("Movement Particles Part 2", Tags::Character);
-	playerParticles2.AddComponent<Cori::World::Components::Entity::QuadRenderer>();
-	playerParticles2.AddComponent<Cori::World::Components::Entity::QuadAnimator>(playerParticles2);
-	CORI_CHECK_EXPECTED(playerParticles2.SetParent(m_Player));
-	playerParticles2.SetActive(false);
-	{
-		auto& transform = playerParticles2.GetComponents<Cori::World::Components::Entity::Transform>();
-		transform.SetLocalDepth(-1);
-	}
-
-	Cori::World::Entity playerParticlesIndependent = ActiveScene.CreateEntity("Movement Particles Independent Root", Tags::Character);
-	CORI_CHECK_EXPECTED(playerParticlesIndependent.SetParent(m_Player));
-	{
-		auto& transform = playerParticlesIndependent.GetComponents<Cori::World::Components::Entity::Transform>();
-		transform.SetLocalDepth(-1);
-	}
-
-	{
-		Cori::World::Entity particles = ActiveScene.CreateEntity("Landing Particles", Tags::Character);
-		particles.AddComponent<Cori::World::Components::Entity::QuadRenderer>();
-		particles.AddComponent<Cori::World::Components::Entity::QuadAnimator>(particles);
-		CORI_CHECK_EXPECTED(particles.SetParent(playerParticlesIndependent));
-		particles.SetActive(false);
-	}
-
-	{
-		Cori::World::Entity particles = ActiveScene.CreateEntity("Jumping Particles", Tags::Character);
-		particles.AddComponent<Cori::World::Components::Entity::QuadRenderer>();
-		particles.AddComponent<Cori::World::Components::Entity::QuadAnimator>(particles);
-		CORI_CHECK_EXPECTED(particles.SetParent(playerParticlesIndependent));
-		particles.SetActive(false);
-	}
-
-	{
-		Cori::World::Entity particles = ActiveScene.CreateEntity("WallJump Particles", Tags::Character);
-		particles.AddComponent<Cori::World::Components::Entity::QuadRenderer>();
-		particles.AddComponent<Cori::World::Components::Entity::QuadAnimator>(particles);
-		CORI_CHECK_EXPECTED(particles.SetParent(playerParticlesIndependent));
-		particles.SetActive(false);
-	}
-
-	{
-		Cori::World::Entity particles = ActiveScene.CreateEntity("DoubleJump Particles", Tags::Character);
-		particles.AddComponent<Cori::World::Components::Entity::QuadRenderer>();
-		particles.AddComponent<Cori::World::Components::Entity::QuadAnimator>(particles);
-		CORI_CHECK_EXPECTED(particles.SetParent(playerParticlesIndependent));
-		particles.SetActive(false);
-	}
-
 
 	auto& fsm = m_Player.AddComponent <Cori::World::Components::Entity::StateMachine>(m_Player);
 
@@ -773,8 +721,6 @@ void LevelLayer::LoadLevel(const std::filesystem::path& path) {
 								} else {
 									CORI_ERROR("Failed to create moving platform");
 								}
-
-
 							}
 						}
 					}
@@ -821,6 +767,10 @@ void LevelLayer::AddRegularOrb(const float orbBonus, const Cori::Physics::Vec2 p
 	trtr.SetLocalPosition(Cori::Physics::ToPixels(bp.position + Cori::Physics::Vec2(orbRadius / 2.0f, orbRadius / 2.0f)));
 	trtr.SetLocalDepth(3);
 
-	tr.AddComponent<Cori::World::Components::Entity::QuadRenderer>(glm::vec2(16, 16), atlas->GetTexture(), atlas->GetSpriteUVsAtIndex(0));
+	tr.AddComponent<Cori::World::Components::Entity::QuadRenderer>();
+	auto& qa = tr.AddComponent<Cori::World::Components::Entity::QuadAnimator>(tr);
+	const auto pack = Cori::AssetManager::Get(AnimationPacks::CoinSpin);
+	const auto anim = std::make_pair(pack->GetAnimation(Animations::Level::CoinSpin), Cori::Graphics::Animation::PlayParams{ .LoopedInSequence = true });
+	qa.Play(anim);
 }
 

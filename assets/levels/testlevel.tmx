@@ -166,17 +166,17 @@
   </object>
  </objectgroup>
  <objectgroup color="#0000ff" id="6" name="MovingPlatforms">
-  <object id="120" x="277" y="177">
+  <object id="120" x="270" y="273">
    <properties>
     <property name="AtlasName" value="Construction"/>
     <property name="BodyTileID" type="int" value="35"/>
     <property name="Depth" type="int" value="10"/>
-    <property name="ExpressionX" value="0"/>
-    <property name="ExpressionY" value="3*cos(t*2)"/>
+    <property name="ExpressionX" value="3*cos(t*2)"/>
+    <property name="ExpressionY" value="0"/>
     <property name="IsVertical" type="bool" value="true"/>
     <property name="LeftOrBottomCornerTileID" type="int" value="52"/>
     <property name="RightOrTopCornerTileID" type="int" value="18"/>
-    <property name="Size" type="int" value="7"/>
+    <property name="Size" type="int" value="4"/>
    </properties>
    <point/>
   </object>
