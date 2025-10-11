@@ -16,6 +16,11 @@
       "root": "ENGINE_ROOT"
     },
     {
+      "alias": "USER_DATA",
+      "path": "userdata",
+      "root": "APP_ROOT"
+    },
+    {
       "alias": "ASSETS",
       "path": "assets",
       "root": "APP_ROOT"

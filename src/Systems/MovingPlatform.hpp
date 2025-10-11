@@ -25,12 +25,12 @@ namespace Systems {
 
 		void CreatePlatform(PlatformParams& params);
 
-		void Reset(const Cori::Core::GameTimer& gameTimer);
+		void Reset();
 
 		bool Create();
 		static constexpr Cori::World::SystemPriority Priority = 1000;
 	private:
-		double m_LevelStartStamp{ 0.0f };
+		double m_InternalTimer{ 0.0f };
 	};
 
 }

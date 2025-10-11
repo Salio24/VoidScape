@@ -14,6 +14,7 @@
 bin/Debug/*
 bin/Release/*
 bin/RelWithDebInfo/*
+userdata/*
 
 # build directory for libs and tmp files
 /out

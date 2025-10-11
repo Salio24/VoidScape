@@ -27,7 +27,7 @@ namespace Components {
 		bp.fixedRotation = true;
 		bp.rotation = b2Rot_identity;
 
-		auto& rb = m_Player.AddComponent<Cori::World::Components::Entity::RigidBody>(world, bp, m_Player);
+		auto& rb = m_Player.AddComponent<Cori::World::Components::Entity::RigidBody>(world, bp);
 
 		Cori::Physics::Shape::Params sp;
 		sp.filter.maskBits = Cori::Physics::CollisionBits::SensorBit;
@@ -640,11 +640,11 @@ namespace Components {
 		Cori::Graphics::Renderer2D::SubmitText(Cori::Graphics::Renderer2D::SCREEN_SPACE, Cori::Graphics::Renderer2D::LEFT, glm::translate(glm::mat3(1.0f), glm::vec2(20.0f, 300.0f)), 4, "Relative Velocity: " + Cori::Physics::Vec2ToString(m_RelativeVelocity), glm::vec4(1.0f), Cori::AssetManager::Get(Assets::GlobalFont).get(), 20, 1000.0f, 0.0f, 0.0f);
 		Cori::Graphics::Renderer2D::SubmitText(Cori::Graphics::Renderer2D::SCREEN_SPACE, Cori::Graphics::Renderer2D::LEFT, glm::translate(glm::mat3(1.0f), glm::vec2(20.0f, 295.0f)), 4, "Absolute Velocity: " + Cori::Physics::Vec2ToString(m_AbsoluteVelocity), glm::vec4(1.0f), Cori::AssetManager::Get(Assets::GlobalFont).get(), 20, 1000.0f, 0.0f, 0.0f);
 		Cori::Graphics::Renderer2D::SubmitText(Cori::Graphics::Renderer2D::SCREEN_SPACE, Cori::Graphics::Renderer2D::LEFT, glm::translate(glm::mat3(1.0f), glm::vec2(20.0f, 290.0f)), 4, "Last Natural Velocity: " + Cori::Physics::Vec2ToString(m_LastNaturalVelocity), glm::vec4(1.0f), Cori::AssetManager::Get(Assets::GlobalFont).get(), 20, 1000.0f, 0.0f, 0.0f);
-		Cori::Graphics::Renderer2D::SubmitText(Cori::Graphics::Renderer2D::SCREEN_SPACE, Cori::Graphics::Renderer2D::LEFT, glm::translate(glm::mat3(1.0f), glm::vec2(20.0f, 285.0f)), 4, "Absolute Velocity * ts: " + Cori::Physics::Vec2ToString({ m_RelativeVelocity.x * timeStep, m_RelativeVelocity.y * timeStep }), glm::vec4(1.0f), Cori::AssetManager::Get(Assets::GlobalFont).get(), 20, 1000.0f, 0.0f, 0.0f);
+		Cori::Graphics::Renderer2D::SubmitText(Cori::Graphics::Renderer2D::SCREEN_SPACE, Cori::Graphics::Renderer2D::LEFT, glm::translate(glm::mat3(1.0f), glm::vec2(20.0f, 285.0f)), 4, "Absolute Velocity * ts: " + Cori::Physics::Vec2ToString({ m_AbsoluteVelocity.x * timeStep, m_AbsoluteVelocity.y * timeStep }), glm::vec4(1.0f), Cori::AssetManager::Get(Assets::GlobalFont).get(), 20, 1000.0f, 0.0f, 0.0f);
 		Cori::Graphics::Renderer2D::SubmitText(Cori::Graphics::Renderer2D::SCREEN_SPACE, Cori::Graphics::Renderer2D::LEFT, glm::translate(glm::mat3(1.0f), glm::vec2(20.0f, 280.0f)), 4, "Position: " + Cori::Physics::Vec2ToString(m_Transform.p), glm::vec4(1.0f), Cori::AssetManager::Get(Assets::GlobalFont).get(), 20, 1000.0f, 0.0f, 0.0f);
 		Cori::Graphics::Renderer2D::SubmitText(Cori::Graphics::Renderer2D::SCREEN_SPACE, Cori::Graphics::Renderer2D::LEFT, glm::translate(glm::mat3(1.0f), glm::vec2(20.0f, 275.0f)), 4, "m_Gravity: " + std::to_string(m_Gravity), glm::vec4(1.0f), Cori::AssetManager::Get(Assets::GlobalFont).get(), 20, 1000.0f, 0.0f, 0.0f);
 
-		#if 1
+		#if 0
 		if (test) {
 			Cori::Graphics::Renderer2D::SubmitColoredQuad(Cori::Graphics::Renderer2D::SCREEN_SPACE, glm::vec2(100, 100), glm::vec2(5.0f, 5.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 		} else {

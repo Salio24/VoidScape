@@ -17,6 +17,6 @@ namespace AnimationPacks {
 	inline const Cori::Graphics::AnimationPack::Descriptor CoinSpin {
 		"Coin Spin",
 		Cori::FileSystem::PathManager::GetAliasedPath("TEXTURES") / "level/CoinSpin.json",
-		Cori::Graphics::AnimationPack::CORI_VARYING
+		Cori::Graphics::AnimationPack::CORI_UNIFORM
 	};
 }

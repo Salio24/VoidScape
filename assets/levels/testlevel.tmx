@@ -155,25 +155,22 @@
   </object>
  </objectgroup>
  <objectgroup id="3" name="Points">
-  <object id="94" name="ActorSpawn" x="192" y="672">
+  <object id="94" name="ActorSpawn" x="193" y="665">
    <point/>
   </object>
-  <object id="99" name="EscapePortal" x="448" y="768">
-   <point/>
-  </object>
-  <object id="101" name="EscapePortal" x="1072" y="768" visible="0">
+  <object id="101" name="EscapePortal" x="1072" y="768">
    <point/>
   </object>
  </objectgroup>
  <objectgroup color="#0000ff" id="6" name="MovingPlatforms">
-  <object id="120" x="270" y="273">
+  <object id="120" x="246" y="190">
    <properties>
     <property name="AtlasName" value="Construction"/>
     <property name="BodyTileID" type="int" value="35"/>
     <property name="Depth" type="int" value="10"/>
     <property name="ExpressionX" value="3*cos(t*2)"/>
-    <property name="ExpressionY" value="0"/>
-    <property name="IsVertical" type="bool" value="true"/>
+    <property name="ExpressionY" value="3*sin(t*2)"/>
+    <property name="IsVertical" type="bool" value="false"/>
     <property name="LeftOrBottomCornerTileID" type="int" value="52"/>
     <property name="RightOrTopCornerTileID" type="int" value="18"/>
     <property name="Size" type="int" value="4"/>

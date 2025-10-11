@@ -10,6 +10,7 @@ GameLayer::~GameLayer() {
 }
 
 void GameLayer::OnAttach() {
+
 	auto level = new LevelLayer();
 
 	level->LoadLevel(Cori::FileSystem::PathManager::GetAliasedPath("LEVELS") / "testlevel.tmx");
@@ -34,6 +35,8 @@ void GameLayer::OnTickUpdate(Cori::Core::GameTimer& gameTimer) {
 
 void GameLayer::OnImGuiRender(Cori::Core::GameTimer& gameTimer) {
 	ImGui::Begin("Game Layer UI");
+
+	Cori::ImGuiPresets::FpsCounter(gameTimer);
 
 	ImGui::SeparatorText("Graphical Settings");
 

@@ -42,11 +42,11 @@
             "scaleInEditor": 2
         },
         "testlevel.tmx": {
-            "scale": 1.5,
+            "scale": 1,
             "selectedLayer": 4,
             "viewCenter": {
-                "x": 708.3333333333333,
-                "y": 518.6666666666666
+                "x": 344.5,
+                "y": 415
             }
         }
     },

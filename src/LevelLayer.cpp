@@ -25,7 +25,9 @@ LevelLayer::LevelLayer() : Layer("Level Layer") {
 	const int screenWidth = Cori::Core::Application::GetWindow().GetWidth();
 	const int screenHeight = Cori::Core::Application::GetWindow().GetHeight();
 
-	ActiveScene.AddContextComponent<Cori::World::Components::Scene::PhysicsWorld>();
+	Cori::Physics::World::Params p{};
+	ActiveScene.RegisterSystem<Cori::World::Systems::Trigger>();
+	ActiveScene.RegisterSystem<Cori::World::Systems::PhysicsSystem>(p);
 
 	ActiveScene.GetActiveCamera().CreateOrthoCamera(0, static_cast<float>(screenWidth) / (static_cast<float>(screenHeight) / 360.0f), 0, 360);
 
@@ -130,7 +132,7 @@ void LevelLayer::OnImGuiRender(Cori::Core::GameTimer& gameTimer) {
 
 				if (system) {
 					auto locked = system->lock();
-					locked->Reset(gameTimer);
+					locked->Reset();
 				}
 			}
 		}
@@ -140,7 +142,7 @@ void LevelLayer::OnImGuiRender(Cori::Core::GameTimer& gameTimer) {
 
 			if (system) {
 				auto locked = system->lock();
-				locked->Reset(gameTimer);
+				locked->Reset();
 			}
 		}
 
@@ -157,17 +159,21 @@ void LevelLayer::OnImGuiRender(Cori::Core::GameTimer& gameTimer) {
 		}
 
 		if (ImGui::Button("Add dynamic box")) {
-			auto ent = ActiveScene.CreateEntity("Dynamic Box", Tags::ForTest);
+			auto system = ActiveScene.GetSystem<Cori::World::Systems::PhysicsSystem>();
+			if (system) {
+				auto locked = system->lock();
+				auto ent = ActiveScene.CreateEntity("Dynamic Box", Tags::ForTest);
 
-			Cori::Physics::Body::Params bp;
-			bp.type = b2_dynamicBody;
-			bp.position = { 4.0f, 4.0f };
+				Cori::Physics::Body::Params bp;
+				bp.type = b2_dynamicBody;
+				bp.position = {4.0f, 4.0f};
 
-			auto& rb = ent.AddComponent<Cori::World::Components::Entity::RigidBody>(ActiveScene.GetContextComponent<Cori::World::Components::Scene::PhysicsWorld>(), bp, ent);
+				auto& rb = ent.AddComponent<Cori::World::Components::Entity::RigidBody>(locked->GetWorld(), bp);
 
-			Cori::Physics::Shape::Params sp;
+				Cori::Physics::Shape::Params sp;
 
-			rb.CreateShape(Cori::Physics::DestroyWithParent, sp, Cori::Physics::Polygon::CreateBox({ 1.0f, 1.0f }));
+				rb.CreateShape(Cori::Physics::DestroyWithParent, sp, Cori::Physics::Polygon::CreateBox({1.0f, 1.0f}));
+			}
 		}
 
 		ImGui::SeparatorText("Camera Settings");
@@ -238,67 +244,79 @@ void LevelLayer::OnEvent(Cori::Core::Event& event) {
 }
 
 void LevelLayer::CreatePlayer(const float startingTime, const glm::vec2 spawnPos) {
-	m_Player = ActiveScene.CreateEntity(EntityNames::PlayerRoot, Tags::Character);
+	auto system = ActiveScene.GetSystem<Cori::World::Systems::PhysicsSystem>();
+	if (system) {
+		auto locked = system->lock();
+		m_Player = ActiveScene.CreateEntity(EntityNames::PlayerRoot, Tags::Character);
 
-	Cori::AssetManager::Preload({AnimationPacks::PlayerMovement, AnimationPacks::PlayerMovementFX});
+		Cori::AssetManager::Preload({AnimationPacks::PlayerMovement, AnimationPacks::PlayerMovementFX});
 
-	m_Player.AddComponent<Cori::World::Components::Entity::QuadRenderer>();
-	m_Player.AddComponent<Cori::World::Components::Entity::QuadAnimator>(m_Player);
-	m_Player.AddComponent<Components::Spawnpoint>(spawnPos);
-	{
+		m_Player.AddComponent<Cori::World::Components::Entity::QuadRenderer>();
+		m_Player.AddComponent<Cori::World::Components::Entity::QuadAnimator>();
+		m_Player.AddComponent<Components::Spawnpoint>(spawnPos);
+
 		auto& transform = m_Player.GetComponents<Cori::World::Components::Entity::Transform>();
 		transform.SetLocalDepth(4);
+
+
+		auto& fsm = m_Player.AddComponent<Cori::World::Components::Entity::StateMachine>();
+
+		fsm.Register<States::Player::Idle>();
+		fsm.SetState<States::Player::Idle>();
+		fsm.Register<States::Player::Run>();
+		fsm.Register<States::Player::Fall>();
+		fsm.Register<States::Player::Jump>();
+		fsm.Register<States::Player::DoubleJump>();
+		fsm.Register<States::Player::WallJump>();
+		fsm.Register<States::Player::WallSlide>();
+		fsm.Register<States::Player::Ascending>();
+		fsm.Register<States::Player::Dead>();
+		fsm.SetState<States::Player::Idle>();
+
+		m_Player.AddComponent<Components::Health>(startingTime, m_Player);
+
+		Components::Mover::Params mp;
+		mp.gravityDefault = 34.5f;
+
+		m_Player.AddComponent<Components::Mover>(Cori::Physics::Capsule::Create({ 0.0f, -0.5f }, { 0.0f, 0.55f }, 0.37f), Cori::Physics::Capsule::Create({ 0.0f, -0.9f }, { 0.0f, 0.6f }, 0.45f), locked->GetWorld(), m_Player, mp);
+	} else {
+		CORI_FATAL("Failed to create player, no physics system registered for the scene.");
 	}
-
-	auto& fsm = m_Player.AddComponent <Cori::World::Components::Entity::StateMachine>(m_Player);
-
-	fsm.Register<States::Player::Idle>();
-	fsm.SetState<States::Player::Idle>();
-	fsm.Register<States::Player::Run>();
-	fsm.Register<States::Player::Fall>();
-	fsm.Register<States::Player::Jump>();
-	fsm.Register<States::Player::DoubleJump>();
-	fsm.Register<States::Player::WallJump>();
-	fsm.Register<States::Player::WallSlide>();
-	fsm.Register<States::Player::Ascending>();
-	fsm.Register<States::Player::Dead>();
-	fsm.SetState<States::Player::Idle>();
-
-	m_Player.AddComponent<Components::Health>(startingTime, m_Player);
-
-	Components::Mover::Params mp;
-	mp.gravityDefault = 34.5f;
-
-	m_Player.AddComponent<Components::Mover>(Cori::Physics::Capsule::Create({ 0.0f, -0.5f }, { 0.0f, 0.55f }, 0.37f), Cori::Physics::Capsule::Create({ 0.0f, -0.9f }, { 0.0f, 0.6f }, 0.45f), ActiveScene.GetContextComponent<Cori::World::Components::Scene::PhysicsWorld>(), m_Player, mp);
 }
 
 void LevelLayer::CreateEscapeDoor(const Cori::Physics::Vec2 pos) {
-	auto tr = ActiveScene.CreateEntity("Escape Door", Tags::Triggers);
+	auto system = ActiveScene.GetSystem<Cori::World::Systems::PhysicsSystem>();
+	if (system) {
+		auto locked = system->lock();
+		auto tr = ActiveScene.CreateEntity("Escape Door", Tags::Triggers);
 
-	Cori::Physics::Vec2 sizem = Cori::Physics::ToMeters(Assets::Door.m_SpriteResolution);
-	Cori::Physics::Body::Params bp;
-	bp.type = b2_staticBody;
-	bp.position = pos + Cori::Physics::Vec2(0.0f, sizem.y / 2.0f - 1);
-	bp.name = "Escape Door";
+		Cori::Physics::Vec2 sizem = Cori::Physics::ToMeters(Assets::Door.m_SpriteResolution);
+		Cori::Physics::Body::Params bp;
+		bp.type = b2_staticBody;
+		bp.position = pos + Cori::Physics::Vec2(0.0f, sizem.y / 2.0f - 1);
+		bp.name = "Escape Door";
 
-	auto& rb = tr.AddComponent<Cori::World::Components::Entity::RigidBody>(ActiveScene.GetContextComponent<Cori::World::Components::Scene::PhysicsWorld>(), bp, tr);
+		auto& rb = tr.AddComponent<Cori::World::Components::Entity::RigidBody>(locked->GetWorld(), bp);
 
-	Cori::Physics::Shape::Params spa;
-	spa.filter.categoryBits = Cori::Physics::CollisionBits::SensorBit;
-	spa.isSensor = true;
-	spa.enableSensorEvents = true;
+		Cori::Physics::Shape::Params spa;
+		spa.filter.categoryBits = Cori::Physics::CollisionBits::SensorBit;
+		spa.isSensor = true;
+		spa.enableSensorEvents = true;
 
-	rb.CreateShape(Cori::Physics::DestroyWithParent, spa, Cori::Physics::Polygon::CreateBox({ sizem.x / 4.0f, sizem.y / 3.4f }));
+		rb.CreateShape(Cori::Physics::DestroyWithParent, spa, Cori::Physics::Polygon::CreateBox({ sizem.x / 4.0f, sizem.y / 3.4f }));
 
-	auto& trig = tr.AddComponent<Cori::World::Components::Entity::Trigger>(tr);
-	trig.SetBehavior<Triggers::EscapeDoor>();
+		auto& trig = tr.AddComponent<Cori::World::Components::Entity::Trigger>();
+		trig.SetBehavior<Triggers::EscapeDoor>();
 
-	const auto atlas = Cori::AssetManager::Get(Assets::Door);
-	auto& trtr = tr.GetComponents<Cori::World::Components::Entity::Transform>();
-	trtr.SetLocalPosition(Cori::Physics::ToPixels(pos) + glm::vec2(0.0f, Assets::Door.m_SpriteResolution.y / 2 - 16));
-	trtr.SetLocalDepth(3);
+		const auto atlas = Cori::AssetManager::Get(Assets::Door);
+		auto& trtr = tr.GetComponents<Cori::World::Components::Entity::Transform>();
+		trtr.SetLocalPosition(Cori::Physics::ToPixels(pos) + glm::vec2(0.0f, Assets::Door.m_SpriteResolution.y / 2 - 16));
+		trtr.SetLocalDepth(3);
 
-	tr.AddComponent<Cori::World::Components::Entity::QuadRenderer>(glm::vec2{ Assets::Door.m_SpriteResolution.x / 2.0f, Assets::Door.m_SpriteResolution.y / 2.0f}, atlas->GetTexture(), atlas->GetSpriteUVsAtIndex(0));
+		tr.AddComponent<Cori::World::Components::Entity::QuadRenderer>(glm::vec2{ Assets::Door.m_SpriteResolution.x / 2.0f, Assets::Door.m_SpriteResolution.y / 2.0f}, atlas->GetTexture(), atlas->GetSpriteUVsAtIndex(0));
+	} else {
+		CORI_FATAL("Failed to create escape door, no physics system registered for the scene.");
+	}
 }
 
 void LevelLayer::LoadLevel(const std::filesystem::path& path) {
@@ -522,24 +540,28 @@ void LevelLayer::LoadLevel(const std::filesystem::path& path) {
 											bp.position = Cori::Physics::ToMeters(GridPosToPixels({ j, i }, { width, height }, false) + localPos);
 											bp.name = "Trap";
 
-											auto& rb = trap.AddComponent<Cori::World::Components::Entity::RigidBody>(ActiveScene.GetContextComponent<Cori::World::Components::Scene::PhysicsWorld>(), bp, trap);
+											auto system = ActiveScene.GetSystem<Cori::World::Systems::PhysicsSystem>();
+											if (system) {
+												auto locked = system->lock();
+												auto& rb = trap.AddComponent<Cori::World::Components::Entity::RigidBody>(locked->GetWorld(), bp);
 
-											Cori::Physics::Chain::Params cp;
-											cp.count = b2points.size();
-											cp.points = b2points.data();
-											cp.isLoop = true;
-											cp.filter.categoryBits = Cori::Physics::CollisionBits::StaticBit;
+												Cori::Physics::Chain::Params cp;
+												cp.count = b2points.size();
+												cp.points = b2points.data();
+												cp.isLoop = true;
+												cp.filter.categoryBits = Cori::Physics::CollisionBits::StaticBit;
 
-											rb.CreateChain(Cori::Physics::DestroyWithParent, cp);
+												rb.CreateChain(Cori::Physics::DestroyWithParent, cp);
 
-											Cori::Physics::Shape::Params spa;
-											spa.filter.categoryBits = Cori::Physics::CollisionBits::SensorBit;
-											spa.isSensor = true;
-											spa.enableSensorEvents = true;
+												Cori::Physics::Shape::Params spa;
+												spa.filter.categoryBits = Cori::Physics::CollisionBits::SensorBit;
+												spa.isSensor = true;
+												spa.enableSensorEvents = true;
 
-											rb.CreateShape(Cori::Physics::DestroyWithParent, spa, Cori::Physics::Polygon::CreatePolygon(Cori::Physics::ConvexHull::Create(b2points)));
+												rb.CreateShape(Cori::Physics::DestroyWithParent, spa, Cori::Physics::Polygon::CreatePolygon(Cori::Physics::ConvexHull::Create(b2points)));
+											}
 
-											auto& trig = trap.AddComponent<Cori::World::Components::Entity::Trigger>(trap);
+											auto& trig = trap.AddComponent<Cori::World::Components::Entity::Trigger>();
 											auto* behavior = trig.SetBehavior<Triggers::SpikeTrap>();
 											if (behavior) {
 												behavior->m_Damage = damage;
@@ -603,16 +625,20 @@ void LevelLayer::LoadLevel(const std::filesystem::path& path) {
 							bp.type = b2_staticBody;
 							bp.position = Cori::Physics::ToMeters(TiledPosToPixels(pos, { mapSize.x, mapSize.y }));
 
-							auto& rb = col.AddComponent<Cori::World::Components::Entity::RigidBody>(ActiveScene.GetContextComponent<Cori::World::Components::Scene::PhysicsWorld>(), bp, col);
+							auto system = ActiveScene.GetSystem<Cori::World::Systems::PhysicsSystem>();
+							if (system) {
+								auto locked = system->lock();
+								auto& rb = col.AddComponent<Cori::World::Components::Entity::RigidBody>(locked->GetWorld(), bp);
 
-							Cori::Physics::Chain::Params cp;
-							cp.count = b2points.size();
-							cp.points = b2points.data();
-							cp.isLoop = true;
-							cp.filter.categoryBits = Cori::Physics::CollisionBits::StaticBit;
+								Cori::Physics::Chain::Params cp;
+								cp.count = b2points.size();
+								cp.points = b2points.data();
+								cp.isLoop = true;
+								cp.filter.categoryBits = Cori::Physics::CollisionBits::StaticBit;
 
-							rb.CreateChain(Cori::Physics::DestroyWithParent, cp);
-							count++;
+								rb.CreateChain(Cori::Physics::DestroyWithParent, cp);
+								count++;
+							}
 						}
 					}
 				}
@@ -737,40 +763,46 @@ void LevelLayer::LoadLevel(const std::filesystem::path& path) {
 }
 
 void LevelLayer::AddRegularOrb(const float orbBonus, const Cori::Physics::Vec2 pos) {
-	auto tr = ActiveScene.CreateEntity("Regular Orb", Tags::Triggers);
+	auto system = ActiveScene.GetSystem<Cori::World::Systems::PhysicsSystem>();
+	if (system) {
+		auto locked = system->lock();
+		auto tr = ActiveScene.CreateEntity("Regular Orb", Tags::Triggers);
 
-	Cori::Physics::Body::Params bp;
-	bp.type = b2_staticBody;
-	bp.position = pos;
-	bp.name = "Regular Orb";
+		Cori::Physics::Body::Params bp;
+		bp.type = b2_staticBody;
+		bp.position = pos;
+		bp.name = "Regular Orb";
 
-	auto& rb = tr.AddComponent<Cori::World::Components::Entity::RigidBody>(ActiveScene.GetContextComponent<Cori::World::Components::Scene::PhysicsWorld>(), bp, tr);
+		auto& rb = tr.AddComponent<Cori::World::Components::Entity::RigidBody>(locked->GetWorld(), bp);
 
-	Cori::Physics::Shape::Params spa;
-	spa.filter.categoryBits = Cori::Physics::CollisionBits::SensorBit;
-	spa.isSensor = true;
-	spa.enableSensorEvents = true;
+		Cori::Physics::Shape::Params spa;
+		spa.filter.categoryBits = Cori::Physics::CollisionBits::SensorBit;
+		spa.isSensor = true;
+		spa.enableSensorEvents = true;
 
-	constexpr float orbRadius = 0.2f;
+		constexpr float orbRadius = 0.2f;
 
-	rb.CreateShape(Cori::Physics::DestroyWithParent, spa, Cori::Physics::Circle::Create({ orbRadius / 2.0f, orbRadius / 2.0f }, orbRadius));
+		rb.CreateShape(Cori::Physics::DestroyWithParent, spa, Cori::Physics::Circle::Create({ orbRadius / 2.0f, orbRadius / 2.0f }, orbRadius));
 
-	auto& trig = tr.AddComponent<Cori::World::Components::Entity::Trigger>(tr);
-	trig.SetBehavior<Triggers::RegularOrb>();
-	const auto behavior = trig.GetBehavior<Triggers::RegularOrb>();
-	if (behavior) {
-		behavior.value()->m_TimeBonus = orbBonus;
+		auto& trig = tr.AddComponent<Cori::World::Components::Entity::Trigger>();
+		trig.SetBehavior<Triggers::RegularOrb>();
+		const auto behavior = trig.GetBehavior<Triggers::RegularOrb>();
+		if (behavior) {
+			behavior.value()->m_TimeBonus = orbBonus;
+		}
+
+		const auto atlas = Cori::AssetManager::Get(Assets::Coin);
+		auto& trtr = tr.GetComponents<Cori::World::Components::Entity::Transform>();
+		trtr.SetLocalPosition(Cori::Physics::ToPixels(bp.position + Cori::Physics::Vec2(orbRadius / 2.0f, orbRadius / 2.0f)));
+		trtr.SetLocalDepth(3);
+
+		tr.AddComponent<Cori::World::Components::Entity::QuadRenderer>();
+		auto& qa = tr.AddComponent<Cori::World::Components::Entity::QuadAnimator>();
+		const auto pack = Cori::AssetManager::Get(AnimationPacks::CoinSpin);
+		const auto anim = std::make_pair(pack->GetAnimation(Animations::Level::CoinSpin), Cori::Graphics::Animation::PlayParams{ .LoopedInSequence = true });
+		qa.Play(anim);
+	} else {
+		CORI_FATAL("Failed to create regular orb, no physics system registered for the scene.");
 	}
-
-	const auto atlas = Cori::AssetManager::Get(Assets::Coin);
-	auto& trtr = tr.GetComponents<Cori::World::Components::Entity::Transform>();
-	trtr.SetLocalPosition(Cori::Physics::ToPixels(bp.position + Cori::Physics::Vec2(orbRadius / 2.0f, orbRadius / 2.0f)));
-	trtr.SetLocalDepth(3);
-
-	tr.AddComponent<Cori::World::Components::Entity::QuadRenderer>();
-	auto& qa = tr.AddComponent<Cori::World::Components::Entity::QuadAnimator>(tr);
-	const auto pack = Cori::AssetManager::Get(AnimationPacks::CoinSpin);
-	const auto anim = std::make_pair(pack->GetAnimation(Animations::Level::CoinSpin), Cori::Graphics::Animation::PlayParams{ .LoopedInSequence = true });
-	qa.Play(anim);
 }
 

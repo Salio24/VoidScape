@@ -52,10 +52,10 @@ namespace States {
 				auto& ar = player.GetComponents<Cori::World::Components::Entity::QuadAnimator>();
 				ar.Stop(true);
 
-				temp1.GetComponents<Cori::World::Components::Entity::QuadAnimator>().Stop(false);
-				temp2.GetComponents<Cori::World::Components::Entity::QuadAnimator>().Stop(false);
 				temp1.UnlinkFromParent();
 				temp2.UnlinkFromParent();
+				temp1.GetComponents<Cori::World::Components::Entity::QuadAnimator>().Stop(false);
+				temp2.GetComponents<Cori::World::Components::Entity::QuadAnimator>().Stop(false);
 			}
 
 			[[nodiscard]] const char* GetDebugName() const override {
