@@ -300,10 +300,8 @@ void LevelLayer::CreatePlayer(const float startingTime, const glm::vec2 spawnPos
 		as.AddTrack(Tracks::Player::Landing);
 		as.AddTrack(Tracks::Player::WallSlide);
 
-
 		auto& transform = m_Player.GetComponents<Cori::World::Components::Entity::Transform>();
 		transform.SetLocalDepth(91);
-
 
 		auto& fsm = m_Player.AddComponent<Cori::World::Components::Entity::StateMachine>();
 
@@ -437,11 +435,14 @@ void LevelLayer::LoadLevel(const std::filesystem::path& path) {
 			}
 		}
 
+
+		static uint32_t tileCount = 1;
+
 		for (const auto& layer : map.getLayers()) {
 			if (layer->getType() == tmx::Layer::Type::Tile) {
 				const auto& tileLayer = layer->getLayerAs<tmx::TileLayer>();
 
-				if (tileLayer.getName() == "BaseLayer") {
+				if (tileLayer.getName() == "BaseLayerLow") {
 					const auto& tiles = tileLayer.getTiles();
 
 					int height = layer->getSize().y;
@@ -471,16 +472,98 @@ void LevelLayer::LoadLevel(const std::filesystem::path& path) {
 									tilesetID = 0;
 								}
 
-								static uint32_t count = 1;
-
-								auto tile = ActiveScene.CreateEntity<Tags::StaticTileTag>("Tile " + std::to_string(count));
+								auto tile = ActiveScene.CreateEntity<Tags::StaticTileTag>("Tile " + std::to_string(tileCount));
 								tile.AddComponent<Cori::World::Components::Entity::QuadRenderer>(glm::vec2{ blockSize / 2.0f, blockSize / 2.0f }, SpriteAtlases.at(tilesetID)->GetTexture(), SpriteAtlases.at(tilesetID)->GetSpriteUVsAtIndex(tileID - GDIs.at(tilesetID).first));
 								auto& transform = tile.GetComponents<Cori::World::Components::Entity::Transform>();
 								//transform.SetLocalPosition(glm::vec2{ j * blockSize + blockSize / 2.0f, ((height - i) * blockSize) - blockSize / 2.0f });
 								transform.SetLocalPosition(GridPosToPixels({ j, i }, { width, height }, true));
-								transform.SetLocalDepth(50);
+								transform.SetLocalDepth(85);
 
-								count++;
+								tileCount++;
+							}
+						}
+					}
+				}
+				else if (tileLayer.getName() == "BaseLayerHigh") {
+					const auto& tiles = tileLayer.getTiles();
+
+					int height = layer->getSize().y;
+					int width = layer->getSize().x;
+
+					for (int i = 0; i < height; ++i) {
+						for (int j = 0; j < width; ++j) {
+							if (tiles[width * i + j].ID != 0) {
+								int tilesetID;
+								uint32_t tileID = tiles[width * i + j].ID;
+
+								auto comparator = [](const std::pair<uint32_t, uint32_t>& range, uint32_t value) {
+									return range.second < value;
+								};
+
+								auto it = std::lower_bound(GDIs.begin(), GDIs.end(), tileID, comparator);
+
+								if (it == GDIs.end()) {
+									CORI_WARN("LevelLoader: Tile ID is greater than all GDI ranges.");
+									tilesetID = 0;
+								}
+								else if (tileID >= it->first) {
+									tilesetID = static_cast<int>(std::distance(GDIs.begin(), it));
+								}
+								else {
+									CORI_WARN("LevelLoader: Tile ID is between some GDI range.");
+									tilesetID = 0;
+								}
+
+								auto tile = ActiveScene.CreateEntity<Tags::StaticTileTag>("Tile " + std::to_string(tileCount));
+								tile.AddComponent<Cori::World::Components::Entity::QuadRenderer>(glm::vec2{ blockSize / 2.0f, blockSize / 2.0f }, SpriteAtlases.at(tilesetID)->GetTexture(), SpriteAtlases.at(tilesetID)->GetSpriteUVsAtIndex(tileID - GDIs.at(tilesetID).first));
+								auto& transform = tile.GetComponents<Cori::World::Components::Entity::Transform>();
+								//transform.SetLocalPosition(glm::vec2{ j * blockSize + blockSize / 2.0f, ((height - i) * blockSize) - blockSize / 2.0f });
+								transform.SetLocalPosition(GridPosToPixels({ j, i }, { width, height }, true));
+								transform.SetLocalDepth(92);
+
+								tileCount++;
+							}
+						}
+					}
+				}
+				else if (tileLayer.getName() == "BaseLayerLowTwo") {
+					const auto& tiles = tileLayer.getTiles();
+
+					int height = layer->getSize().y;
+					int width = layer->getSize().x;
+
+					for (int i = 0; i < height; ++i) {
+						for (int j = 0; j < width; ++j) {
+							if (tiles[width * i + j].ID != 0) {
+								int tilesetID;
+								uint32_t tileID = tiles[width * i + j].ID;
+
+								auto comparator = [](const std::pair<uint32_t, uint32_t>& range, uint32_t value) {
+									return range.second < value;
+								};
+
+								auto it = std::lower_bound(GDIs.begin(), GDIs.end(), tileID, comparator);
+
+								if (it == GDIs.end()) {
+									CORI_WARN("LevelLoader: Tile ID is greater than all GDI ranges.");
+									tilesetID = 0;
+								}
+								else if (tileID >= it->first) {
+									tilesetID = static_cast<int>(std::distance(GDIs.begin(), it));
+								}
+								else {
+									CORI_WARN("LevelLoader: Tile ID is between some GDI range.");
+									tilesetID = 0;
+								}
+
+								auto tile = ActiveScene.CreateEntity<Tags::StaticTileTag>("Tile " + std::to_string(tileCount));
+								tile.AddComponent<Cori::World::Components::Entity::QuadRenderer>(glm::vec2{ blockSize / 2.0f, blockSize / 2.0f }, SpriteAtlases.at(tilesetID)->GetTexture(), SpriteAtlases.at(tilesetID)->GetSpriteUVsAtIndex(tileID - GDIs.at(tilesetID).first));
+								auto& transform = tile.GetComponents<Cori::World::Components::Entity::Transform>();
+								//transform.SetLocalPosition(glm::vec2{ j * blockSize + blockSize / 2.0f, ((height - i) * blockSize) - blockSize / 2.0f });
+								transform.SetLocalPosition(GridPosToPixels({ j, i }, { width, height }, true));
+								transform.SetLocalDepth(85);
+
+								tileCount++;
 							}
 						}
 					}
@@ -621,7 +704,7 @@ void LevelLayer::LoadLevel(const std::filesystem::path& path) {
 											auto tilePos = GridPosToPixels({ j, i }, { width, height }, true);
 
 											trapTr.SetLocalPosition(tilePos);
-											trapTr.SetLocalDepth(89);
+											trapTr.SetLocalDepth(84);
 
 											trap.AddComponent<Cori::World::Components::Entity::QuadRenderer>(glm::vec2{ blockSize / 2.0f, blockSize / 2.0f }, SpriteAtlases.at(tilesetID)->GetTexture(), SpriteAtlases.at(tilesetID)->GetSpriteUVsAtIndex(tileID - GDIs.at(tilesetID).first));
 											count++;
@@ -840,7 +923,7 @@ void LevelLayer::AddRegularOrb(const float orbBonus, const Cori::Physics::Vec2 p
 		const auto atlas = Cori::AssetManager::Get(Assets::Coin);
 		auto& trtr = tr.GetComponents<Cori::World::Components::Entity::Transform>();
 		trtr.SetLocalPosition(Cori::Physics::ToPixels(bp.position + Cori::Physics::Vec2(orbRadius / 2.0f, orbRadius / 2.0f)));
-		trtr.SetLocalDepth(90);
+		trtr.SetLocalDepth(86);
 
 		tr.AddComponent<Cori::World::Components::Entity::QuadRenderer>();
 		auto& qa = tr.AddComponent<Cori::World::Components::Entity::QuadAnimator>();

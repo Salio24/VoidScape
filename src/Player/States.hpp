@@ -230,7 +230,7 @@ namespace States {
 					auto& as = player.GetComponents<Cori::World::Components::Entity::AudioSource>();
 					auto track = as.GetTrack(Tracks::Player::Falling);
 					if (track) {
-						track.value()->SetGain(std::clamp(m_FallDuration / 5.0f, 0.0f, 1.0f));
+						track.value()->SetGain(std::clamp(m_FallDuration / 4.0f, 0.0f, 1.0f));
 					}
 				}
 			}
@@ -275,12 +275,12 @@ namespace States {
 							track.value()->Play(land);
 						}
 					}
+				}
 
-					auto& as = player.GetComponents<Cori::World::Components::Entity::AudioSource>();
-					auto track = as.GetTrack(Tracks::Player::Falling);
-					if (track) {
-						track.value()->Stop(true);
-					}
+				auto& as = player.GetComponents<Cori::World::Components::Entity::AudioSource>();
+				auto track = as.GetTrack(Tracks::Player::Falling);
+				if (track) {
+					track.value()->Stop(true);
 				}
 
 

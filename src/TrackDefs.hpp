@@ -9,6 +9,5 @@ namespace Tracks {
 		static constexpr char Falling[] = "Falling";
 		static constexpr char Landing[] = "Landing";
 		static constexpr char WallSlide[] = "WallSlide";
-
 	}
 }

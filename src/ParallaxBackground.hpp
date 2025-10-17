@@ -10,7 +10,6 @@ public:
 	}
 
 	void AddLayer(const std::string& name, const std::filesystem::path& topImagePath, const std::filesystem::path& mainImagePath, const std::filesystem::path& bottomImagePath, const glm::vec2 speed, const glm::vec2 offset, const uint16_t screenHeight, const uint8_t depth) {
-		// Helper to create a texture from a path
 		auto createTexture = [](const std::filesystem::path& path) {
 			if (path.empty()) return std::shared_ptr<Cori::Graphics::Texture2D>(nullptr);
 			const auto image = Cori::Graphics::Image::Create(path);

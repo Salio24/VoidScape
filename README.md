@@ -4,6 +4,8 @@ This is my game I'm building using my CoriEngine, it's very much in work in prog
 
 Now its more of a demo and a showcase of my game engine.
 
+[Demo](https://github.com/user-attachments/assets/80627d24-c67a-44f5-8fbf-d58c35c78aa7)
+
 ## Getting Started
 
 Cori Engine uses CMake as a build system. Currently, it supports only Windows.
@@ -25,7 +27,7 @@ Cori Engine uses CMake as a build system. Currently, it supports only Windows.
 
 First install Jinja2 by running: `pip install Jinja2`
 
-Now you have several options: Visual Studio 2022 CMake integration, plain CMake, CLion
+Now you have several options: Visual Studio 2022 CMake integration, directly through CMake, CLion
 
 #### Visual Studio 2022 CMake integration
 1. Clone the repository with `git clone -b Stable https://github.com/Salio24/VoidScape.git --recursive`
@@ -57,7 +59,7 @@ First install Jinja2:
 - For Arch, you need to run: `sudo pacman -S python-jinja`
 - I don't know about other distros, try `pip install Jinja2`
 
-Now you have several options: CLion, plain CMake
+Now you have several options: CLion, directly through CMake, and a bunch of other tools Linux can offer.
 
 #### CLion
 
@@ -65,7 +67,7 @@ Now you have several options: CLion, plain CMake
 2. By default, CLion will create a `Debug` CMake profile, you can add `Release` and `RelWithDebInfo` if you want.
 3. Wait for CLion to generate CMake config and hit build on `VoidScape` target.
 
-#### Plain CMake
+#### Directly through CMake
 
 1. Make sure you have gcc package installed
 2. Run one of build scripts for linux: `Build_Debug_Linux.sh` `Build_Release_Linux.sh` `Build_RelWithDebInfo_Linux.sh`
