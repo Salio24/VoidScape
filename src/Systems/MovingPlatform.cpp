@@ -4,18 +4,16 @@
 
 namespace Systems {
 	void MovingPlatform::OnUpdate(Cori::Core::GameTimer& gameTimer) {
-		auto view = m_Owner.View<Components::MovingPlatform, Cori::World::Components::Entity::Transform>(Cori::World::Exclude<Cori::World::Components::Entity::InactiveLocallyFlag>());
+		auto view = m_Owner.StaticView<Components::MovingPlatform, Cori::World::Components::Entity::Transform>(Cori::World::Exclude<Cori::World::Components::Entity::InactiveLocallyFlag>());
 		for (const auto entity : view) {
 			auto& pc = view.Get<Components::MovingPlatform>(entity);
 			auto& tr = view.Get<Cori::World::Components::Entity::Transform>(entity);
 			tr.SetLocalPosition(Cori::Physics::ToPixels(pc.m_CurrentPosition * gameTimer.GetTickAlpha() + pc.m_OldPosition * (1.0f - gameTimer.GetTickAlpha())));
 		}
-
-
 	}
 
 	void MovingPlatform::OnTickUpdate(Cori::Core::GameTimer& gameTimer) {
-		auto view = m_Owner.View<Components::MovingPlatform, Cori::World::Components::Entity::RigidBody>(Cori::World::Exclude<Cori::World::Components::Entity::InactiveLocallyFlag>());
+		auto view = m_Owner.StaticView<Components::MovingPlatform, Cori::World::Components::Entity::RigidBody>(Cori::World::Exclude<Cori::World::Components::Entity::InactiveLocallyFlag>());
 
 		for (const auto entity : view) {
 			auto& rb = view.Get<Cori::World::Components::Entity::RigidBody>(entity);
@@ -45,7 +43,7 @@ namespace Systems {
 		if (system) {
 			auto locked = system->lock();
 			static uint32_t count = 0;
-			Cori::World::Entity platform = m_Owner.CreateEntity(std::format("Moving Platform {}", count), Tags::MovingPlatform);
+			Cori::World::Entity platform = m_Owner.CreateEntity<Tags::MovingPlatformTag>(std::format("Moving Platform {}", count));
 			++count;
 			auto& tr = platform.GetComponents<Cori::World::Components::Entity::Transform>();
 			tr.SetLocalDepth(params.m_Depth);
@@ -102,7 +100,7 @@ namespace Systems {
 					pos = glm::vec2(0.0f, CORI_PIXELS_PER_METER * i + bonusX);
 				}
 
-				Cori::World::Entity part = m_Owner.CreateEntity(std::format("Platforms' '{}' part '{}'", count, partCount), Tags::MovingPlatform);
+				Cori::World::Entity part = m_Owner.CreateEntity<Tags::MovingPlatformTag>(std::format("Platforms' '{}' part '{}'", count, partCount));
 				++partCount;
 				auto& transform = part.GetComponents<Cori::World::Components::Entity::Transform>();
 				transform.SetLocalPosition(pos);
@@ -122,7 +120,7 @@ namespace Systems {
 					pos = glm::vec2(0.0f, -(CORI_PIXELS_PER_METER * i + bonusX));
 				}
 
-				Cori::World::Entity part = m_Owner.CreateEntity(std::format("Platforms' '{}' part '{}'", count, partCount), Tags::MovingPlatform);
+				Cori::World::Entity part = m_Owner.CreateEntity<Tags::MovingPlatformTag>(std::format("Platforms' '{}' part '{}'", count, partCount));
 				++partCount;
 				auto& transform = part.GetComponents<Cori::World::Components::Entity::Transform>();
 				transform.SetLocalPosition(pos);

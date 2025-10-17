@@ -8,7 +8,7 @@ namespace Triggers {
 	public:
 		EscapeDoor() = default;
 		void OnEnter(Cori::World::Entity& entity, Cori::World::Entity& trigger) override {
-			if (entity.GetComponents<Cori::World::Components::Entity::Tag>().m_Tag == Tags::Character) {
+			if (entity.HasComponents<Tags::CharacterTag>()) {
 				entity.SetActive(false);
 				auto event = Events::PlayerEscaped{};
 				Cori::Core::Application::EmitEvent(event);

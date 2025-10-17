@@ -84,7 +84,7 @@ public:
 
 	void SetWorldBound(const Cori::Utility::AABB& worldBound) {
 		m_WorldBound = worldBound;
-	};
+	}
 
 	Cori::Utility::AABB GetWorldBound() const {
 		return m_WorldBound;

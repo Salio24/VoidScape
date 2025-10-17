@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.28)
 
 if(MSVC)
-    message(FATAL_ERROR "MSVC Compiler frontend is not supported, use GCC or Clang (not clang-cl it has MSVC frontend)")
+    message(FATAL_ERROR "MSVC is not supported, use GCC or Clang (not clang-cl)")
 endif()
 
 if(CMAKE_CXX_COMPILER MATCHES "/msys[36][24]/")
@@ -19,7 +19,6 @@ if(CLANG_VARIANT STREQUAL "MSYS2")
     endif()
     if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -static-libstdc++ -static-libgcc -static")
-        #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -static")
     endif()
 endif ()
 

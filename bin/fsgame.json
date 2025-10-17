@@ -7,12 +7,12 @@
     },
     {
       "alias": "ENGINE_ROOT",
-      "path": "CoriEngine/Engine",
+      "path": "CoriEngine",
       "root": "APP_ROOT"
     },
     {
       "alias": "ENGINE_DATA",
-      "path": "enginedata",
+      "path": "Engine/enginedata",
       "root": "ENGINE_ROOT"
     },
     {

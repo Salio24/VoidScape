@@ -13,6 +13,8 @@
 #include <tmxlite/TileLayer.hpp>
 #include <tmxlite/ObjectGroup.hpp>
 #include "Systems/MovingPlatform.hpp"
+#include "TrackDefs.hpp"
+#include "Sounds.hpp"
 
 static bool manualStep = false;
 
@@ -29,9 +31,38 @@ LevelLayer::LevelLayer() : Layer("Level Layer") {
 	ActiveScene.RegisterSystem<Cori::World::Systems::Trigger>();
 	ActiveScene.RegisterSystem<Cori::World::Systems::PhysicsSystem>(p);
 
-	ActiveScene.GetActiveCamera().CreateOrthoCamera(0, static_cast<float>(screenWidth) / (static_cast<float>(screenHeight) / 360.0f), 0, 360);
+	ActiveScene.GetActiveCamera().CreateOrthoCamera(0, static_cast<float>(screenWidth) / (static_cast<float>(screenHeight) / 360.0f), 0, 360, 255);
+	m_Background.SetCameraBounds({static_cast<float>(screenWidth) / (static_cast<float>(screenHeight) / 360.0f), 360});
 
 	ActiveScene.RegisterSystem<Systems::MovingPlatform>();
+
+	std::filesystem::path assetDir = Cori::FileSystem::PathManager::GetAliasedPath("ASSETS");
+
+	std::filesystem::path buildingsBack = assetDir / "textures/level/Backgrounds/Backgrounds_BuildingsBack.png";
+	std::filesystem::path buildingsFar = assetDir / "textures/level/Backgrounds/Backgrounds_BuildingsFar.png";
+	std::filesystem::path buildingsMid = assetDir / "textures/level/Backgrounds/Backgrounds_BuildingsMid.png";
+	std::filesystem::path buildingsClose = assetDir / "textures/level/Backgrounds/Backgrounds_BuildingsClose.png";
+	std::filesystem::path moon = assetDir / "textures/level/Backgrounds/Backgrounds_Moon.png";
+	std::filesystem::path sky = assetDir / "textures/level/Backgrounds/Backgrounds_Sky.png";
+
+	//std::filesystem::path red = assetDir / "textures/level/Backgrounds/red.png";
+
+	m_Background.AddLayer("sky", sky, {-0.95f, -0.92f}, { 0.0f, 0.0f }, 360, 1, true);
+	m_Background.AddLayer("moon", moon, {-1.0f, -0.95f}, { -125.0f, 5.0f }, 360, 2, false);
+	m_Background.AddLayer("buildings back", buildingsBack, { -0.9f, -0.9f }, { 0.0f, 0.0f }, 360, 3, false);
+	m_Background.AddLayer("buildings far", buildingsFar, { -0.88f, -0.88f }, { 0.0f, 0.0f }, 360, 4, false);
+	m_Background.AddLayer("buildings mid", buildingsMid, { -0.86f, -0.86f }, { 0.0f, 0.0f }, 360, 5, false);
+	m_Background.AddLayer("buildings close", buildingsClose, { -0.84f, -0.84f }, { 0.0f, 0.0f }, 360, 6, false);
+
+	//m_Background.AddLayer("buildings close", red, buildingsClose, red, { 0.5f, 0.5f }, { 0.0f, 0.0f }, 360, 6);
+
+
+	Cori::AssetManager::Preload({ Sounds::Player::Step1, Sounds::Player::Step2, Sounds::Player::Step3,
+								Sounds::Player::DoubleJump1, Sounds::Player::DoubleJump2, Sounds::Player::DoubleJump3, Sounds::Player::DoubleJump4,
+								Sounds::Player::Jump1, Sounds::Player::Jump2, Sounds::Player::Jump3, Sounds::Player::Jump4,
+								Sounds::Player::FallingLoop1, Sounds::Player::FallingLoop2,
+								Sounds::Player::Landing2, Sounds::Player::Landing3,
+								Sounds::Player::SlidingLoop1, Sounds::Player::SlidingLoop2});
 }
 
 LevelLayer::~LevelLayer() {
@@ -71,12 +102,14 @@ void LevelLayer::OnUpdate(Cori::Core::GameTimer& gameTimer) {
 			timerText = std::format("You escaped, now do it faster. \nTime left in the bank: {}", Cori::Core::GameTimer::FormatTime_S_to_M_S_MS(hp.m_TimeHealth));
 		}
 
-		Cori::Graphics::Renderer2D::SubmitText(Cori::Graphics::Renderer2D::SCREEN_SPACE, alignment, textPos, 20, timerText, glm::vec4(1.0f), Cori::AssetManager::Get(Assets::GlobalFont).get(), 20, 1000.0f, 0.0f, 0.0f);
+		Cori::Graphics::Renderer2D::SubmitText(Cori::Graphics::Renderer2D::SCREEN_SPACE, alignment, textPos, 20, timerText, glm::vec4(1.0f), Cori::AssetManager::Get(Assets::GlobalFont).get(), 100, 1000.0f, 0.0f, 0.0f);
 
 		auto& mover = m_Player.GetComponents<Components::Mover>();
 
 		mover.OnUpdate(gameTimer.GetDeltaTime(), gameTimer.GetTickAlpha());
 		m_MainCamera.OnUpdate(gameTimer, ActiveScene.GetActiveCamera(), !m_LevelCompleted);
+
+		m_Background.Render(ActiveScene.GetActiveCamera().GetPosition() + glm::vec2(ActiveScene.GetActiveCamera().GetSize().x / 2.0f, 0.0f), { -350.0f, -45.0f });
 	}
 }
 
@@ -92,7 +125,6 @@ void LevelLayer::OnTickUpdate(Cori::Core::GameTimer& gameTimer) {
 		mover.OnTickUpdate(gameTimer.GetTimestep(),m_MainCamera, !fsm.IsInState<States::Player::Dead>() && !m_LevelCompleted);
 
 		const glm::vec2 playerPos = m_Player.GetComponents<Cori::World::Components::Entity::Transform>().GetLocalPosition();
-		const glm::vec2 playerHalfSize = m_Player.GetComponents<Cori::World::Components::Entity::QuadRenderer>().GetHalfSize();
 		m_MainCamera.OnTickUpdate(gameTimer, playerPos, Cori::Physics::ToPixels(mover.m_RelativeVelocity), ActiveScene.GetActiveCamera());
 	}
 }
@@ -113,7 +145,7 @@ void LevelLayer::OnImGuiRender(Cori::Core::GameTimer& gameTimer) {
 				auto& mover = m_Player.GetComponents<Components::Mover>();
 				mover.ResetState();
 				mover.TeleportToSpawn();
-				auto view = ActiveScene.View<Cori::World::Components::Entity::Trigger>();
+				auto view = ActiveScene.StaticView<Cori::World::Components::Entity::Trigger>();
 				for (auto entity : view) {
 					auto& t = view.Get<Cori::World::Components::Entity::Trigger>(entity);
 					if (t.HasBehaviour<Triggers::RegularOrb>()) {
@@ -158,11 +190,12 @@ void LevelLayer::OnImGuiRender(Cori::Core::GameTimer& gameTimer) {
 			Cori::Core::Application::GetGameTimer().SetManualTickStep(manualStep);
 		}
 
+		/*
 		if (ImGui::Button("Add dynamic box")) {
 			auto system = ActiveScene.GetSystem<Cori::World::Systems::PhysicsSystem>();
 			if (system) {
 				auto locked = system->lock();
-				auto ent = ActiveScene.CreateEntity("Dynamic Box", Tags::ForTest);
+				auto ent = ActiveScene.CreateEntity("Dynamic Box");
 
 				Cori::Physics::Body::Params bp;
 				bp.type = b2_dynamicBody;
@@ -175,6 +208,7 @@ void LevelLayer::OnImGuiRender(Cori::Core::GameTimer& gameTimer) {
 				rb.CreateShape(Cori::Physics::DestroyWithParent, sp, Cori::Physics::Polygon::CreateBox({1.0f, 1.0f}));
 			}
 		}
+		*/
 
 		ImGui::SeparatorText("Camera Settings");
 
@@ -212,6 +246,8 @@ void LevelLayer::OnImGuiRender(Cori::Core::GameTimer& gameTimer) {
 			mover.DebugDraw(gameTimer.GetTimestep());
 			mover.UpdateGui();
 		}
+
+		//m_Background.ImGui();
 	}
 }
 
@@ -219,7 +255,8 @@ void LevelLayer::OnEvent(Cori::Core::Event& event) {
 	Cori::Core::EventDispatcher dispatcher(event);
 
 	dispatcher.Dispatch<Cori::Core::WindowResizeEvent>([this](const Cori::Core::WindowResizeEvent& e) -> bool {
-		ActiveScene.GetActiveCamera().CreateOrthoCamera(0, static_cast<float>(e.GetWidth()) / (static_cast<float>(e.GetHeight()) / 360.0f), 0, 360);
+		ActiveScene.GetActiveCamera().CreateOrthoCamera(0, static_cast<float>(e.GetWidth()) / (static_cast<float>(e.GetHeight()) / 360.0f), 0, 360, 255);
+		m_Background.SetCameraBounds({static_cast<float>(e.GetWidth()) / (static_cast<float>(e.GetHeight()) / 360.0f), 360});
 		return false;
 	});
 
@@ -247,16 +284,25 @@ void LevelLayer::CreatePlayer(const float startingTime, const glm::vec2 spawnPos
 	auto system = ActiveScene.GetSystem<Cori::World::Systems::PhysicsSystem>();
 	if (system) {
 		auto locked = system->lock();
-		m_Player = ActiveScene.CreateEntity(EntityNames::PlayerRoot, Tags::Character);
+		m_Player = ActiveScene.CreateEntity<Tags::CharacterTag>(EntityNames::PlayerRoot);
 
 		Cori::AssetManager::Preload({AnimationPacks::PlayerMovement, AnimationPacks::PlayerMovementFX});
 
 		m_Player.AddComponent<Cori::World::Components::Entity::QuadRenderer>();
 		m_Player.AddComponent<Cori::World::Components::Entity::QuadAnimator>();
 		m_Player.AddComponent<Components::Spawnpoint>(spawnPos);
+		auto& as = m_Player.AddComponent<Cori::World::Components::Entity::AudioSource>();
+		as.AddTrack(Tracks::Player::Steps);
+		as.AddTrack(Tracks::Player::Jump);
+		as.AddTrack(Tracks::Player::WallJump);
+		as.AddTrack(Tracks::Player::DoubleJump);
+		as.AddTrack(Tracks::Player::Falling);
+		as.AddTrack(Tracks::Player::Landing);
+		as.AddTrack(Tracks::Player::WallSlide);
+
 
 		auto& transform = m_Player.GetComponents<Cori::World::Components::Entity::Transform>();
-		transform.SetLocalDepth(4);
+		transform.SetLocalDepth(91);
 
 
 		auto& fsm = m_Player.AddComponent<Cori::World::Components::Entity::StateMachine>();
@@ -288,7 +334,7 @@ void LevelLayer::CreateEscapeDoor(const Cori::Physics::Vec2 pos) {
 	auto system = ActiveScene.GetSystem<Cori::World::Systems::PhysicsSystem>();
 	if (system) {
 		auto locked = system->lock();
-		auto tr = ActiveScene.CreateEntity("Escape Door", Tags::Triggers);
+		auto tr = ActiveScene.CreateEntity<Tags::TriggersTag>("Escape Door");
 
 		Cori::Physics::Vec2 sizem = Cori::Physics::ToMeters(Assets::Door.m_SpriteResolution);
 		Cori::Physics::Body::Params bp;
@@ -311,7 +357,7 @@ void LevelLayer::CreateEscapeDoor(const Cori::Physics::Vec2 pos) {
 		const auto atlas = Cori::AssetManager::Get(Assets::Door);
 		auto& trtr = tr.GetComponents<Cori::World::Components::Entity::Transform>();
 		trtr.SetLocalPosition(Cori::Physics::ToPixels(pos) + glm::vec2(0.0f, Assets::Door.m_SpriteResolution.y / 2 - 16));
-		trtr.SetLocalDepth(3);
+		trtr.SetLocalDepth(51);
 
 		tr.AddComponent<Cori::World::Components::Entity::QuadRenderer>(glm::vec2{ Assets::Door.m_SpriteResolution.x / 2.0f, Assets::Door.m_SpriteResolution.y / 2.0f}, atlas->GetTexture(), atlas->GetSpriteUVsAtIndex(0));
 	} else {
@@ -427,12 +473,12 @@ void LevelLayer::LoadLevel(const std::filesystem::path& path) {
 
 								static uint32_t count = 1;
 
-								auto tile = ActiveScene.CreateEntity("Tile " + std::to_string(count), Tags::StaticTile);
+								auto tile = ActiveScene.CreateEntity<Tags::StaticTileTag>("Tile " + std::to_string(count));
 								tile.AddComponent<Cori::World::Components::Entity::QuadRenderer>(glm::vec2{ blockSize / 2.0f, blockSize / 2.0f }, SpriteAtlases.at(tilesetID)->GetTexture(), SpriteAtlases.at(tilesetID)->GetSpriteUVsAtIndex(tileID - GDIs.at(tilesetID).first));
 								auto& transform = tile.GetComponents<Cori::World::Components::Entity::Transform>();
 								//transform.SetLocalPosition(glm::vec2{ j * blockSize + blockSize / 2.0f, ((height - i) * blockSize) - blockSize / 2.0f });
 								transform.SetLocalPosition(GridPosToPixels({ j, i }, { width, height }, true));
-								transform.SetLocalDepth(1);
+								transform.SetLocalDepth(50);
 
 								count++;
 							}
@@ -533,7 +579,7 @@ void LevelLayer::LoadLevel(const std::filesystem::path& path) {
 												}
 											}
 
-											auto trap = ActiveScene.CreateEntity("Chain Collider " + std::to_string(count), Tags::ChainCollider);
+											auto trap = ActiveScene.CreateEntity<Tags::ChainColliderTag>("Chain Collider " + std::to_string(count));
 
 											Cori::Physics::Body::Params bp;
 											bp.type = b2_staticBody;
@@ -575,7 +621,7 @@ void LevelLayer::LoadLevel(const std::filesystem::path& path) {
 											auto tilePos = GridPosToPixels({ j, i }, { width, height }, true);
 
 											trapTr.SetLocalPosition(tilePos);
-											trapTr.SetLocalDepth(1);
+											trapTr.SetLocalDepth(89);
 
 											trap.AddComponent<Cori::World::Components::Entity::QuadRenderer>(glm::vec2{ blockSize / 2.0f, blockSize / 2.0f }, SpriteAtlases.at(tilesetID)->GetTexture(), SpriteAtlases.at(tilesetID)->GetSpriteUVsAtIndex(tileID - GDIs.at(tilesetID).first));
 											count++;
@@ -619,7 +665,7 @@ void LevelLayer::LoadLevel(const std::filesystem::path& path) {
 
 							static uint32_t count = 1;
 
-							auto col = ActiveScene.CreateEntity("Chain Collider " + std::to_string(count), Tags::ChainCollider);
+							auto col = ActiveScene.CreateEntity<Tags::ChainColliderTag>("Chain Collider " + std::to_string(count));
 
 							Cori::Physics::Body::Params bp;
 							bp.type = b2_staticBody;
@@ -766,7 +812,7 @@ void LevelLayer::AddRegularOrb(const float orbBonus, const Cori::Physics::Vec2 p
 	auto system = ActiveScene.GetSystem<Cori::World::Systems::PhysicsSystem>();
 	if (system) {
 		auto locked = system->lock();
-		auto tr = ActiveScene.CreateEntity("Regular Orb", Tags::Triggers);
+		auto tr = ActiveScene.CreateEntity<Tags::TriggersTag>("Regular Orb");
 
 		Cori::Physics::Body::Params bp;
 		bp.type = b2_staticBody;
@@ -794,7 +840,7 @@ void LevelLayer::AddRegularOrb(const float orbBonus, const Cori::Physics::Vec2 p
 		const auto atlas = Cori::AssetManager::Get(Assets::Coin);
 		auto& trtr = tr.GetComponents<Cori::World::Components::Entity::Transform>();
 		trtr.SetLocalPosition(Cori::Physics::ToPixels(bp.position + Cori::Physics::Vec2(orbRadius / 2.0f, orbRadius / 2.0f)));
-		trtr.SetLocalDepth(3);
+		trtr.SetLocalDepth(90);
 
 		tr.AddComponent<Cori::World::Components::Entity::QuadRenderer>();
 		auto& qa = tr.AddComponent<Cori::World::Components::Entity::QuadAnimator>();

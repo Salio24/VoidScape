@@ -2,6 +2,7 @@
 #include <Cori.hpp>
 #include "Player/Mover.hpp"
 #include "WorldSystem/Systems/System.hpp"
+#include "ParallaxBackground.hpp"
 
 class LevelLayer final : public Cori::Core::Layer {
 public:
@@ -34,5 +35,6 @@ private:
 
 	Cori::World::Entity m_Player;
 
+	ParallaxBackground m_Background;
 	MainCamera m_MainCamera;
 };

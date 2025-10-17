@@ -19,7 +19,7 @@ namespace Triggers {
 
 	protected:
 		void OnEnter(Cori::World::Entity& entity, Cori::World::Entity& trigger) override {
-			if (entity.GetComponents<Cori::World::Components::Entity::Tag>().m_Tag == Tags::Character) {
+			if (entity.HasComponents<Tags::CharacterTag>()) {
 				auto& hc = entity.GetComponents<Components::Health>();
 				const bool damageDelt = hc.InduceDamage(m_Damage);
 				if (damageDelt) {
@@ -34,7 +34,7 @@ namespace Triggers {
 		}
 
 		void OnTickUpdate(Cori::World::Entity& entity, Cori::World::Entity& trigger, const float timeStep) override {
-			if (entity.GetComponents<Cori::World::Components::Entity::Tag>().m_Tag == Tags::Character) {
+			if (entity.HasComponents<Tags::CharacterTag>()) {
 				auto& hc = entity.GetComponents<Components::Health>();
 				const bool damageDelt = hc.InduceDamage(m_Damage);
 				if (damageDelt) {
