@@ -77,6 +77,7 @@ void LevelLayer::OnDetach() {
 }
 
 void LevelLayer::OnUpdate(Cori::Core::GameTimer& gameTimer) {
+	CORI_PROFILE_FUNCTION();
 	if (m_LevelLoaded) {
 		const auto& hp = m_Player.GetComponents<Components::Health>();
 
