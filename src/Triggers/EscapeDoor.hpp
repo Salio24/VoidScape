@@ -7,6 +7,7 @@ namespace Triggers {
 	class EscapeDoor final : public Cori::World::TriggerBehaviour {
 	public:
 		EscapeDoor() = default;
+
 		void OnEnter(Cori::World::Entity& entity, Cori::World::Entity& trigger) override {
 			if (entity.HasComponents<Tags::CharacterTag>()) {
 				auto& fsm = entity.GetComponents<Cori::World::Components::Entity::StateMachine>();
