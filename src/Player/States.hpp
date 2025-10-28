@@ -69,19 +69,26 @@ namespace States {
 			}
 
 			void OnExit(Cori::World::Entity& player, const std::type_index& nextStateType) override {
-				auto& ar = player.GetComponents<Cori::World::Components::Entity::QuadAnimator>();
-				ar.Stop(true);
-
-				auto& as = player.GetComponents<Cori::World::Components::Entity::AudioSource>();
-				auto track = as.GetTrack(Tracks::Player::Steps);
-				if (track) {
-					track.value()->Stop(false);
+				if (player.HasComponents<Cori::World::Components::Entity::QuadAnimator>()) {
+					auto& ar = player.GetComponents<Cori::World::Components::Entity::QuadAnimator>();
+					ar.Stop(true);
 				}
 
-				temp1.UnlinkFromParent();
-				temp2.UnlinkFromParent();
-				temp1.GetComponents<Cori::World::Components::Entity::QuadAnimator>().Stop(false);
-				temp2.GetComponents<Cori::World::Components::Entity::QuadAnimator>().Stop(false);
+				if (player.HasComponents<Cori::World::Components::Entity::AudioSource>()) {
+
+					auto& as = player.GetComponents<Cori::World::Components::Entity::AudioSource>();
+					auto track = as.GetTrack(Tracks::Player::Steps);
+					if (track) {
+						track.value()->Stop(false);
+					}
+				}
+
+				if (temp1.IsValid() && temp2.IsValid()) {
+					temp1.UnlinkFromParent();
+					temp2.UnlinkFromParent();
+					temp1.GetComponents<Cori::World::Components::Entity::QuadAnimator>().Stop(false);
+					temp2.GetComponents<Cori::World::Components::Entity::QuadAnimator>().Stop(false);
+				}
 			}
 
 			[[nodiscard]] const char* GetDebugName() const override {
@@ -106,8 +113,10 @@ namespace States {
 			}
 
 			void OnExit(Cori::World::Entity& player, const std::type_index& nextStateType) override {
-				auto& ar = player.GetComponents<Cori::World::Components::Entity::QuadAnimator>();
-				ar.Stop(true);
+				if (player.HasComponents<Cori::World::Components::Entity::QuadAnimator>()) {
+					auto& ar = player.GetComponents<Cori::World::Components::Entity::QuadAnimator>();
+					ar.Stop(true);
+				}
 			}
 
 			[[nodiscard]] const char* GetDebugName() const override {
@@ -177,8 +186,10 @@ namespace States {
 			}
 
 			void OnExit(Cori::World::Entity& player, const std::type_index& nextStateType) override {
-				auto& ar = player.GetComponents<Cori::World::Components::Entity::QuadAnimator>();
-				ar.Stop(true);
+				if (player.HasComponents<Cori::World::Components::Entity::QuadAnimator>()) {
+					auto& ar = player.GetComponents<Cori::World::Components::Entity::QuadAnimator>();
+					ar.Stop(true);
+				}
 			}
 
 			[[nodiscard]] const char* GetDebugName() const override {
@@ -249,7 +260,7 @@ namespace States {
 						}
 					}
 
-					{
+					if (player.HasComponents<Cori::World::Components::Entity::AudioSource>()) {
 						auto& as = player.GetComponents<Cori::World::Components::Entity::AudioSource>();
 						auto track = as.GetTrack(Tracks::Player::Landing);
 						if (track) {
@@ -277,10 +288,12 @@ namespace States {
 					}
 				}
 
-				auto& as = player.GetComponents<Cori::World::Components::Entity::AudioSource>();
-				auto track = as.GetTrack(Tracks::Player::Falling);
-				if (track) {
-					track.value()->Stop(true);
+				if (player.HasComponents<Cori::World::Components::Entity::AudioSource>()) {
+					auto& as = player.GetComponents<Cori::World::Components::Entity::AudioSource>();
+					auto track = as.GetTrack(Tracks::Player::Falling);
+					if (track) {
+						track.value()->Stop(true);
+					}
 				}
 
 
@@ -358,8 +371,10 @@ namespace States {
 			}
 
 			void OnExit(Cori::World::Entity& player, const std::type_index& nextStateType) override {
-				auto& ar = player.GetComponents<Cori::World::Components::Entity::QuadAnimator>();
-				ar.Stop(true);
+				if (player.HasComponents<Cori::World::Components::Entity::QuadAnimator>()) {
+					auto& ar = player.GetComponents<Cori::World::Components::Entity::QuadAnimator>();
+					ar.Stop(true);
+				}
 			}
 
 			[[nodiscard]] const char* GetDebugName() const override {
@@ -431,8 +446,10 @@ namespace States {
 			}
 
 			void OnExit(Cori::World::Entity& player, const std::type_index& nextStateType) override {
-				auto& ar = player.GetComponents<Cori::World::Components::Entity::QuadAnimator>();
-				ar.Stop(true);
+				if (player.HasComponents<Cori::World::Components::Entity::QuadAnimator>()) {
+					auto& ar = player.GetComponents<Cori::World::Components::Entity::QuadAnimator>();
+					ar.Stop(true);
+				}
 			}
 
 			[[nodiscard]] const char* GetDebugName() const override {
@@ -495,17 +512,23 @@ namespace States {
 			}
 
 			void OnExit(Cori::World::Entity& player, const std::type_index& nextStateType) override {
-				auto& ar = player.GetComponents<Cori::World::Components::Entity::QuadAnimator>();
-				ar.Stop(true);
-
-				auto& as = player.GetComponents<Cori::World::Components::Entity::AudioSource>();
-				auto track = as.GetTrack(Tracks::Player::WallSlide);
-				if (track) {
-					track.value()->Stop(true);
+				if (player.HasComponents<Cori::World::Components::Entity::QuadAnimator>()) {
+					auto& ar = player.GetComponents<Cori::World::Components::Entity::QuadAnimator>();
+					ar.Stop(true);
 				}
 
-				temp.GetComponents<Cori::World::Components::Entity::QuadAnimator>().Stop(true);
-				temp.UnlinkFromParent();
+				if (player.HasComponents<Cori::World::Components::Entity::AudioSource>()) {
+					auto& as = player.GetComponents<Cori::World::Components::Entity::AudioSource>();
+					auto track = as.GetTrack(Tracks::Player::WallSlide);
+					if (track) {
+						track.value()->Stop(true);
+					}
+				}
+
+				if (temp.IsValid()) {
+					temp.GetComponents<Cori::World::Components::Entity::QuadAnimator>().Stop(true);
+					temp.UnlinkFromParent();
+				}
 			}
 
 			[[nodiscard]] const char* GetDebugName() const override {
@@ -532,8 +555,10 @@ namespace States {
 			}
 
 			void OnExit(Cori::World::Entity& player, const std::type_index& nextStateType) override {
-				auto& ar = player.GetComponents<Cori::World::Components::Entity::QuadAnimator>();
-				ar.Stop(true);
+				if (player.HasComponents<Cori::World::Components::Entity::QuadAnimator>()) {
+					auto& ar = player.GetComponents<Cori::World::Components::Entity::QuadAnimator>();
+					ar.Stop(true);
+				}
 			}
 
 			[[nodiscard]] const char* GetDebugName() const override {
